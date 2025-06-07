@@ -4,6 +4,4 @@ node_modules
 #ignore a key
 serviceAccountKey.json
 # ignore firebase config
-frontend/js/firebase-config.js
-=======
 firebase-config.js
