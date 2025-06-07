@@ -54,6 +54,7 @@ router.get('/me/treinos', verifyToken, async (req, res) => {
         const alunoSnap = await admin.firestore()
             .collectionGroup('alunos')
             .where('email', '==', email)
+            .where('nome', '!=', null)
             .limit(1)
             .get();
 
