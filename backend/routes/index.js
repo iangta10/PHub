@@ -9,6 +9,7 @@ router.use('/users', require('./users/profile'));
 router.use('/users', require('./users/treinos'));
 router.use('/users', require('./users/exercicios'));
 router.use('/users', require('./users/metodos'));
+router.use('/users', require('./users/admin-invite'));
 
 
 module.exports = router;

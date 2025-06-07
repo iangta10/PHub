@@ -31,7 +31,12 @@ router.post('/register', verifyToken, async (req, res) => {
         }
 
         if (tipo === 'admin') {
-            if (!codigo || codigo !== 'admin123') {
+            if (!codigo) {
+                return res.status(403).json({ message: 'Código de admin obrigatório' });
+            }
+
+            const inviteDoc = await admin.firestore().collection('adminInvites').doc(codigo).get();
+            if (!inviteDoc.exists || inviteDoc.data().used) {
                 return res.status(403).json({ message: 'Código de admin inválido' });
             }
 
@@ -41,6 +46,8 @@ router.post('/register', verifyToken, async (req, res) => {
                 role: 'admin',
                 createdAt: new Date().toISOString()
             });
+
+            await inviteDoc.ref.update({ used: true, usedBy: uid, usedAt: new Date().toISOString() });
 
             return res.status(200).json({ message: 'Admin registrado' });
         }
