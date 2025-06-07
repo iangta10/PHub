@@ -98,8 +98,71 @@
     z-index: 100;
 }
 
+
 .sidebar ul li:hover .tooltip {
     opacity: 1;
+}
+
+/* ===== Treinos & Exercícios ===== */
+
+#novoTreinoForm,
+#novoExercicio,
+#novoMetodo {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dia {
+    background-color: #1e1e1e;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+.exercicios {
+    margin-top: 10px;
+}
+
+.exercicio {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    align-items: center;
+    background-color: #1a1a1a;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+.exercicio input.series,
+.exercicio input.repeticoes {
+    width: 80px;
+}
+
+.exercicio button.removeExercicio {
+    border: 1px solid #f58725;
+    background: none;
+    color: #f58725;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.exercicio button.removeExercicio:hover {
+    background-color: #f58725;
+    color: #000;
+}
+
+.treino {
+    background-color: #1e1e1e;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+.treino ul {
+    list-style: none;
+    padding-left: 20px;
 }
 
 
