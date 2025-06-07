@@ -6,6 +6,7 @@ router.use('/users', require('./users/alunos'));
 router.use('/users', require('./users/role'));
 router.use('/users', require('./users/check-aluno'));
 router.use('/users', require('./users/profile'));
+router.use('/users', require('./users/treinos'));
 
 
 module.exports = router;
