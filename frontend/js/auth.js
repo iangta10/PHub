@@ -1,10 +1,26 @@
 import { auth } from './firebase-config.js';
-import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+// Aguarda até que o Firebase defina o usuário logado
+function waitForUser() {
+    return new Promise((resolve, reject) => {
+        if (auth.currentUser) {
+            return resolve(auth.currentUser);
+        }
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            unsubscribe();
+            if (user) {
+                resolve(user);
+            } else {
+                reject(new Error("Usuário não está logado."));
+            }
+        });
+    });
+}
 
 // Atualiza token sempre antes de fazer uma requisição
 async function getFreshIdToken() {
-    const user = auth.currentUser;
-    if (!user) throw new Error("Usuário não está logado.");
+    const user = await waitForUser();
     return await user.getIdToken(true); // força refresh
 }
 
