@@ -37,7 +37,9 @@ function renderForms(container, exercicios, metodos) {
                 <option value="Bíceps">Bíceps</option>
                 <option value="Tríceps">Tríceps</option>
                 <option value="Ombros">Ombros</option>
-                <option value="Pernas">Pernas</option>
+                <option value="Quadríceps">Quadríceps</option>
+                <option value="Posteriores">Posteriores</option>
+                <option value="Panturrilha">Panturrilha</option>
                 <option value="Abdômen">Abdômen</option>
                 <option value="Glúteos">Glúteos</option>
             </select>
@@ -47,7 +49,9 @@ function renderForms(container, exercicios, metodos) {
                 <option value="Bíceps">Bíceps</option>
                 <option value="Tríceps">Tríceps</option>
                 <option value="Ombros">Ombros</option>
-                <option value="Pernas">Pernas</option>
+                <option value="Quadríceps">Quadríceps</option>
+                <option value="Posteriores">Posteriores</option>
+                <option value="Panturrilha">Panturrilha</option>
                 <option value="Abdômen">Abdômen</option>
                 <option value="Glúteos">Glúteos</option>
             </select>
