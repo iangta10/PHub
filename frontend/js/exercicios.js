@@ -19,21 +19,46 @@ export async function loadExerciciosSection() {
 }
 
 function renderForms(container, exercicios, metodos) {
+    const exerciciosOptions = exercicios.map(e => `<option value="${e.nome}"></option>`).join('');
     container.innerHTML = `
         <h2>Exercícios Personalizados</h2>
         <form id="novoExercicio">
-            <input type="text" name="nome" placeholder="Nome" required />
-            <input type="text" name="categoria" placeholder="Categoria" />
-            <input type="number" name="seriesPadrao" placeholder="Séries padrão(opcional)" />
-            <input type="number" name="repeticoesPadrao" placeholder="Repetições padrão(opcional)" />
+            <input type="text" name="nome" list="exerciciosOptions" placeholder="Nome" required />
+            <datalist id="exerciciosOptions">${exerciciosOptions}</datalist>
+            <select name="categoria">
+                <option value="Musculação">Musculação</option>
+                <option value="Cardio">Cardio</option>
+                <option value="Mobilidade">Mobilidade</option>
+                <option value="Alongamento">Alongamento</option>
+            </select>
+            <select name="grupos" multiple>
+                <option value="Peito">Peito</option>
+                <option value="Costas">Costas</option>
+                <option value="Bíceps">Bíceps</option>
+                <option value="Tríceps">Tríceps</option>
+                <option value="Ombros">Ombros</option>
+                <option value="Pernas">Pernas</option>
+                <option value="Abdômen">Abdômen</option>
+                <option value="Glúteos">Glúteos</option>
+            </select>
+            <select name="grupoPrincipal">
+                <option value="Peito">Peito</option>
+                <option value="Costas">Costas</option>
+                <option value="Bíceps">Bíceps</option>
+                <option value="Tríceps">Tríceps</option>
+                <option value="Ombros">Ombros</option>
+                <option value="Pernas">Pernas</option>
+                <option value="Abdômen">Abdômen</option>
+                <option value="Glúteos">Glúteos</option>
+            </select>
             <button type="submit">Criar</button>
         </form>
-        <ul id="listaExercicios">${exercicios.map(e => `<li>${e.nome}</li>`).join('')}</ul>
         <h2>Métodos de Treino</h2>
         <form id="novoMetodo">
             <input type="text" name="nome" placeholder="Nome" required />
             <input type="number" name="series" placeholder="Séries" />
             <input type="number" name="repeticoes" placeholder="Repetições" />
+            <input type="text" name="observacoes" placeholder="Observações" />
             <button type="submit">Criar</button>
         </form>
         <ul id="listaMetodos">${metodos.map(m => `<li>${m.nome}</li>`).join('')}</ul>
@@ -42,11 +67,12 @@ function renderForms(container, exercicios, metodos) {
     document.getElementById('novoExercicio').addEventListener('submit', async e => {
         e.preventDefault();
         const form = e.target;
+        const grupos = Array.from(form.grupos.selectedOptions).map(o => o.value);
         const body = {
             nome: form.nome.value,
             categoria: form.categoria.value,
-            seriesPadrao: form.seriesPadrao.value,
-            repeticoesPadrao: form.repeticoesPadrao.value
+            grupoMuscularPrincipal: form.grupoPrincipal.value,
+            gruposMusculares: grupos
         };
         const resp = await fetchWithFreshToken('http://localhost:3000/users/exercicios', {
             method: 'POST',
@@ -66,7 +92,8 @@ function renderForms(container, exercicios, metodos) {
         const body = {
             nome: form.nome.value,
             series: form.series.value,
-            repeticoes: form.repeticoes.value
+            repeticoes: form.repeticoes.value,
+            observacoes: form.observacoes.value
         };
         const resp = await fetchWithFreshToken('http://localhost:3000/users/metodos', {
             method: 'POST',
