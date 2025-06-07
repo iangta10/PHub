@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Aluno | PersonalHub</title>
+
+    <!-- CSS base + dashboard -->
+    <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="stylesheet" href="./css/dashboard.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
+    <script src="https://kit.fontawesome.com/2c9298b4bd.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="logo">🏋️</div>
+            <ul class="menu">
+                <li data-section="home"><i class="fas fa-home"></i><span class="tooltip">Início</span></li>
+                <li data-section="meus-treinos"><i class="fas fa-dumbbell"></i><span class="tooltip">Meus Treinos</span></li>
+                <li data-section="agenda"><i class="fas fa-calendar-alt"></i><span class="tooltip">Agenda</span></li>
+                <li data-section="anamnese"><i class="fas fa-notes-medical"></i><span class="tooltip">Anamnese</span></li>
+                <li data-section="progresso"><i class="fas fa-chart-line"></i><span class="tooltip">Progresso</span></li>
+                <li id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span class="tooltip">Sair</span></li>
+            </ul>
+        </aside>
+
+        <div class="main">
+            <header class="header">
+                <h1><span style="color: #f58725;">Personal</span>Hub</h1>
+                <span id="userGreeting">Olá, Aluno</span>
+            </header>
+
+            <main id="content">
+                <h2>Bem-vindo!</h2>
+                <p>Selecione uma seção no menu lateral para começar.</p>
+            </main>
+        </div>
+    </div>
+
+    <script type="module" src="./js/dashboard.js"></script>
+</body>
+
+</html>

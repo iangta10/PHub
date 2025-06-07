@@ -1,0 +1,110 @@
+/* ===== BASE ===== */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #121212;
+    color: #FFFFFF;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background: #1e1e1e;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    max-width: 400px;
+}
+
+/* ===== TÍTULOS E TEXTO ===== */
+h1 {
+    font-size: 24px;
+    margin-bottom: 1rem;
+    text-align: center;
+    color: #f58725;
+}
+
+p {
+    margin-top: 12px;
+    text-align: center;
+    font-size: 14px;
+}
+
+a {
+    color: #f58725;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* ===== INPUTS ===== */
+form input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 6px;
+    border: 1px solid #333;
+    background-color: #2a2a2a;
+    color: #fff;
+    box-sizing: border-box;
+}
+
+form input::placeholder {
+    color: #bbb;
+}
+
+form input:focus {
+    border-color: #f58725;
+    outline: none;
+    background-color: #2e2e2e;
+}
+
+/* ===== BOTÕES ===== */
+button {
+    width: 100%;
+    padding: 12px;
+    background-color: #f58725;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin-top: 15px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #d9731d;
+    transform: scale(1.02);
+}
+
+.user-type-selector {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.user-type-selector button {
+    flex: 1;
+    background-color: #2a2a2a;
+    border: 1px solid #444;
+    color: #fff;
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin: 0 4px;
+}
+
+.user-type-selector button.active {
+    background-color: #f58725;
+    color: #000;
+}
+
+.hidden {
+    display: none;
+}
