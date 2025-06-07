@@ -52,7 +52,7 @@ if (loginForm) {
             console.log(userData);
 
             // O backend retorna a propriedade `role` indicando o tipo de usuário
-            if (userData.role === 'personal') {
+            if (userData.role === 'personal' || userData.role === 'admin') {
                 window.location.href = 'dashboard.html';
             } else if (userData.role === 'aluno') {
                 window.location.href = 'aluno.html';
@@ -76,4 +76,11 @@ export async function fetchWithFreshToken(url, options = {}) {
         }
     };
     return fetch(url, updatedOptions);
+}
+
+// Obtém a role do usuário logado
+export async function fetchUserRole() {
+    const res = await fetchWithFreshToken('http://localhost:3000/users/role');
+    const data = await res.json();
+    return data.role;
 }
