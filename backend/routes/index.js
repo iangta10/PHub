@@ -7,6 +7,8 @@ router.use('/users', require('./users/role'));
 router.use('/users', require('./users/check-aluno'));
 router.use('/users', require('./users/profile'));
 router.use('/users', require('./users/treinos'));
+router.use('/users', require('./users/exercicios'));
+router.use('/users', require('./users/metodos'));
 
 
 module.exports = router;

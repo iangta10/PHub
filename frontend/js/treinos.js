@@ -1,13 +1,10 @@
 import { fetchWithFreshToken } from "./auth.js";
+import { fetchExerciciosMap, fetchMetodos } from "./exercicios.js";
 
-const EXERCICIOS_POR_CATEGORIA = {
-    "Peito": ["Supino", "Crucifixo", "Flexão"],
-    "Pernas": ["Agachamento", "Leg Press"],
-    "Cardio": ["Corrida", "Bicicleta"],
-    "Mobilidade": ["Alongamento", "Yoga"]
-};
-const TODAS_CATEGORIAS = Object.keys(EXERCICIOS_POR_CATEGORIA);
-const TODOS_EXERCICIOS = TODAS_CATEGORIAS.flatMap(c => EXERCICIOS_POR_CATEGORIA[c]);
+let EXERCICIOS_MAP = {};
+let TODAS_CATEGORIAS = [];
+let TODOS_EXERCICIOS = [];
+let METODOS = [];
 
 export async function loadTreinosSection() {
     const content = document.getElementById("content");
@@ -15,6 +12,10 @@ export async function loadTreinosSection() {
     try {
         const res = await fetchWithFreshToken('http://localhost:3000/users/alunos');
         const alunos = await res.json();
+        EXERCICIOS_MAP = await fetchExerciciosMap();
+        METODOS = await fetchMetodos();
+        TODAS_CATEGORIAS = Object.keys(EXERCICIOS_MAP);
+        TODOS_EXERCICIOS = TODAS_CATEGORIAS.flatMap(c => EXERCICIOS_MAP[c].map(e => e.nome));
         const catOptions = TODAS_CATEGORIAS.map(c => `<option value="${c}">${c}</option>`).join('');
 
         content.innerHTML = `
@@ -104,6 +105,10 @@ function addExercicio(container, catOptions) {
             ${catOptions}
         </select>
         <select class="nomeExercicio">${allOptions}</select>
+        <select class="metodo">
+            <option value="">Método</option>
+            ${METODOS.map(m => `<option value="${m.series || ''}|${m.repeticoes || ''}">${m.nome}</option>`).join('')}
+        </select>
         <input type="number" class="series" placeholder="Séries" />
         <input type="number" class="repeticoes" placeholder="Repetições" />
         <input type="number" class="carga" placeholder="Carga (opcional)" />
@@ -114,11 +119,20 @@ function addExercicio(container, catOptions) {
 
     const categoriaSel = exDiv.querySelector('.categoria');
     const exercicioSel = exDiv.querySelector('.nomeExercicio');
+    const metodoSel = exDiv.querySelector('.metodo');
+    const seriesInput = exDiv.querySelector('.series');
+    const repInput = exDiv.querySelector('.repeticoes');
 
     categoriaSel.addEventListener('change', () => {
         const cat = categoriaSel.value;
-        const items = cat ? EXERCICIOS_POR_CATEGORIA[cat] : TODOS_EXERCICIOS;
+        const items = cat ? (EXERCICIOS_MAP[cat] || []).map(e => e.nome) : TODOS_EXERCICIOS;
         exercicioSel.innerHTML = items.map(e => `<option value="${e}">${e}</option>`).join('');
+    });
+
+    metodoSel.addEventListener('change', () => {
+        const [s, r] = metodoSel.value.split('|');
+        if (s) seriesInput.value = s;
+        if (r) repInput.value = r;
     });
 
     exDiv.querySelector('.removeExercicio').addEventListener('click', () => {

@@ -8,6 +8,9 @@ document.querySelectorAll(".sidebar li").forEach(item => {
             } else if (section === "treinos") {
                 const { loadTreinosSection } = await import("./treinos.js");
                 loadTreinosSection();
+            } else if (section === "exercicios") {
+                const { loadExerciciosSection } = await import("./exercicios.js");
+                loadExerciciosSection();
             } else if (section === "meus-treinos") {
                 const { loadMeusTreinos } = await import("./treinos.js");
                 loadMeusTreinos();
