@@ -25,7 +25,7 @@ export async function loadTreinosSection() {
                     <option value="">Selecione o aluno</option>
                     ${alunos.map(a => `<option value="${a.id}">${a.nome}</option>`).join('')}
                 </select>
-                <input type="text" name="nome" placeholder="Nome do treino" required />
+                <input type="text" name="nome" placeholder="Nome da ficha" required />
                 <div id="diasContainer"></div>
                 <button type="button" id="addDia">Adicionar Dia</button>
                 <button type="submit">Criar</button>
@@ -85,7 +85,7 @@ function addDia(catOptions) {
     diaDiv.className = 'dia';
     diaDiv.innerHTML = `
         <h3>Dia ${diaIndex + 1}</h3>
-        <input type="text" class="nomeDia" placeholder="Nome do dia" />
+        <input type="text" class="nomeDia" placeholder="Nome do treino" />
         <div class="exercicios"></div>
         <button type="button" class="addExercicio">Adicionar Exercício</button>
     `;
