@@ -30,6 +30,21 @@ router.post('/register', verifyToken, async (req, res) => {
             return res.status(200).json({ message: "Personal registrado" });
         }
 
+        if (tipo === 'admin') {
+            if (!codigo || codigo !== 'admin123') {
+                return res.status(403).json({ message: 'Código de admin inválido' });
+            }
+
+            await admin.firestore().collection('users').doc(uid).set({
+                email,
+                username: username || 'admin',
+                role: 'admin',
+                createdAt: new Date().toISOString()
+            });
+
+            return res.status(200).json({ message: 'Admin registrado' });
+        }
+
         if (tipo === 'aluno') {
             // ✅ Verifica se email está registrado em qualquer subcoleção /alunos
             const snapshot = await admin.firestore()

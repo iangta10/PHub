@@ -13,16 +13,20 @@ router.post('/exercicios', verifyToken, async (req, res) => {
     }
 
     try {
-        const docRef = await admin.firestore()
-            .collection('users').doc(personalId)
-            .collection('exercicios')
-            .add({
-                nome,
-                categoria: categoria || null,
-                seriesPadrao: seriesPadrao !== undefined ? Number(seriesPadrao) : null,
-                repeticoesPadrao: repeticoesPadrao !== undefined ? Number(repeticoesPadrao) : null,
-                criadoEm: new Date().toISOString()
-            });
+        const userDoc = await admin.firestore().collection('users').doc(personalId).get();
+        const role = userDoc.exists ? userDoc.data().role : 'personal';
+
+        const collectionRef = role === 'admin'
+            ? admin.firestore().collection('exerciciosSistema')
+            : admin.firestore().collection('users').doc(personalId).collection('exercicios');
+
+        const docRef = await collectionRef.add({
+            nome,
+            categoria: categoria || null,
+            seriesPadrao: seriesPadrao !== undefined ? Number(seriesPadrao) : null,
+            repeticoesPadrao: repeticoesPadrao !== undefined ? Number(repeticoesPadrao) : null,
+            criadoEm: new Date().toISOString()
+        });
 
         res.status(201).json({ id: docRef.id });
     } catch (err) {
@@ -36,12 +40,17 @@ router.get('/exercicios', verifyToken, async (req, res) => {
     const personalId = req.user.uid;
 
     try {
-        const snapshot = await admin.firestore()
+        const personalSnap = await admin.firestore()
             .collection('users').doc(personalId)
             .collection('exercicios').get();
 
-        const exercicios = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        res.json(exercicios);
+        const globalSnap = await admin.firestore()
+            .collection('exerciciosSistema').get();
+
+        const pessoais = personalSnap.docs.map(doc => ({ id: doc.id, ...doc.data(), global: false }));
+        const globais = globalSnap.docs.map(doc => ({ id: doc.id, ...doc.data(), global: true }));
+
+        res.json([...globais, ...pessoais]);
     } catch (err) {
         console.error('Erro ao listar exercícios:', err);
         res.status(500).json({ error: 'Erro ao listar exercícios' });

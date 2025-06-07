@@ -13,15 +13,19 @@ router.post('/metodos', verifyToken, async (req, res) => {
     }
 
     try {
-        const docRef = await admin.firestore()
-            .collection('users').doc(personalId)
-            .collection('metodos')
-            .add({
-                nome,
-                series: series !== undefined ? Number(series) : null,
-                repeticoes: repeticoes !== undefined ? Number(repeticoes) : null,
-                criadoEm: new Date().toISOString()
-            });
+        const userDoc = await admin.firestore().collection('users').doc(personalId).get();
+        const role = userDoc.exists ? userDoc.data().role : 'personal';
+
+        const collectionRef = role === 'admin'
+            ? admin.firestore().collection('metodosSistema')
+            : admin.firestore().collection('users').doc(personalId).collection('metodos');
+
+        const docRef = await collectionRef.add({
+            nome,
+            series: series !== undefined ? Number(series) : null,
+            repeticoes: repeticoes !== undefined ? Number(repeticoes) : null,
+            criadoEm: new Date().toISOString()
+        });
 
         res.status(201).json({ id: docRef.id });
     } catch (err) {
@@ -35,12 +39,17 @@ router.get('/metodos', verifyToken, async (req, res) => {
     const personalId = req.user.uid;
 
     try {
-        const snapshot = await admin.firestore()
+        const personalSnap = await admin.firestore()
             .collection('users').doc(personalId)
             .collection('metodos').get();
 
-        const metodos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        res.json(metodos);
+        const globalSnap = await admin.firestore()
+            .collection('metodosSistema').get();
+
+        const pessoais = personalSnap.docs.map(doc => ({ id: doc.id, ...doc.data(), global: false }));
+        const globais = globalSnap.docs.map(doc => ({ id: doc.id, ...doc.data(), global: true }));
+
+        res.json([...globais, ...pessoais]);
     } catch (err) {
         console.error('Erro ao listar métodos:', err);
         res.status(500).json({ error: 'Erro ao listar métodos' });
