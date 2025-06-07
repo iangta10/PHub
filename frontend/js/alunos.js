@@ -10,12 +10,23 @@ export async function loadAlunosSection() {
 
         content.innerHTML = `
             <h2>Meus Alunos</h2>
-            <ul>
+            <input type="text" id="searchAluno" placeholder="Buscar por nome..." />
+            <ul id="alunoList">
                 ${alunos.map(aluno => `
                     <li><strong>${aluno.nome}</strong> (${aluno.email})</li>
                 `).join('')}
             </ul>
         `;
+
+        const searchInput = document.getElementById('searchAluno');
+        const list = document.getElementById('alunoList');
+        searchInput.addEventListener('input', () => {
+            const term = searchInput.value.toLowerCase();
+            list.innerHTML = alunos
+                .filter(a => a.nome && a.nome.toLowerCase().includes(term))
+                .map(aluno => `<li><strong>${aluno.nome}</strong> (${aluno.email})</li>`)
+                .join('');
+        });
     } catch (err) {
         console.error("Erro ao buscar alunos:", err);
         content.innerHTML = `<p style="color:red;">Erro ao carregar alunos</p>`;
