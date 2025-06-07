@@ -56,4 +56,74 @@ router.get('/alunos', verifyToken, async (req, res) => {
     }
 });
 
+// Buscar dados de um aluno especifico
+router.get('/alunos/:id', verifyToken, async (req, res) => {
+    const personalId = req.user.uid;
+    const alunoId = req.params.id;
+
+    try {
+        const doc = await admin.firestore()
+            .collection('users')
+            .doc(personalId)
+            .collection('alunos')
+            .doc(alunoId)
+            .get();
+
+        if (!doc.exists) {
+            return res.status(404).json({ error: 'Aluno não encontrado' });
+        }
+
+        return res.status(200).json({ id: doc.id, ...doc.data() });
+    } catch (err) {
+        console.error('Erro ao buscar aluno:', err);
+        res.status(500).json({ error: 'Erro ao buscar aluno' });
+    }
+});
+
+// Atualizar dados de um aluno
+router.put('/alunos/:id', verifyToken, async (req, res) => {
+    const personalId = req.user.uid;
+    const alunoId = req.params.id;
+    const { nome, email, observacoes } = req.body;
+
+    try {
+        const alunoRef = admin.firestore()
+            .collection('users')
+            .doc(personalId)
+            .collection('alunos')
+            .doc(alunoId);
+
+        const updateData = {};
+        if (nome !== undefined) updateData.nome = nome;
+        if (email !== undefined) updateData.email = email;
+        if (observacoes !== undefined) updateData.observacoes = observacoes;
+
+        await alunoRef.update(updateData);
+        res.status(200).json({ message: 'Aluno atualizado' });
+    } catch (err) {
+        console.error('Erro ao atualizar aluno:', err);
+        res.status(500).json({ error: 'Erro ao atualizar aluno' });
+    }
+});
+
+// Remover aluno
+router.delete('/alunos/:id', verifyToken, async (req, res) => {
+    const personalId = req.user.uid;
+    const alunoId = req.params.id;
+
+    try {
+        await admin.firestore()
+            .collection('users')
+            .doc(personalId)
+            .collection('alunos')
+            .doc(alunoId)
+            .delete();
+
+        res.status(200).json({ message: 'Aluno removido' });
+    } catch (err) {
+        console.error('Erro ao remover aluno:', err);
+        res.status(500).json({ error: 'Erro ao remover aluno' });
+    }
+});
+
 module.exports = router;
