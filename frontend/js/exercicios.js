@@ -24,8 +24,8 @@ function renderForms(container, exercicios, metodos) {
         <form id="novoExercicio">
             <input type="text" name="nome" placeholder="Nome" required />
             <input type="text" name="categoria" placeholder="Categoria" />
-            <input type="number" name="seriesPadrao" placeholder="Séries padrão" />
-            <input type="number" name="repeticoesPadrao" placeholder="Repetições padrão" />
+            <input type="number" name="seriesPadrao" placeholder="Séries padrão(opcional)" />
+            <input type="number" name="repeticoesPadrao" placeholder="Repetições padrão(opcional)" />
             <button type="submit">Criar</button>
         </form>
         <ul id="listaExercicios">${exercicios.map(e => `<li>${e.nome}</li>`).join('')}</ul>

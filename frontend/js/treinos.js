@@ -110,7 +110,7 @@ function addExercicio(container, catOptions) {
             ${METODOS.map(m => `<option value="${m.series || ''}|${m.repeticoes || ''}">${m.nome}</option>`).join('')}
         </select>
         <input type="number" class="series" placeholder="Séries" />
-        <input type="number" class="repeticoes" placeholder="Repetições" />
+        <input type="number" class="repeticoes" placeholder="Reps" />
         <input type="number" class="carga" placeholder="Carga (opcional)" />
         <input type="text" class="observacoes" placeholder="Observações" />
         <button type="button" class="removeExercicio">X</button>
