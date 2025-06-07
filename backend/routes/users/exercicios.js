@@ -6,7 +6,7 @@ const verifyToken = require('../../middleware/verifyToken');
 // Criar exercício personalizado
 router.post('/exercicios', verifyToken, async (req, res) => {
     const personalId = req.user.uid;
-    const { nome, categoria, seriesPadrao, repeticoesPadrao } = req.body;
+    const { nome, categoria, grupoMuscularPrincipal, gruposMusculares } = req.body;
 
     if (!nome) {
         return res.status(400).json({ error: 'Nome é obrigatório' });
@@ -23,8 +23,8 @@ router.post('/exercicios', verifyToken, async (req, res) => {
         const docRef = await collectionRef.add({
             nome,
             categoria: categoria || null,
-            seriesPadrao: seriesPadrao !== undefined ? Number(seriesPadrao) : null,
-            repeticoesPadrao: repeticoesPadrao !== undefined ? Number(repeticoesPadrao) : null,
+            grupoMuscularPrincipal: grupoMuscularPrincipal || null,
+            gruposMusculares: Array.isArray(gruposMusculares) ? gruposMusculares : [],
             criadoEm: new Date().toISOString()
         });
 

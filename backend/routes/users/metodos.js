@@ -6,7 +6,7 @@ const verifyToken = require('../../middleware/verifyToken');
 // Criar método de treino
 router.post('/metodos', verifyToken, async (req, res) => {
     const personalId = req.user.uid;
-    const { nome, series, repeticoes } = req.body;
+    const { nome, series, repeticoes, observacoes } = req.body;
 
     if (!nome) {
         return res.status(400).json({ error: 'Nome é obrigatório' });
@@ -24,6 +24,7 @@ router.post('/metodos', verifyToken, async (req, res) => {
             nome,
             series: series !== undefined ? Number(series) : null,
             repeticoes: repeticoes !== undefined ? Number(repeticoes) : null,
+            observacoes: observacoes || '',
             criadoEm: new Date().toISOString()
         });
 
