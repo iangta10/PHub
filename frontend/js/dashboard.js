@@ -5,6 +5,12 @@ document.querySelectorAll(".sidebar li").forEach(item => {
             if (section === "alunos") {
                 const { loadAlunosSection } = await import("./alunos.js");
                 loadAlunosSection();
+            } else if (section === "treinos") {
+                const { loadTreinosSection } = await import("./treinos.js");
+                loadTreinosSection();
+            } else if (section === "meus-treinos") {
+                const { loadMeusTreinos } = await import("./treinos.js");
+                loadMeusTreinos();
             } else {
                 loadSection(section);
             }
