@@ -7,7 +7,7 @@ const verifyToken = require('../../middleware/verifyToken');
 router.post('/alunos/:alunoId/treinos', verifyToken, async (req, res) => {
     const personalId = req.user.uid;
     const alunoId = req.params.alunoId;
-    const { nome, exercicios } = req.body;
+    const { nome, dias } = req.body;
 
     try {
         const treinoRef = await admin.firestore()
@@ -16,7 +16,7 @@ router.post('/alunos/:alunoId/treinos', verifyToken, async (req, res) => {
             .collection('treinos')
             .add({
                 nome: nome || 'Treino',
-                exercicios: exercicios || [],
+                dias: Array.isArray(dias) ? dias : [],
                 criadoEm: new Date().toISOString()
             });
 
