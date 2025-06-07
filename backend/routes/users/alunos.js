@@ -29,7 +29,7 @@ router.post('/alunos', verifyToken, async (req, res) => {
 
 // Listar alunos
 router.get('/alunos', verifyToken, async (req, res) => {
-    const personalId = req.user;
+    const personalId = req.user.uid;
 
     try {
         const snapshot = await admin.firestore()
@@ -38,10 +38,16 @@ router.get('/alunos', verifyToken, async (req, res) => {
             .collection('alunos')
             .get();
 
-        const alunos = snapshot.docs.map(doc => ({
+        let alunos = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
         }));
+
+        const { nome } = req.query;
+        if (nome) {
+            const search = nome.toLowerCase();
+            alunos = alunos.filter(aluno => aluno.nome && aluno.nome.toLowerCase().includes(search));
+        }
 
         res.status(200).json(alunos);
     } catch (err) {
