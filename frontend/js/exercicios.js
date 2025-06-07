@@ -25,24 +25,14 @@ function renderForms(container, exercicios, metodos) {
         <form id="novoExercicio">
             <input type="text" name="nome" list="exerciciosOptions" placeholder="Nome" required />
             <datalist id="exerciciosOptions">${exerciciosOptions}</datalist>
+            <h3>Categoria<h3/>
             <select name="categoria">
                 <option value="Musculação">Musculação</option>
                 <option value="Cardio">Cardio</option>
                 <option value="Mobilidade">Mobilidade</option>
                 <option value="Alongamento">Alongamento</option>
             </select>
-            <select name="grupos" multiple>
-                <option value="Peito">Peito</option>
-                <option value="Costas">Costas</option>
-                <option value="Bíceps">Bíceps</option>
-                <option value="Tríceps">Tríceps</option>
-                <option value="Ombros">Ombros</option>
-                <option value="Quadríceps">Quadríceps</option>
-                <option value="Posteriores">Posteriores</option>
-                <option value="Panturrilha">Panturrilha</option>
-                <option value="Abdômen">Abdômen</option>
-                <option value="Glúteos">Glúteos</option>
-            </select>
+            <h3>Grupo Muscular Principal<h3/>
             <select name="grupoPrincipal">
                 <option value="Peito">Peito</option>
                 <option value="Costas">Costas</option>
@@ -55,6 +45,19 @@ function renderForms(container, exercicios, metodos) {
                 <option value="Abdômen">Abdômen</option>
                 <option value="Glúteos">Glúteos</option>
             </select>
+            <h3>Outros Grupos Se Houver<h3/>
+            <select name="grupos" multiple>
+                <option value="Peito">Peito</option>
+                <option value="Costas">Costas</option>
+                <option value="Bíceps">Bíceps</option>
+                <option value="Tríceps">Tríceps</option>
+                <option value="Ombros">Ombros</option>
+                <option value="Quadríceps">Quadríceps</option>
+                <option value="Posteriores">Posteriores</option>
+                <option value="Panturrilha">Panturrilha</option>
+                <option value="Abdômen">Abdômen</option>
+                <option value="Glúteos">Glúteos</option>
+            </select>            
             <button type="submit">Criar</button>
         </form>
         <h2>Métodos de Treino</h2>
