@@ -1,12 +1,13 @@
 import { fetchWithFreshToken } from "./auth.js";
 
-export async function loadExerciciosSection() {
+export async function loadExerciciosSection(filters = {}) {
     const content = document.getElementById("content");
     content.innerHTML = "<h2>Carregando...</h2>";
 
     try {
+        const query = new URLSearchParams(filters).toString();
         const [exRes, metRes] = await Promise.all([
-            fetchWithFreshToken('http://localhost:3000/users/exercicios'),
+            fetchWithFreshToken(`http://localhost:3000/users/exercicios?${query}`),
             fetchWithFreshToken('http://localhost:3000/users/metodos')
         ]);
         const exercicios = await exRes.json();
@@ -74,7 +75,14 @@ function renderForms(container, exercicios, metodos) {
             <input type="text" name="observacoes" placeholder="Observações" />
             <button type="submit">Criar</button>
         </form>
-        <ul id="listaMetodos">${metodos.map(m => `<li>${m.nome}</li>`).join('')}</ul>
+        <ul id="listaMetodos">${metodos.map(m => `<li data-id="${m.id}" data-global="${m.global}">${m.nome} <button class="editMetodo">Editar</button> <button class="delMetodo">Excluir</button></li>`).join('')}</ul>
+        <h2>Buscar Exercícios</h2>
+        <div id="filtros">
+            <input type="text" id="fCategoria" placeholder="Categoria" />
+            <input type="text" id="fGrupo" placeholder="Grupo muscular" />
+            <button id="buscarEx">Buscar</button>
+        </div>
+        <ul id="listaExercicios">${exercicios.map(e => `<li data-id="${e.id}" data-global="${e.global}">${e.nome} (${e.categoria || ''}) <button class="editEx">Editar</button> <button class="delEx">Excluir</button></li>`).join('')}</ul>
     `;
 
     document.getElementById('novoExercicio').addEventListener('submit', async e => {
@@ -118,6 +126,61 @@ function renderForms(container, exercicios, metodos) {
         } else {
             alert('Erro ao criar método');
         }
+    });
+
+    document.querySelectorAll('#listaMetodos .delMetodo').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const li = btn.parentElement;
+            if (confirm('Excluir método?')) {
+                await fetchWithFreshToken(`http://localhost:3000/users/metodos/${li.dataset.id}?global=${li.dataset.global}`, { method: 'DELETE' });
+                loadExerciciosSection();
+            }
+        });
+    });
+
+    document.querySelectorAll('#listaMetodos .editMetodo').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const li = btn.parentElement;
+            const nome = prompt('Nome', li.firstChild.textContent.trim());
+            if (nome === null) return;
+            await fetchWithFreshToken(`http://localhost:3000/users/metodos/${li.dataset.id}?global=${li.dataset.global}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome })
+            });
+            loadExerciciosSection();
+        });
+    });
+
+    document.getElementById('buscarEx').addEventListener('click', () => {
+        const categoria = document.getElementById('fCategoria').value;
+        const grupo = document.getElementById('fGrupo').value;
+        loadExerciciosSection({ categoria, grupo });
+    });
+
+    document.querySelectorAll('#listaExercicios .delEx').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const li = btn.parentElement;
+            if (confirm('Excluir exercício?')) {
+                await fetchWithFreshToken(`http://localhost:3000/users/exercicios/${li.dataset.id}?global=${li.dataset.global}`, { method: 'DELETE' });
+                loadExerciciosSection();
+            }
+        });
+    });
+
+    document.querySelectorAll('#listaExercicios .editEx').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const li = btn.parentElement;
+            const nomeAtual = li.firstChild.textContent.trim();
+            const novoNome = prompt('Nome', nomeAtual);
+            if (novoNome === null) return;
+            await fetchWithFreshToken(`http://localhost:3000/users/exercicios/${li.dataset.id}?global=${li.dataset.global}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome: novoNome })
+            });
+            loadExerciciosSection();
+        });
     });
 }
 

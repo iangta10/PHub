@@ -38,6 +38,7 @@ router.post('/exercicios', verifyToken, async (req, res) => {
 // Listar exercícios do personal
 router.get('/exercicios', verifyToken, async (req, res) => {
     const personalId = req.user.uid;
+    const { categoria, grupo } = req.query;
 
     try {
         const personalSnap = await admin.firestore()
@@ -50,10 +51,85 @@ router.get('/exercicios', verifyToken, async (req, res) => {
         const pessoais = personalSnap.docs.map(doc => ({ id: doc.id, ...doc.data(), global: false }));
         const globais = globalSnap.docs.map(doc => ({ id: doc.id, ...doc.data(), global: true }));
 
-        res.json([...globais, ...pessoais]);
+        let exercicios = [...globais, ...pessoais];
+
+        if (categoria) {
+            const cat = categoria.toLowerCase();
+            exercicios = exercicios.filter(e => e.categoria && e.categoria.toLowerCase() === cat);
+        }
+
+        if (grupo) {
+            const g = grupo.toLowerCase();
+            exercicios = exercicios.filter(e => {
+                const principal = (e.grupoMuscularPrincipal || '').toLowerCase();
+                const outros = Array.isArray(e.gruposMusculares) ? e.gruposMusculares.map(x => x.toLowerCase()) : [];
+                return principal === g || outros.includes(g);
+            });
+        }
+
+        res.json(exercicios);
     } catch (err) {
         console.error('Erro ao listar exercícios:', err);
         res.status(500).json({ error: 'Erro ao listar exercícios' });
+    }
+});
+
+// Atualizar exercício
+router.put('/exercicios/:id', verifyToken, async (req, res) => {
+    const personalId = req.user.uid;
+    const exercicioId = req.params.id;
+    const isGlobal = req.query.global === 'true';
+    const { nome, categoria, grupoMuscularPrincipal, gruposMusculares } = req.body;
+
+    try {
+        const userDoc = await admin.firestore().collection('users').doc(personalId).get();
+        const role = userDoc.exists ? userDoc.data().role : 'personal';
+
+        if (isGlobal && role !== 'admin') {
+            return res.status(403).json({ error: 'Acesso negado' });
+        }
+
+        const docRef = isGlobal
+            ? admin.firestore().collection('exerciciosSistema').doc(exercicioId)
+            : admin.firestore().collection('users').doc(personalId).collection('exercicios').doc(exercicioId);
+
+        const updateData = {};
+        if (nome !== undefined) updateData.nome = nome;
+        if (categoria !== undefined) updateData.categoria = categoria;
+        if (grupoMuscularPrincipal !== undefined) updateData.grupoMuscularPrincipal = grupoMuscularPrincipal;
+        if (gruposMusculares !== undefined) updateData.gruposMusculares = Array.isArray(gruposMusculares) ? gruposMusculares : [];
+
+        await docRef.update(updateData);
+        res.json({ message: 'Exercício atualizado' });
+    } catch (err) {
+        console.error('Erro ao atualizar exercício:', err);
+        res.status(500).json({ error: 'Erro ao atualizar exercício' });
+    }
+});
+
+// Remover exercício
+router.delete('/exercicios/:id', verifyToken, async (req, res) => {
+    const personalId = req.user.uid;
+    const exercicioId = req.params.id;
+    const isGlobal = req.query.global === 'true';
+
+    try {
+        const userDoc = await admin.firestore().collection('users').doc(personalId).get();
+        const role = userDoc.exists ? userDoc.data().role : 'personal';
+
+        if (isGlobal && role !== 'admin') {
+            return res.status(403).json({ error: 'Acesso negado' });
+        }
+
+        const docRef = isGlobal
+            ? admin.firestore().collection('exerciciosSistema').doc(exercicioId)
+            : admin.firestore().collection('users').doc(personalId).collection('exercicios').doc(exercicioId);
+
+        await docRef.delete();
+        res.json({ message: 'Exercício removido' });
+    } catch (err) {
+        console.error('Erro ao remover exercício:', err);
+        res.status(500).json({ error: 'Erro ao remover exercício' });
     }
 });
 
