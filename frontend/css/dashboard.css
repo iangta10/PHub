@@ -157,6 +157,11 @@
     color: #000;
 }
 
+.exercicio select.nomeExercicio,
+.exercicio input.observacoes {
+    grid-column: span 2;
+}
+
 .treino {
     background-color: #1e1e1e;
     padding: 15px;

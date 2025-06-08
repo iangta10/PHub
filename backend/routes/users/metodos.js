@@ -57,4 +57,63 @@ router.get('/metodos', verifyToken, async (req, res) => {
     }
 });
 
+// Atualizar método
+router.put('/metodos/:id', verifyToken, async (req, res) => {
+    const personalId = req.user.uid;
+    const metodoId = req.params.id;
+    const isGlobal = req.query.global === 'true';
+    const { nome, series, repeticoes, observacoes } = req.body;
+
+    try {
+        const userDoc = await admin.firestore().collection('users').doc(personalId).get();
+        const role = userDoc.exists ? userDoc.data().role : 'personal';
+
+        if (isGlobal && role !== 'admin') {
+            return res.status(403).json({ error: 'Acesso negado' });
+        }
+
+        const docRef = isGlobal
+            ? admin.firestore().collection('metodosSistema').doc(metodoId)
+            : admin.firestore().collection('users').doc(personalId).collection('metodos').doc(metodoId);
+
+        const updateData = {};
+        if (nome !== undefined) updateData.nome = nome;
+        if (series !== undefined) updateData.series = Number(series);
+        if (repeticoes !== undefined) updateData.repeticoes = Number(repeticoes);
+        if (observacoes !== undefined) updateData.observacoes = observacoes;
+
+        await docRef.update(updateData);
+        res.json({ message: 'Método atualizado' });
+    } catch (err) {
+        console.error('Erro ao atualizar método:', err);
+        res.status(500).json({ error: 'Erro ao atualizar método' });
+    }
+});
+
+// Remover método
+router.delete('/metodos/:id', verifyToken, async (req, res) => {
+    const personalId = req.user.uid;
+    const metodoId = req.params.id;
+    const isGlobal = req.query.global === 'true';
+
+    try {
+        const userDoc = await admin.firestore().collection('users').doc(personalId).get();
+        const role = userDoc.exists ? userDoc.data().role : 'personal';
+
+        if (isGlobal && role !== 'admin') {
+            return res.status(403).json({ error: 'Acesso negado' });
+        }
+
+        const docRef = isGlobal
+            ? admin.firestore().collection('metodosSistema').doc(metodoId)
+            : admin.firestore().collection('users').doc(personalId).collection('metodos').doc(metodoId);
+
+        await docRef.delete();
+        res.json({ message: 'Método removido' });
+    } catch (err) {
+        console.error('Erro ao remover método:', err);
+        res.status(500).json({ error: 'Erro ao remover método' });
+    }
+});
+
 module.exports = router;
