@@ -46,6 +46,49 @@ router.get('/alunos/:alunoId/treinos', verifyToken, async (req, res) => {
     }
 });
 
+// Atualizar treino de um aluno
+router.put('/alunos/:alunoId/treinos/:id', verifyToken, async (req, res) => {
+    const personalId = req.user.uid;
+    const { alunoId, id } = req.params;
+    const { nome, dias } = req.body;
+
+    const updateData = {};
+    if (nome !== undefined) updateData.nome = nome;
+    if (dias !== undefined) updateData.dias = Array.isArray(dias) ? dias : [];
+
+    try {
+        const docRef = admin.firestore()
+            .collection('users').doc(personalId)
+            .collection('alunos').doc(alunoId)
+            .collection('treinos').doc(id);
+
+        await docRef.update(updateData);
+        res.json({ message: 'Treino atualizado' });
+    } catch (err) {
+        console.error('Erro ao atualizar treino:', err);
+        res.status(500).json({ error: 'Erro ao atualizar treino' });
+    }
+});
+
+// Remover treino de um aluno
+router.delete('/alunos/:alunoId/treinos/:id', verifyToken, async (req, res) => {
+    const personalId = req.user.uid;
+    const { alunoId, id } = req.params;
+
+    try {
+        await admin.firestore()
+            .collection('users').doc(personalId)
+            .collection('alunos').doc(alunoId)
+            .collection('treinos').doc(id)
+            .delete();
+
+        res.json({ message: 'Treino removido' });
+    } catch (err) {
+        console.error('Erro ao remover treino:', err);
+        res.status(500).json({ error: 'Erro ao remover treino' });
+    }
+});
+
 // Listar treinos do aluno logado
 router.get('/me/treinos', verifyToken, async (req, res) => {
     const email = req.user.email;

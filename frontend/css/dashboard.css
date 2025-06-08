@@ -162,14 +162,18 @@
     grid-column: span 2;
 }
 
-.treino {
+.treinoCard {
     background-color: #1e1e1e;
     padding: 15px;
     border-radius: 6px;
     margin-bottom: 15px;
 }
 
-.treino ul {
+.diaCard {
+    margin-top: 10px;
+}
+
+.diaCard ul {
     list-style: none;
     padding-left: 20px;
 }

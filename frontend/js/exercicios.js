@@ -7,7 +7,7 @@ const CATEGORIAS = [
     'Alongamento'
 ];
 
-const GRUPOS = [
+export const GRUPOS = [
     'Peito',
     'Costas',
     'Bíceps',
