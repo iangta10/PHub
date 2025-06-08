@@ -113,6 +113,11 @@
     gap: 10px;
 }
 
+#novoTreinoForm h3 {
+    margin: 10px 0 5px;
+    color: #f58725;
+}
+
 .dia {
     background-color: #1e1e1e;
     padding: 15px;

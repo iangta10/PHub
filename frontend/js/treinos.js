@@ -21,10 +21,12 @@ export async function loadTreinosSection() {
         content.innerHTML = `
             <h2>Novo Treino</h2>
             <form id="novoTreinoForm">
+                <h3>Aluno</h3>
                 <select name="aluno" required>
                     <option value="">Selecione o aluno</option>
                     ${alunos.map(a => `<option value="${a.id}">${a.nome}</option>`).join('')}
                 </select>
+                <h3>Nome da ficha</h3>
                 <input type="text" name="nome" placeholder="Nome da ficha" required />
                 <div id="diasContainer"></div>
                 <button type="button" id="addDia">Adicionar Dia</button>
@@ -107,7 +109,7 @@ function addExercicio(container, catOptions) {
         <select class="nomeExercicio">${allOptions}</select>
         <select class="metodo">
             <option value="">Método</option>
-            ${METODOS.map(m => `<option value="${m.series || ''}|${m.repeticoes || ''}">${m.nome}</option>`).join('')}
+            ${METODOS.map(m => `<option data-series="${m.series || ''}" data-repeticoes="${m.repeticoes || ''}" data-observacoes="${m.observacoes || ''}">${m.nome}</option>`).join('')}
         </select>
         <input type="number" class="series" placeholder="Séries" />
         <input type="number" class="repeticoes" placeholder="Reps" />
@@ -122,6 +124,7 @@ function addExercicio(container, catOptions) {
     const metodoSel = exDiv.querySelector('.metodo');
     const seriesInput = exDiv.querySelector('.series');
     const repInput = exDiv.querySelector('.repeticoes');
+    const obsInput = exDiv.querySelector('.observacoes');
 
     categoriaSel.addEventListener('change', () => {
         const cat = categoriaSel.value;
@@ -130,9 +133,14 @@ function addExercicio(container, catOptions) {
     });
 
     metodoSel.addEventListener('change', () => {
-        const [s, r] = metodoSel.value.split('|');
+        const opt = metodoSel.selectedOptions[0];
+        if (!opt) return;
+        const s = opt.dataset.series;
+        const r = opt.dataset.repeticoes;
+        const o = opt.dataset.observacoes;
         if (s) seriesInput.value = s;
         if (r) repInput.value = r;
+        if (o) obsInput.value = o;
     });
 
     exDiv.querySelector('.removeExercicio').addEventListener('click', () => {
