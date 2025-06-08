@@ -15,6 +15,9 @@ document.querySelectorAll(".sidebar li").forEach(item => {
             } else if (section === "exercicios") {
                 const { loadExerciciosSection } = await import("./exercicios.js");
                 loadExerciciosSection();
+            } else if (section === "anamnese") {
+                const { loadAnamneseSection } = await import("./anamnese.js");
+                loadAnamneseSection();
             } else if (section === "meus-treinos") {
                 const { loadMeusTreinos } = await import("./treinos.js");
                 loadMeusTreinos();
