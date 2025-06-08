@@ -164,18 +164,35 @@
 
 .treinoCard {
     background-color: #1e1e1e;
-    padding: 15px;
+    padding: 20px;
     border-radius: 6px;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    border-left: 4px solid #f58725;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .diaCard {
     margin-top: 10px;
+    background-color: #121212;
+    border-radius: 4px;
+    padding: 10px;
 }
 
 .diaCard ul {
     list-style: none;
     padding-left: 20px;
+}
+
+.diaCard h4 {
+    margin-bottom: 8px;
+    color: #f58725;
+}
+
+.diaCard ul li {
+    margin-bottom: 4px;
 }
 
 .table-exercicios {
