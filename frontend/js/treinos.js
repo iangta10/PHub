@@ -1,10 +1,13 @@
 import { fetchWithFreshToken } from "./auth.js";
-import { fetchExerciciosMap, fetchMetodos } from "./exercicios.js";
+import { fetchExerciciosMap, fetchMetodos, GRUPOS } from "./exercicios.js";
 
 let EXERCICIOS_MAP = {};
 let TODAS_CATEGORIAS = [];
 let TODOS_EXERCICIOS = [];
 let METODOS = [];
+let TODOS_EXERCICIOS_OBJ = [];
+let CAT_OPTIONS = '';
+let GRUPO_OPTIONS = '';
 
 export async function loadTreinosSection() {
     const content = document.getElementById("content");
@@ -14,9 +17,17 @@ export async function loadTreinosSection() {
         const alunos = await res.json();
         EXERCICIOS_MAP = await fetchExerciciosMap();
         METODOS = await fetchMetodos();
-        TODAS_CATEGORIAS = Object.keys(EXERCICIOS_MAP);
-        TODOS_EXERCICIOS = TODAS_CATEGORIAS.flatMap(c => EXERCICIOS_MAP[c].map(e => e.nome));
-        const catOptions = TODAS_CATEGORIAS.map(c => `<option value="${c}">${c}</option>`).join('');
+
+        TODAS_CATEGORIAS = Object.keys(EXERCICIOS_MAP).sort((a, b) => a.localeCompare(b));
+        TODOS_EXERCICIOS_OBJ = [];
+        TODAS_CATEGORIAS.forEach(cat => {
+            EXERCICIOS_MAP[cat].sort((a, b) => a.nome.localeCompare(b.nome));
+            TODOS_EXERCICIOS_OBJ.push(...EXERCICIOS_MAP[cat]);
+        });
+        TODOS_EXERCICIOS = TODOS_EXERCICIOS_OBJ.map(e => e.nome);
+
+        CAT_OPTIONS = TODAS_CATEGORIAS.map(c => `<option value="${c}">${c}</option>`).join('');
+        GRUPO_OPTIONS = GRUPOS.slice().sort((a,b)=>a.localeCompare(b)).map(g => `<option value="${g}">${g}</option>`).join('');
 
         content.innerHTML = `
             <h2>Novo Treino</h2>
@@ -32,11 +43,27 @@ export async function loadTreinosSection() {
                 <button type="button" id="addDia">Adicionar Dia</button>
                 <button type="submit">Criar</button>
             </form>
+            <button id="cancelEdit" class="hidden" type="button">Cancelar Edição</button>
             <div id="mensagemTreino"></div>
+            <h2>Treinos do Aluno</h2>
+            <div id="listaTreinos"></div>
         `;
 
-        document.getElementById('addDia').addEventListener('click', () => addDia(catOptions));
-        addDia(catOptions);
+        document.getElementById('addDia').addEventListener('click', () => addDia());
+        addDia();
+
+        const alunoSel = document.querySelector('#novoTreinoForm select[name="aluno"]');
+        alunoSel.addEventListener('change', () => loadTreinosAluno(alunoSel.value));
+        loadTreinosAluno(alunoSel.value);
+
+        document.getElementById('cancelEdit').addEventListener('click', () => {
+            const form = document.getElementById('novoTreinoForm');
+            form.removeAttribute('data-editar');
+            form.reset();
+            document.getElementById('diasContainer').innerHTML = '';
+            addDia();
+            document.getElementById('cancelEdit').classList.add('hidden');
+        });
 
         document.getElementById('novoTreinoForm').addEventListener('submit', async e => {
             e.preventDefault();
@@ -60,16 +87,26 @@ export async function loadTreinosSection() {
                 dias.push({ nome: nomeDia, exercicios });
             });
 
-            const resp = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${alunoId}/treinos`, {
-                method: 'POST',
+            let url = `http://localhost:3000/users/alunos/${alunoId}/treinos`;
+            let method = 'POST';
+            if (form.dataset.editar) {
+                url += `/${form.dataset.editar}`;
+                method = 'PUT';
+            }
+
+            const resp = await fetchWithFreshToken(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nome: nomeTreino, dias })
             });
             if (resp.ok) {
                 form.reset();
                 document.getElementById('diasContainer').innerHTML = '';
-                addDia(catOptions);
+                addDia();
                 document.getElementById('mensagemTreino').textContent = 'Treino criado com sucesso!';
+                form.removeAttribute('data-editar');
+                document.getElementById('cancelEdit').classList.add('hidden');
+                loadTreinosAluno(alunoId);
             } else {
                 document.getElementById('mensagemTreino').textContent = 'Erro ao criar treino';
             }
@@ -80,7 +117,7 @@ export async function loadTreinosSection() {
     }
 }
 
-function addDia(catOptions) {
+function addDia() {
     const diasContainer = document.getElementById('diasContainer');
     const diaIndex = diasContainer.children.length;
     const diaDiv = document.createElement('div');
@@ -93,18 +130,22 @@ function addDia(catOptions) {
     `;
     diasContainer.appendChild(diaDiv);
     const container = diaDiv.querySelector('.exercicios');
-    diaDiv.querySelector('.addExercicio').addEventListener('click', () => addExercicio(container, catOptions));
-    addExercicio(container, catOptions);
+    diaDiv.querySelector('.addExercicio').addEventListener('click', () => addExercicio(container));
+    addExercicio(container);
 }
 
-function addExercicio(container, catOptions) {
-    const allOptions = TODOS_EXERCICIOS.map(e => `<option value="${e}">${e}</option>`).join('');
+function addExercicio(container) {
+    const allOptions = TODOS_EXERCICIOS.sort((a,b)=>a.localeCompare(b)).map(e => `<option value="${e}">${e}</option>`).join('');
     const exDiv = document.createElement('div');
     exDiv.className = 'exercicio';
     exDiv.innerHTML = `
         <select class="categoria">
             <option value="">Todas</option>
-            ${catOptions}
+            ${CAT_OPTIONS}
+        </select>
+        <select class="grupo">
+            <option value="">Todos os Grupos</option>
+            ${GRUPO_OPTIONS}
         </select>
         <select class="nomeExercicio">${allOptions}</select>
         <select class="metodo">
@@ -121,16 +162,29 @@ function addExercicio(container, catOptions) {
 
     const categoriaSel = exDiv.querySelector('.categoria');
     const exercicioSel = exDiv.querySelector('.nomeExercicio');
+    const grupoSel = exDiv.querySelector('.grupo');
     const metodoSel = exDiv.querySelector('.metodo');
     const seriesInput = exDiv.querySelector('.series');
     const repInput = exDiv.querySelector('.repeticoes');
     const obsInput = exDiv.querySelector('.observacoes');
 
-    categoriaSel.addEventListener('change', () => {
+    function updateOptions() {
         const cat = categoriaSel.value;
-        const items = cat ? (EXERCICIOS_MAP[cat] || []).map(e => e.nome) : TODOS_EXERCICIOS;
-        exercicioSel.innerHTML = items.map(e => `<option value="${e}">${e}</option>`).join('');
-    });
+        const grupo = grupoSel.value;
+        let items = TODOS_EXERCICIOS_OBJ;
+        if (cat) items = items.filter(e => e.categoria === cat);
+        if (grupo) items = items.filter(e => {
+            const gp = e.grupoMuscularPrincipal || '';
+            const outros = Array.isArray(e.gruposMusculares) ? e.gruposMusculares : [];
+            return gp === grupo || outros.includes(grupo);
+        });
+        const nomes = items.map(e => e.nome).sort((a,b)=>a.localeCompare(b));
+        exercicioSel.innerHTML = nomes.map(n => `<option value="${n}">${n}</option>`).join('');
+    }
+
+    categoriaSel.addEventListener('change', updateOptions);
+    grupoSel.addEventListener('change', updateOptions);
+    updateOptions();
 
     metodoSel.addEventListener('change', () => {
         const opt = metodoSel.selectedOptions[0];
@@ -146,6 +200,81 @@ function addExercicio(container, catOptions) {
     exDiv.querySelector('.removeExercicio').addEventListener('click', () => {
         exDiv.remove();
     });
+}
+
+async function loadTreinosAluno(alunoId) {
+    const list = document.getElementById('listaTreinos');
+    list.innerHTML = '';
+    if (!alunoId) return;
+    try {
+        const res = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${alunoId}/treinos`);
+        const treinos = await res.json();
+        if (Array.isArray(treinos) && treinos.length) {
+            list.innerHTML = treinos.map(t => renderTreinoAluno(t, alunoId)).join('');
+            attachTreinoHandlers(alunoId, treinos);
+        } else {
+            list.innerHTML = '<p>Nenhum treino cadastrado.</p>';
+        }
+    } catch (err) {
+        console.error('Erro ao carregar treinos:', err);
+        list.innerHTML = '<p style="color:red;">Erro ao listar treinos</p>';
+    }
+}
+
+function renderTreinoAluno(treino, alunoId) {
+    const dias = (treino.dias || []).map(d => {
+        const exs = (d.exercicios || []).map(ex => `<li>${ex.nome} - ${ex.series || ''}x${ex.repeticoes || ''}</li>`).join('');
+        return `<div class="diaCard"><h4>${d.nome}</h4><ul>${exs}</ul></div>`;
+    }).join('');
+    return `<div class="treinoCard" data-id="${treino.id}"><h3>${treino.nome}</h3>${dias}<div><button class="editTreino">Editar</button> <button class="delTreino">Excluir</button></div></div>`;
+}
+
+function attachTreinoHandlers(alunoId, treinos) {
+    document.querySelectorAll('#listaTreinos .delTreino').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const card = btn.closest('.treinoCard');
+            if (confirm('Excluir treino?')) {
+                await fetchWithFreshToken(`http://localhost:3000/users/alunos/${alunoId}/treinos/${card.dataset.id}`, { method: 'DELETE' });
+                loadTreinosAluno(alunoId);
+            }
+        });
+    });
+
+    document.querySelectorAll('#listaTreinos .editTreino').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const card = btn.closest('.treinoCard');
+            const treino = treinos.find(t => t.id === card.dataset.id);
+            fillTreinoForm(alunoId, treino);
+        });
+    });
+}
+
+function fillTreinoForm(alunoId, treino) {
+    const form = document.getElementById('novoTreinoForm');
+    form.aluno.value = alunoId;
+    form.nome.value = treino.nome || '';
+    form.dataset.editar = treino.id;
+    document.getElementById('diasContainer').innerHTML = '';
+    (treino.dias || []).forEach((dia, idx) => {
+        addDia();
+        const diaDiv = document.querySelectorAll('#diasContainer .dia')[idx];
+        diaDiv.querySelector('.nomeDia').value = dia.nome;
+        const container = diaDiv.querySelector('.exercicios');
+        container.innerHTML = '';
+        (dia.exercicios || []).forEach(() => addExercicio(container));
+        Array.from(container.children).forEach((exDiv, i) => {
+            const exData = dia.exercicios[i];
+            exDiv.querySelector('.categoria').value = exData.categoria || '';
+            exDiv.querySelector('.grupo').value = exData.grupoMuscularPrincipal || '';
+            exDiv.querySelector('.nomeExercicio').value = exData.nome;
+            exDiv.querySelector('.series').value = exData.series || '';
+            exDiv.querySelector('.repeticoes').value = exData.repeticoes || '';
+            if (exData.carga !== undefined) exDiv.querySelector('.carga').value = exData.carga;
+            exDiv.querySelector('.observacoes').value = exData.observacoes || '';
+        });
+    });
+    document.getElementById('cancelEdit').classList.remove('hidden');
+    form.scrollIntoView({ behavior: 'smooth' });
 }
 
 export async function loadMeusTreinos() {
@@ -172,7 +301,7 @@ function renderTreino(treino) {
             const obs = ex.observacoes ? ` (${ex.observacoes})` : '';
             return `<li>${ex.nome} - ${ex.series || ''}x${ex.repeticoes || ''}${carga}${obs}</li>`;
         }).join('');
-        return `<li><strong>${d.nome}</strong><ul>${exs}</ul></li>`;
+        return `<div class="diaCard"><h4>${d.nome}</h4><ul>${exs}</ul></div>`;
     }).join('');
-    return `<div class="treino"><strong>${treino.nome}</strong><ul>${diasHtml}</ul></div>`;
+    return `<div class="treinoCard"><h3>${treino.nome}</h3>${diasHtml}</div>`;
 }
