@@ -113,9 +113,8 @@
     gap: 10px;
 }
 
-#novoTreinoForm h3 {
-    margin: 10px 0 5px;
-    color: #f58725;
+.exerciseOptions h3 {
+    margin: 0px 0 5px;
 }
 
 .dia {
