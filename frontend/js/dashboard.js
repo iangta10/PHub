@@ -42,7 +42,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         USER_ROLE = await fetchUserRole();
         const greet = document.getElementById('userGreeting');
         if (greet) {
-            greet.textContent = `Olá, ${USER_ROLE === 'admin' ? 'Admin' : 'Personal'}`;
+            let roleText = 'Personal';
+            if (USER_ROLE === 'admin') {
+                roleText = 'Admin';
+            } else if (USER_ROLE === 'aluno') {
+                roleText = 'Aluno';
+            }
+            greet.textContent = `Olá, ${roleText}`;
         }
     } catch (err) {
         console.error('Erro ao obter role:', err);
