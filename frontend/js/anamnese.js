@@ -1,20 +1,21 @@
 import { fetchWithFreshToken } from './auth.js';
+import { loadAvaliacaoFisicaSection } from './avaliacaoFisica.js';
 
-export async function loadAnamneseSection() {
+export async function loadAnamneseSection(alunoId = null) {
     const content = document.getElementById('content');
     content.innerHTML = '<h2>Carregando...</h2>';
 
     try {
         const res = await fetchWithFreshToken('http://localhost:3000/users/alunos');
         const alunos = await res.json();
-        render(content, alunos);
+        render(content, alunos, alunoId);
     } catch (err) {
         console.error('Erro ao carregar alunos:', err);
         content.innerHTML = '<p style="color:red;">Erro ao carregar dados</p>';
     }
 }
 
-function render(container, alunos) {
+function render(container, alunos, selectedId) {
     const options = alunos.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
     container.innerHTML = `
         <h2>Anamnese</h2>
@@ -49,6 +50,7 @@ function render(container, alunos) {
             <input type="text" name="dispostoMudanca" placeholder="Está disposto(a) a mudar hábitos alimentares e de treino?" />
             <textarea name="comentarios" placeholder="Qualquer comentário ou observação que queira fazer"></textarea>
             <button type="submit">Salvar</button>
+            <button type="button" id="proximoAnamnese">Próximo</button>
         </form>
         <div id="mensagemAnamnese"></div>
     `;
@@ -66,6 +68,14 @@ function render(container, alunos) {
 
     alunoSelect.addEventListener('change', () => loadDadosAluno(alunoSelect.value, form));
     form.addEventListener('submit', e => salvarAnamnese(e, alunoSelect.value));
+    document.getElementById('proximoAnamnese').addEventListener('click', () => {
+        if (alunoSelect.value) loadAvaliacaoFisicaSection(alunoSelect.value);
+    });
+
+    if (selectedId) {
+        alunoSelect.value = selectedId;
+        loadDadosAluno(selectedId, form);
+    }
 }
 
 async function loadDadosAluno(alunoId, form) {
@@ -75,6 +85,12 @@ async function loadDadosAluno(alunoId, form) {
         return;
     }
     try {
+        const alunoRes = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${alunoId}`);
+        if (alunoRes.ok) {
+            const aluno = await alunoRes.json();
+            if (form.nome) form.nome.value = aluno.nome || '';
+            if (form.email) form.email.value = aluno.email || '';
+        }
         const res = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${alunoId}/anamnese`);
         if (res.ok) {
             const data = await res.json();
