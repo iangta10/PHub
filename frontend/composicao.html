@@ -10,15 +10,23 @@
 </head>
 <body>
     <div class="avaliacao-container">
-        <h2>Composição Corporal</h2>
+        <h2>Dobras Cutâneas</h2>
         <form id="compForm" class="avaliacao-grid">
             <input type="number" step="0.1" name="peso" placeholder="Peso (kg)" />
-            <textarea name="dobras" placeholder="Dobras cutâneas"></textarea>
+            <input type="number" step="0.1" name="tricipital" placeholder="Tricipital (mm)" />
+            <input type="number" step="0.1" name="subescapular" placeholder="Subescapular (mm)" />
+            <input type="number" step="0.1" name="peitoral" placeholder="Peitoral (mm)" />
+            <input type="number" step="0.1" name="axilarMedia" placeholder="Axilar Média (mm)" />
+            <input type="number" step="0.1" name="suprailiaca" placeholder="Supra-ilíaca (mm)" />
+            <input type="number" step="0.1" name="abdominal" placeholder="Abdominal (mm)" />
+            <input type="number" step="0.1" name="coxa" placeholder="Coxa (mm)" />
+            <textarea name="observacoes" placeholder="Observações"></textarea>
             <div class="form-actions">
                 <button type="button" id="voltar">Voltar</button>
                 <button type="submit">Salvar</button>
             </div>
         </form>
+        <div id="msgDobras"></div>
     </div>
     <script type="module">
         const params = new URLSearchParams(window.location.search);
