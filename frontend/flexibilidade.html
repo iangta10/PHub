@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flexibilidade</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="stylesheet" href="./css/dashboard.css" />
+</head>
+<body>
+    <div class="avaliacao-container">
+        <h2>Flexibilidade</h2>
+        <p>Página em construção.</p>
+        <div class="form-actions">
+            <button id="voltar">Voltar</button>
+        </div>
+    </div>
+    <script type="module">
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('id');
+        document.getElementById('voltar').addEventListener('click', () => {
+            window.location.href = `avaliacao.html?id=${id}`;
+        });
+    </script>
+</body>
+</html>

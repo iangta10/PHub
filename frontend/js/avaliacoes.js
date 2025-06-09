@@ -1,5 +1,4 @@
 import { fetchWithFreshToken } from './auth.js';
-import { loadAnamneseSection } from './anamnese.js';
 
 export async function loadAvaliacoesSection() {
     const content = document.getElementById('content');
@@ -52,7 +51,9 @@ function render(container, alunos) {
         }
     });
 
-    novaBtn.addEventListener('click', () => loadAnamneseSection(novaBtn.dataset.id));
+    novaBtn.addEventListener('click', () => {
+        window.location.href = `avaliacao.html?id=${novaBtn.dataset.id}`;
+    });
 }
 
 async function loadAvaliacoesAluno(alunoId, container) {
