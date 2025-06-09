@@ -64,6 +64,23 @@ form input:focus {
     background-color: #2e2e2e;
 }
 
+form textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 6px;
+    border: 1px solid #333;
+    background-color: #2a2a2a;
+    color: #fff;
+    box-sizing: border-box;
+}
+
+form textarea:focus {
+    border-color: #f58725;
+    outline: none;
+    background-color: #2e2e2e;
+}
+
 /* ===== BOTÕES ===== */
 button {
     padding: 8px 16px;

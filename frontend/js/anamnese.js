@@ -18,13 +18,16 @@ export async function loadAnamneseSection(alunoId = null) {
 function render(container, alunos, selectedId) {
     const options = alunos.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
     container.innerHTML = `
-        <h2>Anamnese</h2>
-        <input type="text" id="searchAluno" placeholder="Buscar por nome..." />
-        <select id="alunoSelect">
-            <option value="">Selecione o aluno</option>
-            ${options}
-        </select>
-        <form id="anamneseForm" class="hidden">
+        <div class="avaliacao-container">
+            <h2>Anamnese</h2>
+            <div class="avaliacao-controls">
+                <input type="text" id="searchAluno" placeholder="Buscar por nome..." />
+                <select id="alunoSelect">
+                    <option value="">Selecione o aluno</option>
+                    ${options}
+                </select>
+            </div>
+            <form id="anamneseForm" class="hidden avaliacao-grid">
             <input type="email" name="email" placeholder="Endereço de e-mail" />
             <input type="text" name="nome" placeholder="Nome" />
             <input type="number" name="idade" placeholder="Idade" />
@@ -49,10 +52,13 @@ function render(container, alunos, selectedId) {
             <input type="text" name="tempoObjetivos" placeholder="Em quanto tempo gostaria de alcançar seus objetivos?" />
             <input type="text" name="dispostoMudanca" placeholder="Está disposto(a) a mudar hábitos alimentares e de treino?" />
             <textarea name="comentarios" placeholder="Qualquer comentário ou observação que queira fazer"></textarea>
-            <button type="submit">Salvar</button>
-            <button type="button" id="proximoAnamnese">Próximo</button>
+            <div class="form-actions">
+                <button type="submit">Salvar</button>
+                <button type="button" id="proximoAnamnese">Próximo</button>
+            </div>
         </form>
         <div id="mensagemAnamnese"></div>
+        </div>
     `;
 
     const searchInput = document.getElementById('searchAluno');

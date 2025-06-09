@@ -239,6 +239,46 @@
     min-width: 280px;
 }
 
+/* === Avaliação / Anamnese === */
+.avaliacao-container {
+    background-color: #1e1e1e;
+    padding: 20px;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.avaliacao-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 1rem;
+}
+
+.avaliacao-controls input,
+.avaliacao-controls select {
+    flex: 1;
+    min-width: 200px;
+}
+
+.avaliacao-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 10px;
+}
+
+.avaliacao-grid textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.avaliacao-grid .form-actions {
+    grid-column: span 2;
+    display: flex;
+    gap: 10px;
+}
+
 
 /* Responsivo */
 @media (max-width: 768px) {
