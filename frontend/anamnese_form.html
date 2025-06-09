@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Anamnese</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="stylesheet" href="./css/dashboard.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
+</head>
+<body>
+    <div class="avaliacao-container">
+        <h2>Anamnese</h2>
+        <form id="anamneseForm" class="avaliacao-grid">
+            <input type="text" name="comentario" placeholder="Comentário" />
+            <div class="form-actions">
+                <button type="button" id="voltar">Voltar</button>
+                <button type="submit">Salvar</button>
+            </div>
+        </form>
+    </div>
+    <script type="module">
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('id');
+        document.getElementById('voltar').addEventListener('click', () => {
+            window.location.href = `avaliacao.html?id=${id}`;
+        });
+        document.getElementById('anamneseForm').addEventListener('submit', e => {
+            e.preventDefault();
+            window.location.href = `avaliacao.html?id=${id}`;
+        });
+    </script>
+</body>
+</html>
