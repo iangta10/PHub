@@ -12,23 +12,88 @@
     <div class="avaliacao-container">
         <h2>Anamnese</h2>
         <form id="anamneseForm" class="avaliacao-grid">
-            <input type="text" name="comentario" placeholder="Comentário" />
+            <input type="email" name="email" placeholder="Endereço de e-mail" />
+            <input type="text" name="nome" placeholder="Nome" />
+            <input type="number" name="idade" placeholder="Idade" />
+            <input type="text" name="genero" placeholder="Gênero" />
+            <input type="number" step="0.01" name="altura" placeholder="Altura" />
+            <input type="number" step="0.1" name="peso" placeholder="Peso" />
+            <textarea name="objetivos" placeholder="Objetivos"></textarea>
+            <textarea name="doencas" placeholder="Já teve ou tem alguma doença? Se sim, quais?"></textarea>
+            <textarea name="doencasFamilia" placeholder="Alguém da família tem alguma doença? Se sim, quais?"></textarea>
+            <textarea name="medicamentos" placeholder="Faz uso de medicamentos? Quais?"></textarea>
+            <textarea name="cirurgias" placeholder="Já passou por cirurgias? Quais?"></textarea>
+            <textarea name="doresLesoes" placeholder="Possui dores ou lesões?"></textarea>
+            <textarea name="limitacoes" placeholder="Alguma limitação para exercícios físicos?"></textarea>
+            <input type="text" name="fuma" placeholder="Você Fuma?" />
+            <input type="text" name="bebe" placeholder="Você Bebe? Se sim, com qual frequência?" />
+            <input type="text" name="qualidadeSono" placeholder="Qualidade do sono" />
+            <input type="number" step="0.1" name="horasSono" placeholder="Horas de sono por noite" />
+            <input type="text" name="nivelAtividade" placeholder="Nível de atividade física atual" />
+            <input type="text" name="tiposExercicio" placeholder="Tipos de exercício que pratica ou já praticou" />
+            <input type="text" name="frequenciaTreinos" placeholder="Frequência de treinos pretendida" />
+            <input type="text" name="agua" placeholder="Consome água com frequência? (litros/dia)" />
+            <input type="text" name="tempoObjetivos" placeholder="Em quanto tempo gostaria de alcançar seus objetivos?" />
+            <input type="text" name="dispostoMudanca" placeholder="Está disposto(a) a mudar hábitos alimentares e de treino?" />
+            <textarea name="comentarios" placeholder="Qualquer comentário ou observação que queira fazer"></textarea>
             <div class="form-actions">
                 <button type="button" id="voltar">Voltar</button>
                 <button type="submit">Salvar</button>
             </div>
         </form>
+        <div id="mensagemAnamnese"></div>
     </div>
     <script type="module">
+        import { fetchWithFreshToken } from './js/auth.js';
+
         const params = new URLSearchParams(window.location.search);
         const id = params.get('id');
+        const form = document.getElementById('anamneseForm');
+        const msg = document.getElementById('mensagemAnamnese');
+
         document.getElementById('voltar').addEventListener('click', () => {
             window.location.href = `avaliacao.html?id=${id}`;
         });
-        document.getElementById('anamneseForm').addEventListener('submit', e => {
+
+        form.addEventListener('submit', async e => {
             e.preventDefault();
-            window.location.href = `avaliacao.html?id=${id}`;
+            const dados = {};
+            Array.from(form.elements).forEach(el => { if (el.name) dados[el.name] = el.value; });
+            try {
+                const res = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${id}/anamnese`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dados)
+                });
+                msg.textContent = res.ok ? 'Anamnese salva' : 'Erro ao salvar anamnese';
+            } catch (err) {
+                console.error('Erro ao salvar anamnese:', err);
+                msg.textContent = 'Erro ao salvar anamnese';
+            }
         });
+
+        async function carregar() {
+            if (!id) return;
+            try {
+                const alunoRes = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${id}`);
+                if (alunoRes.ok) {
+                    const aluno = await alunoRes.json();
+                    if (form.nome) form.nome.value = aluno.nome || '';
+                    if (form.email) form.email.value = aluno.email || '';
+                }
+                const res = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${id}/anamnese`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data) {
+                        Object.keys(data).forEach(k => { if (form[k]) form[k].value = data[k]; });
+                    }
+                }
+            } catch (err) {
+                console.error('Erro ao carregar anamnese:', err);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', carregar);
     </script>
 </body>
 </html>
