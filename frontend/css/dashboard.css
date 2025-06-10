@@ -326,3 +326,49 @@ body {
 .box-opcao:hover {
     background-color: #2a2a2a;
 }
+
+.autocomplete-wrapper {
+    position: relative;
+    max-width: 400px;
+}
+
+.autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 4px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 50;
+}
+
+.autocomplete-list li {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.autocomplete-list li.active,
+.autocomplete-list li:hover {
+    background-color: #2a2a2a;
+}
+
+.avaliacao-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1e1e1e;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+.sem-avaliacoes {
+    text-align: center;
+    margin: 20px 0;
+}

@@ -15,61 +15,99 @@ export async function loadAvaliacoesSection() {
 }
 
 function render(container, alunos) {
-    const options = alunos.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
     container.innerHTML = `
-        <h2>Avaliação Física</h2>
-        <input type="text" id="searchAlunoAvaliacao" placeholder="Buscar por nome..." />
-        <select id="alunoSelectAvaliacao">
-            <option value="">Selecione o aluno</option>
-            ${options}
-        </select>
+        <h2>Avaliações de Alunos</h2>
+        <div class="autocomplete-wrapper">
+            <input type="text" id="searchAlunoAvaliacao" placeholder="Digite o nome do aluno..." autocomplete="off" />
+            <ul id="alunoSugestoes" class="autocomplete-list hidden"></ul>
+        </div>
+        <div id="painelAluno"></div>
         <div id="avaliacoesList"></div>
         <button id="novaAvaliacao" class="hidden">Nova Avaliação</button>
     `;
 
-    const searchInput = document.getElementById('searchAlunoAvaliacao');
-    const alunoSelect = document.getElementById('alunoSelectAvaliacao');
+    const input = document.getElementById('searchAlunoAvaliacao');
+    const sugList = document.getElementById('alunoSugestoes');
+    const painel = document.getElementById('painelAluno');
     const listDiv = document.getElementById('avaliacoesList');
     const novaBtn = document.getElementById('novaAvaliacao');
 
-    searchInput.addEventListener('input', () => {
-        const term = searchInput.value.toLowerCase();
-        alunoSelect.innerHTML = '<option value="">Selecione o aluno</option>' +
-            alunos.filter(a => a.nome && a.nome.toLowerCase().includes(term))
-                  .map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
-    });
+    let idx = -1;
 
-    alunoSelect.addEventListener('change', () => {
-        const alunoId = alunoSelect.value;
-        if (alunoId) {
-            loadAvaliacoesAluno(alunoId, listDiv);
-            novaBtn.classList.remove('hidden');
-            novaBtn.dataset.id = alunoId;
-        } else {
-            listDiv.innerHTML = '';
-            novaBtn.classList.add('hidden');
-        }
-    });
-
-    novaBtn.addEventListener('click', () => {
-        window.location.href = `avaliacao.html?id=${novaBtn.dataset.id}`;
-    });
-}
-
-async function loadAvaliacoesAluno(alunoId, container) {
-    container.innerHTML = '<p>Carregando avalia\u00e7\u00f5es...</p>';
-    try {
-        const res = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${alunoId}/avaliacoes`);
-        const avaliacoes = await res.json();
-        if (!avaliacoes || avaliacoes.length === 0) {
-            container.innerHTML = '<p>Nenhuma avalia\u00e7\u00e3o encontrada.</p>';
+    input.addEventListener('input', () => {
+        const term = input.value.toLowerCase();
+        const matches = alunos.filter(a => a.nome && a.nome.toLowerCase().includes(term));
+        if (!term || matches.length === 0) {
+            sugList.classList.add('hidden');
+            sugList.innerHTML = '';
             return;
         }
-        container.innerHTML = '<ul>' +
-            avaliacoes.map(a => `<li>${new Date(a.data).toLocaleDateString()}</li>`).join('') +
-            '</ul>';
-    } catch (err) {
-        console.error(err);
-        container.innerHTML = '<p style="color:red;">Erro ao carregar avalia\u00e7\u00f5es</p>';
+        sugList.innerHTML = matches.map((a, i) => `<li data-id="${a.id}" data-index="${i}">${a.nome}</li>`).join('');
+        sugList.classList.remove('hidden');
+        idx = -1;
+    });
+
+    input.addEventListener('keydown', e => {
+        const items = sugList.querySelectorAll('li');
+        if (!items.length) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            idx = (idx + 1) % items.length;
+            updateHighlight(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            idx = (idx - 1 + items.length) % items.length;
+            updateHighlight(items);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (idx >= 0) items[idx].click();
+        }
+    });
+
+    sugList.addEventListener('click', e => {
+        if (e.target.tagName === 'LI') {
+            const id = e.target.dataset.id;
+            const nome = e.target.textContent;
+            input.value = nome;
+            sugList.innerHTML = '';
+            sugList.classList.add('hidden');
+            mostrarAvaliacoes(id, nome);
+        }
+    });
+
+    function updateHighlight(items) {
+        items.forEach(li => li.classList.remove('active'));
+        if (idx >= 0) items[idx].classList.add('active');
     }
+
+    async function mostrarAvaliacoes(alunoId, nome) {
+        painel.innerHTML = `<h3>${nome}</h3>`;
+        novaBtn.dataset.id = alunoId;
+        novaBtn.classList.remove('hidden');
+        listDiv.innerHTML = '<p>Carregando avaliações...</p>';
+        try {
+            const res = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${alunoId}/avaliacoes`);
+            const avaliacoes = await res.json();
+            if (!avaliacoes || avaliacoes.length === 0) {
+                listDiv.innerHTML = '<p class="sem-avaliacoes">Este aluno ainda não possui avaliações cadastradas.</p>';
+                return;
+            }
+            listDiv.innerHTML = avaliacoes.map(a => `
+                <div class="avaliacao-card">
+                    <span>${new Date(a.data).toLocaleDateString()}</span>
+                    <button class="btn-visualizar" data-id="${a.id || ''}">Visualizar</button>
+                </div>
+            `).join('');
+        } catch (err) {
+            console.error(err);
+            listDiv.innerHTML = '<p style="color:red;">Erro ao carregar avaliações</p>';
+        }
+    }
+
+    novaBtn.addEventListener('click', () => {
+        if (novaBtn.dataset.id) {
+            window.location.href = `avaliacao.html?id=${novaBtn.dataset.id}`;
+        }
+    });
 }
+
