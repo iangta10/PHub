@@ -25,12 +25,9 @@ function setupNovaAvaliacao(id) {
     const btn = document.getElementById('novaAvaliacaoBtn');
     if (!btn) return;
     btn.addEventListener('click', () => {
-        btn.classList.add('hidden');
-        const lista = document.getElementById('avaliacoesFeitas');
-        if (lista) lista.classList.add('hidden');
-        renderOpcoes(id, 'avaliacaoOpcoes');
-        const opcoes = document.getElementById('avaliacaoOpcoes');
-        if (opcoes) opcoes.classList.remove('hidden');
+        if (id) {
+            window.location.href = `nova_avaliacao.html?id=${id}`;
+        }
     });
 }
 

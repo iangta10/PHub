@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nova Avaliação</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="stylesheet" href="./css/dashboard.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
+    <script src="https://kit.fontawesome.com/2c9298b4bd.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <header class="page-header">
+        <button id="backBtn" class="back-btn">⬅</button>
+        <h2>Nova Avaliação</h2>
+    </header>
+    <main class="avaliacao-main">
+        <section id="alunoInfo" class="aluno-info">
+            <img id="fotoAluno" class="foto-aluno" src="" alt="Foto do aluno" />
+            <div class="dados-aluno">
+                <h3 id="nomeAluno"></h3>
+                <p id="idadeAluno"></p>
+                <p id="sexoAluno"></p>
+                <label>
+                    Data da próxima avaliação
+                    <input type="date" id="proximaAvaliacao" />
+                </label>
+            </div>
+        </section>
+        <section id="avaliacaoOpcoes" class="opcoes-avaliacao"></section>
+    </main>
+    <script type="module" src="./js/novaAvaliacao.js"></script>
+</body>
+</html>
