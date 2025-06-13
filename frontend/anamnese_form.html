@@ -36,6 +36,7 @@
             <textarea name="comentarios" placeholder="Qualquer comentário ou observação que queira fazer"></textarea>
             <div class="form-actions">
                 <button type="button" id="voltar">Voltar</button>
+                <button type="button" id="importarPlanilha">Importar do Google Sheets</button>
                 <button type="submit">Salvar</button>
             </div>
         </form>
@@ -51,6 +52,30 @@
 
         document.getElementById('voltar').addEventListener('click', () => {
             window.location.href = `avaliacao.html?id=${id}`;
+        });
+
+        document.getElementById('importarPlanilha').addEventListener('click', async () => {
+            if (!form.email || !form.email.value) {
+                msg.textContent = 'Preencha o email para importar';
+                return;
+            }
+            try {
+                const res = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${id}/anamnese/sheet?email=${encodeURIComponent(form.email.value)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data) {
+                        Object.keys(data).forEach(k => { if (form[k]) form[k].value = data[k]; });
+                        msg.textContent = 'Dados importados do Google Sheets';
+                    } else {
+                        msg.textContent = 'Nenhum dado encontrado no Google Sheets';
+                    }
+                } else {
+                    msg.textContent = 'Erro ao importar dados';
+                }
+            } catch (err) {
+                console.error('Erro ao importar planilha:', err);
+                msg.textContent = 'Erro ao importar planilha';
+            }
         });
 
         form.addEventListener('submit', async e => {
