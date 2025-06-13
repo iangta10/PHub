@@ -287,6 +287,13 @@ body {
     gap: 10px;
 }
 
+.avaliacao-grid h3,
+.avaliacao-grid p.descricao,
+.avaliacao-grid p.procedimento {
+    grid-column: span 2;
+    margin-top: 20px;
+}
+
 
 /* Responsivo */
 @media (max-width: 768px) {
