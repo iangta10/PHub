@@ -63,15 +63,62 @@ router.get('/alunos/:alunoId/anamnese/sheet', verifyToken, async (req, res) => {
         });
         const rows = sheetRes.data.values;
         if (!rows || rows.length === 0) return res.json(null);
+
+        const normalize = str => str.toLowerCase()
+            .normalize('NFD').replace(/[^\w]/g, '');
+
+        const fieldMap = {
+            email: ['email', 'e-mail', 'mail'],
+            nome: ['nome', 'nomecompleto', 'name'],
+            idade: ['idade', 'age'],
+            genero: ['genero', 'sexo', 'gender'],
+            altura: ['altura', 'height'],
+            peso: ['peso', 'weight'],
+            objetivos: ['objetivos', 'objetivo', 'goals'],
+            doencas: ['doencas', 'doen\u00e7as', 'doenca', 'condicoes'],
+            doencasFamilia: ['doencasfamilia', 'doencasfamiliares', 'historico', 'familia'],
+            medicamentos: ['medicamentos', 'medicacao', 'remedios'],
+            cirurgias: ['cirurgias', 'cirurgia', 'surgeries'],
+            doresLesoes: ['doreslesoes', 'lesoes', 'dores', 'injuries'],
+            limitacoes: ['limitacoes', 'restricoes', 'limitations'],
+            fuma: ['fuma', 'fumante', 'smoker'],
+            bebe: ['bebe', 'alcool', 'bebida'],
+            qualidadeSono: ['qualidadesono', 'qualidadedsono', 'sleepquality'],
+            horasSono: ['horassono', 'tempodesono', 'sleephours'],
+            nivelAtividade: ['nivelatividade', 'atividadenivel', 'activitylevel'],
+            tiposExercicio: ['tiposexercicio', 'exercicios', 'exercisestatus'],
+            frequenciaTreinos: ['frequenciatreinos', 'frequenciatreino', 'workoutfrequency'],
+            agua: ['agua', 'hidrata', 'water'],
+            tempoObjetivos: ['tempoobjetivos', 'tempoobjetivo', 'goalstime'],
+            dispostoMudanca: ['dispostomudanca', 'mudanca', 'readiness'],
+            comentarios: ['comentarios', 'observacoes', 'comments']
+        };
+
         const headers = rows[0].map(h => h.trim());
-        const emailIdx = headers.findIndex(h => h.toLowerCase() === 'email');
+        const normalizedHeaders = headers.map(h => normalize(h));
+        const emailIdx = normalizedHeaders.findIndex(h => fieldMap.email.some(f => h.includes(normalize(f))));
         if (emailIdx === -1) return res.json(null);
+
         const row = rows.find((r, i) => i > 0 && r[emailIdx] && r[emailIdx].toLowerCase() === email.toLowerCase());
         if (!row) return res.json(null);
-        const data = {};
+
+        const headerToField = {};
         headers.forEach((h, idx) => {
-            if (row[idx] !== undefined) data[h] = row[idx];
+            const norm = normalize(h);
+            for (const [field, synonyms] of Object.entries(fieldMap)) {
+                if (synonyms.some(s => norm.includes(normalize(s)))) {
+                    headerToField[idx] = field;
+                    return;
+                }
+            }
+            headerToField[idx] = h;
         });
+
+        const data = {};
+        Object.entries(headerToField).forEach(([idx, field]) => {
+            if (row[idx] !== undefined) data[field] = row[idx];
+        });
+
         res.json(data);
     } catch (err) {
         console.error('Erro ao importar planilha:', err);
