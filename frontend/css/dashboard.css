@@ -372,3 +372,21 @@ body {
     text-align: center;
     margin: 20px 0;
 }
+
+/* ===== Postural Avaliation ===== */
+.postural-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.postural-grid h3 {
+    grid-column: span 3;
+    margin-top: 20px;
+}
+
+.postural-grid .form-actions {
+    grid-column: span 3;
+    display: flex;
+    gap: 10px;
+}
