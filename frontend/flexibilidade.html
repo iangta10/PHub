@@ -10,16 +10,52 @@
 <body>
     <div class="avaliacao-container">
         <h2>Flexibilidade</h2>
-        <p>Página em construção.</p>
-        <div class="form-actions">
-            <button id="voltar">Voltar</button>
-        </div>
+        <form id="flexForm" class="avaliacao-grid">
+            <h3>Sit-and-Reach</h3>
+            <p class="descricao">Mede flexibilidade de isquiotibiais e coluna lombar.</p>
+            <p class="procedimento">O avaliado senta-se no banco, pés apoiados na régua, encosta lentamente as mãos o mais longe possível à frente, sem dobrar joelhos.</p>
+            <input type="number" step="0.1" name="sitReachDistancia" placeholder="Distância alcançada (cm)" />
+            <input type="number" name="sitReachTentativas" placeholder="Número de tentativas" />
+            <textarea name="sitReachObs" placeholder="Observações (ex.: dor, compensações)"></textarea>
+
+            <h3>Back-Scratch (Apley’s Scratch)</h3>
+            <p class="descricao">Avalia mobilidade de ombro em rotação interna e externa.</p>
+            <p class="procedimento">Com um braço por cima do ombro e o outro por trás das costas, tenta aproximar as mãos. Repete espelhado.</p>
+            <input type="number" step="0.1" name="backScratchDistancia" placeholder="Distância entre mãos (cm)" />
+            <select name="backScratchLado">
+                <option value="" disabled selected>Lado avaliado</option>
+                <option value="Direito">Direito</option>
+                <option value="Esquerdo">Esquerdo</option>
+            </select>
+            <textarea name="backScratchObs" placeholder="Observações (ex.: limitação, assimetria)"></textarea>
+
+            <h3>Thomas Test</h3>
+            <p class="descricao">Identifica encurtamento de flexores de quadril (iliopsoas) e reto femoral.</p>
+            <p class="procedimento">Deitado na maca, leva um joelho ao peito e mantém, observando extensão do membro oposto.</p>
+            <input type="number" step="0.1" name="thomasAngulo" placeholder="Ângulo do quadril oposto (graus)" />
+            <select name="thomasCompensacao">
+                <option value="" disabled selected>Compensação pélvica?</option>
+                <option value="Sim">Sim</option>
+                <option value="Não">Não</option>
+            </select>
+            <textarea name="thomasObs" placeholder="Observações (ex.: dor, rigidez)"></textarea>
+
+            <div class="form-actions">
+                <button type="button" id="voltar">Voltar</button>
+                <button type="submit">Salvar</button>
+            </div>
+        </form>
+        <div id="msgFlex"></div>
     </div>
     <script type="module">
         const params = new URLSearchParams(window.location.search);
         const id = params.get('id');
         document.getElementById('voltar').addEventListener('click', () => {
             window.location.href = `avaliacao.html?id=${id}`;
+        });
+        document.getElementById('flexForm').addEventListener('submit', e => {
+            e.preventDefault();
+            document.getElementById('msgFlex').textContent = 'Dados salvos (exemplo)';
         });
     </script>
 </body>
