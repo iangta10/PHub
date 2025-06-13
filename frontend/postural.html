@@ -10,16 +10,496 @@
 <body>
     <div class="avaliacao-container">
         <h2>Avaliação Postural</h2>
-        <p>Página em construção.</p>
-        <div class="form-actions">
-            <button id="voltar">Voltar</button>
-        </div>
+        <form id="posturalForm" class="avaliacao-grid">
+            <h3>Cabeça e Pescoço</h3>
+            <select name="cabecaProtracaoGrau">
+                <option value="" disabled selected>Protração - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="cabecaProtracaoLado">
+                <option value="" disabled selected>Protração - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="cabecaProtracaoComentario" placeholder="Comentário Protração" />
+
+            <select name="cabecaInclinacaoGrau">
+                <option value="" disabled selected>Inclinação Lateral - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="cabecaInclinacaoLado">
+                <option value="" disabled selected>Inclinação Lateral - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="cabecaInclinacaoComentario" placeholder="Comentário Inclinação" />
+
+            <select name="cabecaRotacaoGrau">
+                <option value="" disabled selected>Rotação Cervical - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="cabecaRotacaoLado">
+                <option value="" disabled selected>Rotação Cervical - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="cabecaRotacaoComentario" placeholder="Comentário Rotação" />
+
+            <h3>Coluna Vertebral</h3>
+            <select name="cervicalHiperlordoseGrau">
+                <option value="" disabled selected>Cervical Hiperlordose - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="cervicalHiperlordoseLado">
+                <option value="" disabled selected>Cervical Hiperlordose - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="cervicalHiperlordoseComentario" placeholder="Comentário Cervical Hiperlordose" />
+
+            <select name="cervicalHipolordoseGrau">
+                <option value="" disabled selected>Cervical Hipolordose - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="cervicalHipolordoseLado">
+                <option value="" disabled selected>Cervical Hipolordose - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="cervicalHipolordoseComentario" placeholder="Comentário Cervical Hipolordose" />
+
+            <select name="toracicaHipercifoseGrau">
+                <option value="" disabled selected>Torácica Hipercifose - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="toracicaHipercifoseLado">
+                <option value="" disabled selected>Torácica Hipercifose - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="toracicaHipercifoseComentario" placeholder="Comentário Torácica Hipercifose" />
+
+            <select name="toracicaHipocifoseGrau">
+                <option value="" disabled selected>Torácica Hipocifose - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="toracicaHipocifoseLado">
+                <option value="" disabled selected>Torácica Hipocifose - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="toracicaHipocifoseComentario" placeholder="Comentário Torácica Hipocifose" />
+
+            <select name="lombarHiperlordoseGrau">
+                <option value="" disabled selected>Lombar Hiperlordose - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="lombarHiperlordoseLado">
+                <option value="" disabled selected>Lombar Hiperlordose - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="lombarHiperlordoseComentario" placeholder="Comentário Lombar Hiperlordose" />
+
+            <select name="lombarHipolordoseGrau">
+                <option value="" disabled selected>Lombar Hipolordose - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="lombarHipolordoseLado">
+                <option value="" disabled selected>Lombar Hipolordose - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="lombarHipolordoseComentario" placeholder="Comentário Lombar Hipolordose" />
+
+            <select name="escolioseGrau">
+                <option value="" disabled selected>Escoliose - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="escolioseLado">
+                <option value="" disabled selected>Escoliose - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="escolioseComentario" placeholder="Comentário Escoliose" />
+
+            <select name="desvioLateralGrau">
+                <option value="" disabled selected>Desvio Lateral - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="desvioLateralLado">
+                <option value="" disabled selected>Desvio Lateral - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="desvioLateralComentario" placeholder="Comentário Desvio Lateral" />
+
+            <h3>Ombros e Escápulas</h3>
+            <select name="ombroElevacaoGrau">
+                <option value="" disabled selected>Elevação - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="ombroElevacaoLado">
+                <option value="" disabled selected>Elevação - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="ombroElevacaoComentario" placeholder="Comentário Elevação" />
+
+            <select name="ombroDepressaoGrau">
+                <option value="" disabled selected>Depressão - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="ombroDepressaoLado">
+                <option value="" disabled selected>Depressão - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="ombroDepressaoComentario" placeholder="Comentário Depressão" />
+
+            <select name="ombroProtracaoGrau">
+                <option value="" disabled selected>Protração - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="ombroProtracaoLado">
+                <option value="" disabled selected>Protração - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="ombroProtracaoComentario" placeholder="Comentário Protração" />
+
+            <select name="ombroRetracaoGrau">
+                <option value="" disabled selected>Retração - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="ombroRetracaoLado">
+                <option value="" disabled selected>Retração - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="ombroRetracaoComentario" placeholder="Comentário Retração" />
+
+            <select name="escapulaAbducaoGrau">
+                <option value="" disabled selected>Abdução/Addução Escapular - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="escapulaAbducaoLado">
+                <option value="" disabled selected>Abdução/Addução Escapular - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="escapulaAbducaoComentario" placeholder="Comentário Abdução/Addução" />
+
+            <h3>Tórax e Costelas</h3>
+            <select name="toraxAsaGrau">
+                <option value="" disabled selected>Tórax em "Asa de Pombo" - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="toraxAsaLado">
+                <option value="" disabled selected>Tórax em "Asa de Pombo" - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="toraxAsaComentario" placeholder="Comentário Asa de Pombo" />
+
+            <select name="toraxBarrilGrau">
+                <option value="" disabled selected>Tórax em "Barril" - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="toraxBarrilLado">
+                <option value="" disabled selected>Tórax em "Barril" - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="toraxBarrilComentario" placeholder="Comentário Barril" />
+
+            <h3>Região Pélvica</h3>
+            <select name="pelveAnteversaoGrau">
+                <option value="" disabled selected>Anteversão Pélvica - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="pelveAnteversaoLado">
+                <option value="" disabled selected>Anteversão Pélvica - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="pelveAnteversaoComentario" placeholder="Comentário Anteversão" />
+
+            <select name="pelveRetroversaoGrau">
+                <option value="" disabled selected>Retroversão Pélvica - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="pelveRetroversaoLado">
+                <option value="" disabled selected>Retroversão Pélvica - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="pelveRetroversaoComentario" placeholder="Comentário Retroversão" />
+
+            <select name="pelveInclinacaoGrau">
+                <option value="" disabled selected>Inclinação Pélvica Lateral - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="pelveInclinacaoLado">
+                <option value="" disabled selected>Inclinação Pélvica Lateral - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="pelveInclinacaoComentario" placeholder="Comentário Inclinação" />
+
+            <select name="pelveRotacaoGrau">
+                <option value="" disabled selected>Rotação Pélvica - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="pelveRotacaoLado">
+                <option value="" disabled selected>Rotação Pélvica - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="pelveRotacaoComentario" placeholder="Comentário Rotação" />
+
+            <h3>Quadris e Glúteos</h3>
+            <select name="quadrilAdducaoGrau">
+                <option value="" disabled selected>Addução Excessiva - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="quadrilAdducaoLado">
+                <option value="" disabled selected>Addução Excessiva - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="quadrilAdducaoComentario" placeholder="Comentário Addução" />
+
+            <select name="quadrilAbducaoGrau">
+                <option value="" disabled selected>Abdução Excessiva - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="quadrilAbducaoLado">
+                <option value="" disabled selected>Abdução Excessiva - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="quadrilAbducaoComentario" placeholder="Comentário Abdução" />
+
+            <select name="quadrilRotacaoGrau">
+                <option value="" disabled selected>Rotações Femorais - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Interna Leve</option>
+                <option value="moderado">Interna Moderada</option>
+                <option value="grave">Externa</option>
+            </select>
+            <select name="quadrilRotacaoLado">
+                <option value="" disabled selected>Rotações Femorais - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="quadrilRotacaoComentario" placeholder="Comentário Rotação" />
+
+            <h3>Joelhos</h3>
+            <select name="joelhoValgoGrau">
+                <option value="" disabled selected>Genu Valgo - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="joelhoValgoLado">
+                <option value="" disabled selected>Genu Valgo - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="joelhoValgoComentario" placeholder="Comentário Genu Valgo" />
+
+            <select name="joelhoVaroGrau">
+                <option value="" disabled selected>Genu Varo - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="joelhoVaroLado">
+                <option value="" disabled selected>Genu Varo - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="joelhoVaroComentario" placeholder="Comentário Genu Varo" />
+
+            <select name="joelhoRecurvatumGrau">
+                <option value="" disabled selected>Genu Recurvatum - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="joelhoRecurvatumLado">
+                <option value="" disabled selected>Genu Recurvatum - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="joelhoRecurvatumComentario" placeholder="Comentário Genu Recurvatum" />
+
+            <h3>Tornozelos e Pés</h3>
+            <select name="tornozeloPronacaoGrau">
+                <option value="" disabled selected>Pronação - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="tornozeloPronacaoLado">
+                <option value="" disabled selected>Pronação - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="tornozeloPronacaoComentario" placeholder="Comentário Pronação" />
+
+            <select name="tornozeloSupinacaoGrau">
+                <option value="" disabled selected>Supinação - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="tornozeloSupinacaoLado">
+                <option value="" disabled selected>Supinação - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="tornozeloSupinacaoComentario" placeholder="Comentário Supinação" />
+
+            <select name="tornozeloHiperGrau">
+                <option value="" disabled selected>Hiperextensão/Hiperflexão - Grau</option>
+                <option value="nao">Não</option>
+                <option value="leve">Leve</option>
+                <option value="moderado">Moderado</option>
+                <option value="grave">Grave</option>
+            </select>
+            <select name="tornozeloHiperLado">
+                <option value="" disabled selected>Hiperextensão/Hiperflexão - Lado</option>
+                <option value="direito">Direito</option>
+                <option value="esquerdo">Esquerdo</option>
+                <option value="bilateral">Bilateral</option>
+            </select>
+            <input type="text" name="tornozeloHiperComentario" placeholder="Comentário Hiperextensão/Hiperflexão" />
+
+            <div class="form-actions">
+                <button type="button" id="voltar">Voltar</button>
+                <button type="submit">Salvar</button>
+            </div>
+        </form>
+        <div id="msgPostural"></div>
     </div>
     <script type="module">
         const params = new URLSearchParams(window.location.search);
         const id = params.get('id');
         document.getElementById('voltar').addEventListener('click', () => {
             window.location.href = `avaliacao.html?id=${id}`;
+        });
+        document.getElementById('posturalForm').addEventListener('submit', e => {
+            e.preventDefault();
+            document.getElementById('msgPostural').textContent = 'Dados salvos (exemplo)';
         });
     </script>
 </body>
