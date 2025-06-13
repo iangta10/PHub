@@ -14,13 +14,17 @@
         <form id="compForm" class="avaliacao-grid">
             <input type="number" step="0.1" name="peso" placeholder="Peso (kg)" />
             <input type="number" step="0.1" name="altura" placeholder="Altura (cm)" />
-            <input type="number" step="0.1" name="tricipital" placeholder="Tricipital (mm)" />
-            <input type="number" step="0.1" name="subescapular" placeholder="Subescapular (mm)" />
-            <input type="number" step="0.1" name="peitoral" placeholder="Peitoral (mm)" />
-            <input type="number" step="0.1" name="axilarMedia" placeholder="Axilar Média (mm)" />
-            <input type="number" step="0.1" name="suprailiaca" placeholder="Supra-ilíaca (mm)" />
-            <input type="number" step="0.1" name="abdominal" placeholder="Abdominal (mm)" />
-            <input type="number" step="0.1" name="coxa" placeholder="Coxa (mm)" />
+            <select id="protocoloSelect" name="protocolo">
+                <option value="" disabled selected>Selecione o protocolo</option>
+                <option value="jp7">Jackson &amp; Pollock 7 dobras para Homens e mulheres (18–50 anos)</option>
+            </select>
+            <input type="number" step="0.1" name="peitoral" placeholder="Peitoral (mm)" class="dobras-field jp7 hidden" />
+            <input type="number" step="0.1" name="axilaMedia" placeholder="Axila Média (mm)" class="dobras-field jp7 hidden" />
+            <input type="number" step="0.1" name="triceps" placeholder="Tríceps (mm)" class="dobras-field jp7 hidden" />
+            <input type="number" step="0.1" name="subescapular" placeholder="Subescapular (mm)" class="dobras-field jp7 hidden" />
+            <input type="number" step="0.1" name="suprailiaca" placeholder="Supra-ilíaca (mm)" class="dobras-field jp7 hidden" />
+            <input type="number" step="0.1" name="abdominal" placeholder="Abdômen (mm)" class="dobras-field jp7 hidden" />
+            <input type="number" step="0.1" name="coxa" placeholder="Coxa (mm)" class="dobras-field jp7 hidden" />
             <textarea name="observacoes" placeholder="Observações"></textarea>
             <div class="form-actions">
                 <button type="button" id="voltar">Voltar</button>
@@ -32,6 +36,20 @@
     <script type="module">
         const params = new URLSearchParams(window.location.search);
         const id = params.get('id');
+
+        const protocoloSelect = document.getElementById('protocoloSelect');
+        const dobrasFields = document.querySelectorAll('.dobras-field');
+
+        function atualizarDobras() {
+            dobrasFields.forEach(el => el.classList.add('hidden'));
+            if (protocoloSelect.value === 'jp7') {
+                document.querySelectorAll('.jp7').forEach(el => el.classList.remove('hidden'));
+            }
+        }
+
+        protocoloSelect.addEventListener('change', atualizarDobras);
+        atualizarDobras();
+
         document.getElementById('voltar').addEventListener('click', () => {
             window.location.href = `avaliacao.html?id=${id}`;
         });
