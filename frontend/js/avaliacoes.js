@@ -106,7 +106,7 @@ function render(container, alunos) {
 
     novaBtn.addEventListener('click', () => {
         if (novaBtn.dataset.id) {
-            window.location.href = `avaliacao.html?id=${novaBtn.dataset.id}`;
+            window.location.href = `nova_avaliacao.html?id=${novaBtn.dataset.id}`;
         }
     });
 }
