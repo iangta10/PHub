@@ -75,12 +75,19 @@ router.get('/alunos/:alunoId/anamnese/sheet', verifyToken, async (req, res) => {
             email: ['email', 'e-mail', 'mail'],
             nome: ['nome', 'nomecompleto', 'name'],
             idade: ['idade', 'age'],
-            genero: ['gênero', 'sexo', 'gender'],
+            genero: ['g\u00eanero', 'sexo', 'gender'],
             altura: ['altura', 'height'],
             peso: ['peso', 'weight'],
             objetivos: ['objetivos', 'objetivo', 'goals'],
             doencas: ['doencas', 'doen\u00e7as', 'doenca', 'condicoes'],
-            doencasFamilia: ['familiatemdoenças', 'doencasfamiliares', 'historico', 'família'],
+            doencasFamilia: [
+                'familiatemdoen\u00e7as',
+                'doencasfamiliares',
+                'historicofamiliar',
+                'fam\u00edlia',
+                'alguemdafamiliatemalgumadoenca',
+                'doencafamilia'
+            ],
             medicamentos: ['medicamentos', 'medicacao', 'remedios'],
             cirurgias: ['cirurgias', 'cirurgia', 'surgeries'],
             doresLesoes: ['doreslesoes', 'lesoes', 'dores', 'injuries'],
@@ -88,14 +95,40 @@ router.get('/alunos/:alunoId/anamnese/sheet', verifyToken, async (req, res) => {
             fuma: ['fuma', 'fumante', 'smoker'],
             bebe: ['bebe', 'alcool', 'bebida'],
             qualidadeSono: ['qualidadesono', 'qualidadedosono', 'sleepquality'],
-            horasSono: ['horasdesono', 'tempodesono', 'sleephours'],
-            nivelAtividade: ['nivelatividade', 'atividadenivel', 'activitylevel'],
-            tiposExercicio: ['tiposexercicio', 'exercicios', 'exercisestatus'],
-            frequenciaTreinos: ['frequenciatreinos', 'frequenciatreino', 'workoutfrequency'],
+            horasSono: ['horasdesono', 'tempodesono', 'sleephours', 'horasdesonopornoite'],
+            nivelAtividade: [
+                'nivelatividade',
+                'atividadenivel',
+                'activitylevel',
+                'niveldeatividade',
+                'nivelatividadefisica'
+            ],
+            tiposExercicio: [
+                'tiposexercicio',
+                'tiposdeexercicio',
+                'exercicios',
+                'exercisestatus'
+            ],
+            frequenciaTreinos: [
+                'frequenciatreinos',
+                'frequenciadetreinos',
+                'frequenciatreino',
+                'workoutfrequency'
+            ],
             agua: ['agua', 'hidrata', 'water'],
-            tempoObjetivos: ['tempoobjetivos', 'tempoobjetivo', 'goalstime'],
-            dispostoMudanca: ['dispostomudanca', 'mudanca', 'readiness'],
-            comentarios: ['comentarios', 'observacoes', 'comments']
+            tempoObjetivos: [
+                'tempoobjetivos',
+                'tempoobjetivo',
+                'quantotempo',
+                'goalstime'
+            ],
+            dispostoMudanca: [
+                'dispostomudanca',
+                'dispostoamudar',
+                'mudanca',
+                'readiness'
+            ],
+            comentarios: ['comentarios', 'comentario', 'observacoes', 'observacao', 'comments']
         };
 
         const headers = rows[0].map(h => h.trim());
