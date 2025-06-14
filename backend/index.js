@@ -1,3 +1,7 @@
+const path = require('path');
+// Carrega variáveis de ambiente do .env na raiz do projeto
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+// Carrega variáveis de ambiente específicas do backend, se existirem
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
