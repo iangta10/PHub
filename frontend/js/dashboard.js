@@ -50,7 +50,7 @@ function loadHomeSection() {
             <button class="quick-btn" data-action="nova-avaliacao"><i class="fas fa-notes-medical"></i>Nova avaliação</button>
             <button class="quick-btn" data-action="nova-aula"><i class="fas fa-calendar-plus"></i>Nova aula agendada</button>
             <button class="quick-btn" data-action="fichas"><i class="fas fa-folder-open"></i>Ver fichas dos alunos</button>
-            <button class="quick-btn" data-action="importar"><i class="fas fa-file-import"></i>Importar planilhas</button>
+            <button class="quick-btn" data-action="relatorio"><i class="fas fa-chart-line"></i>Relatorio mensal</button>
             <button class="quick-btn" data-action="criar-treino"><i class="fas fa-dumbbell"></i>Criar treino</button>
         </section>
         <section class="day-calendar">
