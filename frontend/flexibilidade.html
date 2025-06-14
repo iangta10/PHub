@@ -51,7 +51,7 @@
         const params = new URLSearchParams(window.location.search);
         const id = params.get('id');
         document.getElementById('voltar').addEventListener('click', () => {
-            window.location.href = `avaliacao.html?id=${id}`;
+            window.location.href = `nova_avaliacao.html?id=${id}`;
         });
         document.getElementById('flexForm').addEventListener('submit', e => {
             e.preventDefault();
