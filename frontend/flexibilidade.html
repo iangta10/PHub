@@ -55,7 +55,12 @@
         });
         document.getElementById('flexForm').addEventListener('submit', e => {
             e.preventDefault();
-            document.getElementById('msgFlex').textContent = 'Dados salvos (exemplo)';
+            const avalId = localStorage.getItem(`currentAvalId_${id}`);
+            const dados = {};
+            Array.from(e.target.elements).forEach(el => { if (el.name) dados[el.name] = el.value; });
+            if (avalId) localStorage.setItem(`avaliacao_${id}_${avalId}_flexibilidade`, JSON.stringify(dados));
+            document.getElementById('msgFlex').textContent = 'Dados salvos';
+            window.location.href = `nova_avaliacao.html?id=${id}`;
         });
     </script>
 </body>

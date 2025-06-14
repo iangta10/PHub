@@ -148,6 +148,7 @@
             e.preventDefault();
             const dados = {};
             Array.from(form.elements).forEach(el => { if (el.name) dados[el.name] = el.value; });
+            const avalId = localStorage.getItem(`currentAvalId_${id}`);
             try {
                 const res = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${id}/anamnese`, {
                     method: 'POST',
@@ -155,6 +156,10 @@
                     body: JSON.stringify(dados)
                 });
                 msg.textContent = res.ok ? 'Anamnese salva' : 'Erro ao salvar anamnese';
+                if (res.ok) {
+                    if (avalId) localStorage.setItem(`avaliacao_${id}_${avalId}_anamnese`, JSON.stringify(dados));
+                    window.location.href = `nova_avaliacao.html?id=${id}`;
+                }
             } catch (err) {
                 console.error('Erro ao salvar anamnese:', err);
                 msg.textContent = 'Erro ao salvar anamnese';

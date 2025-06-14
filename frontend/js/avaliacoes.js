@@ -109,6 +109,13 @@ function render(container, alunos) {
                 <button class="btn-visualizar" data-id="${a.id || ''}">Visualizar</button>
             </div>
         `).join('');
+
+        listDiv.querySelectorAll('.btn-visualizar').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const avalId = btn.dataset.id;
+                window.location.href = `visualizar_avaliacao.html?alunoId=${alunoId}&avaliacaoId=${avalId}`;
+            });
+        });
     }
 
     novaBtn.addEventListener('click', () => {
