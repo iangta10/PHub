@@ -106,7 +106,11 @@ function render(container, alunos) {
         listDiv.innerHTML = avaliacoes.map(a => `
             <div class="avaliacao-card">
                 <span>${new Date(a.data).toLocaleDateString()}</span>
-                <button class="btn-visualizar" data-id="${a.id || ''}">Visualizar</button>
+                <div>
+                    <button class="btn-visualizar" data-id="${a.id || ''}">Visualizar</button>
+                    <button class="btn-editar" data-id="${a.id || ''}">Editar</button>
+                    <button class="btn-excluir" data-id="${a.id || ''}">Excluir</button>
+                </div>
             </div>
         `).join('');
 
@@ -114,6 +118,26 @@ function render(container, alunos) {
             btn.addEventListener('click', () => {
                 const avalId = btn.dataset.id;
                 window.location.href = `visualizar_avaliacao.html?alunoId=${alunoId}&avaliacaoId=${avalId}`;
+            });
+        });
+        listDiv.querySelectorAll('.btn-editar').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const avalId = btn.dataset.id;
+                localStorage.setItem(`currentAvalId_${alunoId}`, avalId);
+                window.location.href = `nova_avaliacao.html?id=${alunoId}`;
+            });
+        });
+        listDiv.querySelectorAll('.btn-excluir').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (confirm('Deseja excluir esta avaliação?')) {
+                    const avalId = btn.dataset.id;
+                    const chave = `avaliacoes_${alunoId}`;
+                    const lista = JSON.parse(localStorage.getItem(chave) || '[]').filter(a => String(a.id) !== avalId);
+                    localStorage.setItem(chave, JSON.stringify(lista));
+                    const partes = ['anamnese','composicao','perimetria','flexibilidade','postural'];
+                    partes.forEach(p => localStorage.removeItem(`avaliacao_${alunoId}_${avalId}_${p}`));
+                    mostrarAvaliacoes(alunoId, nome);
+                }
             });
         });
     }

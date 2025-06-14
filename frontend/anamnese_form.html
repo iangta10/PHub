@@ -182,6 +182,14 @@
                         Object.keys(data).forEach(k => { if (form[k]) form[k].value = data[k]; });
                     }
                 }
+                const avalId = localStorage.getItem(`currentAvalId_${id}`);
+                if (avalId) {
+                    const local = localStorage.getItem(`avaliacao_${id}_${avalId}_anamnese`);
+                    if (local) {
+                        const obj = JSON.parse(local);
+                        Object.keys(obj).forEach(k => { if (form[k]) form[k].value = obj[k]; });
+                    }
+                }
             } catch (err) {
                 console.error('Erro ao carregar anamnese:', err);
             }

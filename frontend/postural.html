@@ -494,10 +494,21 @@
     <script type="module">
         const params = new URLSearchParams(window.location.search);
         const id = params.get('id');
+        const form = document.getElementById('posturalForm');
         document.getElementById('voltar').addEventListener('click', () => {
             window.location.href = `nova_avaliacao.html?id=${id}`;
         });
-        document.getElementById('posturalForm').addEventListener('submit', e => {
+
+        const avalId = localStorage.getItem(`currentAvalId_${id}`);
+        if (avalId) {
+            const local = localStorage.getItem(`avaliacao_${id}_${avalId}_postural`);
+            if (local) {
+                const obj = JSON.parse(local);
+                Object.keys(obj).forEach(k => { const el = form.querySelector(`[name="${k}"]`); if (el) el.value = obj[k]; });
+            }
+        }
+
+        form.addEventListener('submit', e => {
             e.preventDefault();
             const avalId = localStorage.getItem(`currentAvalId_${id}`);
             const dados = {};

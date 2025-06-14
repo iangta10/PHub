@@ -50,6 +50,19 @@
         protocoloSelect.addEventListener('change', atualizarDobras);
         atualizarDobras();
 
+        const avalId = localStorage.getItem(`currentAvalId_${id}`);
+        if (avalId) {
+            const local = localStorage.getItem(`avaliacao_${id}_${avalId}_composicao`);
+            if (local) {
+                const obj = JSON.parse(local);
+                Object.keys(obj).forEach(k => {
+                    const el = document.querySelector(`[name="${k}"]`);
+                    if (el) el.value = obj[k];
+                });
+                atualizarDobras();
+            }
+        }
+
         document.getElementById('voltar').addEventListener('click', () => {
             window.location.href = `nova_avaliacao.html?id=${id}`;
         });
