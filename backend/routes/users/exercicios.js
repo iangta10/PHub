@@ -38,7 +38,7 @@ router.post('/exercicios', verifyToken, async (req, res) => {
 // Listar exercícios do personal
 router.get('/exercicios', verifyToken, async (req, res) => {
     const personalId = req.user.uid;
-    const { categoria, grupo } = req.query;
+    const { categoria, grupo, nome } = req.query;
 
     try {
         const personalSnap = await admin.firestore()
@@ -65,6 +65,11 @@ router.get('/exercicios', verifyToken, async (req, res) => {
                 const outros = Array.isArray(e.gruposMusculares) ? e.gruposMusculares.map(x => x.toLowerCase()) : [];
                 return principal === g || outros.includes(g);
             });
+        }
+
+        if (nome) {
+            const n = nome.toLowerCase();
+            exercicios = exercicios.filter(e => (e.nome || '').toLowerCase().includes(n));
         }
 
         res.json(exercicios);

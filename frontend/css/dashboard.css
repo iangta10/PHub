@@ -294,6 +294,15 @@ body {
     margin-top: 20px;
 }
 
+.avaliacao-grid .form-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.avaliacao-grid .form-field label {
+    margin-bottom: 4px;
+}
+
 
 /* Responsivo */
 @media (max-width: 768px) {
