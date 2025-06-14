@@ -26,6 +26,28 @@ document.addEventListener('DOMContentLoaded', () => {
     carregarCabecalho(id);
     renderOpcoes(id, 'avaliacaoOpcoes');
 
-    const back = document.getElementById('backBtn');
-    if (back) back.addEventListener('click', () => window.history.back());
+    const finalizar = document.getElementById('finalizarAvaliacao');
+    const cancelar = document.getElementById('cancelarAvaliacao');
+
+    if (cancelar) {
+        cancelar.addEventListener('click', () => {
+            window.location.href = 'dashboard.html?section=avaliacoes';
+        });
+    }
+
+    if (finalizar) {
+        finalizar.addEventListener('click', () => {
+            const proxima = document.getElementById('proximaAvaliacao');
+            const avaliacao = {
+                id: Date.now(),
+                data: new Date().toISOString(),
+                proxima: proxima ? proxima.value : ''
+            };
+            const chave = `avaliacoes_${id}`;
+            const lista = JSON.parse(localStorage.getItem(chave) || '[]');
+            lista.push(avaliacao);
+            localStorage.setItem(chave, JSON.stringify(lista));
+            window.location.href = 'dashboard.html?section=avaliacoes';
+        });
+    }
 });

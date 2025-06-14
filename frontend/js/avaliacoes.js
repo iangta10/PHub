@@ -85,23 +85,30 @@ function render(container, alunos) {
         novaBtn.dataset.id = alunoId;
         novaBtn.classList.remove('hidden');
         listDiv.innerHTML = '<p>Carregando avaliações...</p>';
+        let avaliacoes = [];
         try {
             const res = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${alunoId}/avaliacoes`);
-            const avaliacoes = await res.json();
-            if (!avaliacoes || avaliacoes.length === 0) {
-                listDiv.innerHTML = '<p class="sem-avaliacoes">Este aluno ainda não possui avaliações cadastradas.</p>';
-                return;
+            if (res.ok) {
+                avaliacoes = await res.json();
             }
-            listDiv.innerHTML = avaliacoes.map(a => `
-                <div class="avaliacao-card">
-                    <span>${new Date(a.data).toLocaleDateString()}</span>
-                    <button class="btn-visualizar" data-id="${a.id || ''}">Visualizar</button>
-                </div>
-            `).join('');
         } catch (err) {
             console.error(err);
-            listDiv.innerHTML = '<p style="color:red;">Erro ao carregar avaliações</p>';
         }
+
+        const locais = JSON.parse(localStorage.getItem(`avaliacoes_${alunoId}`) || '[]');
+        avaliacoes = avaliacoes.concat(locais);
+
+        if (!avaliacoes || avaliacoes.length === 0) {
+            listDiv.innerHTML = '<p class="sem-avaliacoes">Este aluno ainda não possui avaliações cadastradas.</p>';
+            return;
+        }
+
+        listDiv.innerHTML = avaliacoes.map(a => `
+            <div class="avaliacao-card">
+                <span>${new Date(a.data).toLocaleDateString()}</span>
+                <button class="btn-visualizar" data-id="${a.id || ''}">Visualizar</button>
+            </div>
+        `).join('');
     }
 
     novaBtn.addEventListener('click', () => {
