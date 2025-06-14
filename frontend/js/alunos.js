@@ -10,6 +10,7 @@ export async function loadAlunosSection() {
 
         content.innerHTML = `
             <h2>Meus Alunos</h2>
+            <button id="btnNovoAluno" class="quick-btn">Cadastrar novo aluno</button>
             <input type="text" id="searchAluno" placeholder="Buscar por nome..." />
             <ul id="alunoList">
                 ${alunos.map(aluno => `
@@ -29,6 +30,8 @@ export async function loadAlunosSection() {
             attachAlunoHandlers();
         });
         attachAlunoHandlers();
+        const btnNovo = document.getElementById('btnNovoAluno');
+        if (btnNovo) btnNovo.addEventListener('click', () => showNovoAlunoModal(loadAlunosSection));
     } catch (err) {
         console.error("Erro ao buscar alunos:", err);
         content.innerHTML = `<p style="color:red;">Erro ao carregar alunos</p>`;
@@ -107,6 +110,53 @@ function showEditAlunoForm(aluno) {
             showAlunoDetails(aluno.id);
         } else {
             alert('Erro ao atualizar aluno');
+        }
+    });
+}
+
+export function showNovoAlunoModal(callback) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <form id="novoAlunoForm">
+                <h3>Novo Aluno</h3>
+                <input type="text" name="nome" placeholder="Nome" required />
+                <input type="email" name="email" placeholder="Email" />
+                <textarea name="observacoes" placeholder="Observações"></textarea>
+                <div>
+                    <button type="submit">Cadastrar</button>
+                    <button type="button" class="cancelModal">Cancelar</button>
+                </div>
+            </form>
+        </div>`;
+    document.body.appendChild(modal);
+    const remove = () => modal.remove();
+    modal.querySelector('.cancelModal').addEventListener('click', remove);
+    modal.addEventListener('click', e => { if (e.target === modal) remove(); });
+    modal.querySelector('#novoAlunoForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const form = e.target;
+        const body = {
+            nome: form.nome.value,
+            email: form.email.value,
+            observacoes: form.observacoes.value
+        };
+        try {
+            const res = await fetchWithFreshToken('http://localhost:3000/users/alunos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (res.ok) {
+                remove();
+                if (callback) callback();
+            } else {
+                alert('Erro ao cadastrar aluno');
+            }
+        } catch (err) {
+            console.error('Erro ao cadastrar aluno:', err);
+            alert('Erro ao cadastrar aluno');
         }
     });
 }

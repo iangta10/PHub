@@ -9,7 +9,7 @@ let TODOS_EXERCICIOS_OBJ = [];
 let CAT_OPTIONS = '';
 let GRUPO_OPTIONS = '';
 
-export async function loadTreinosSection() {
+export async function loadTreinosSection(alunoIdParam = '') {
     const content = document.getElementById("content");
     content.innerHTML = "<h2>Carregando...</h2>";
     try {
@@ -53,6 +53,8 @@ export async function loadTreinosSection() {
         addDia();
 
         const alunoSel = document.querySelector('#novoTreinoForm select[name="aluno"]');
+        const urlAluno = alunoIdParam || new URLSearchParams(window.location.search).get('aluno') || '';
+        if (urlAluno) alunoSel.value = urlAluno;
         alunoSel.addEventListener('change', () => loadTreinosAluno(alunoSel.value));
         loadTreinosAluno(alunoSel.value);
 
