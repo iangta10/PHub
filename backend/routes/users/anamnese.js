@@ -71,6 +71,39 @@ router.get('/alunos/:alunoId/anamnese/sheet', verifyToken, async (req, res) => {
         const normalize = str => str.toLowerCase()
             .normalize('NFD').replace(/[^\w]/g, '');
 
+        const columnToIndex = col => {
+            let idx = 0;
+            for (let i = 0; i < col.length; i++) {
+                idx = idx * 26 + (col.toUpperCase().charCodeAt(i) - 64);
+            }
+            return idx - 1;
+        };
+
+        const columnMap = {
+            B: 'email',
+            C: 'nome',
+            D: 'idade',
+            E: 'genero',
+            H: 'objetivos',
+            I: 'doencas',
+            J: 'doencasFamilia',
+            K: 'medicamentos',
+            L: 'cirurgias',
+            M: 'doresLesoes',
+            N: 'limitacoes',
+            O: 'fuma',
+            P: 'bebe',
+            Q: 'qualidadeSono',
+            R: 'horasSono',
+            S: 'nivelAtividade',
+            T: 'tiposExercicio',
+            U: 'frequenciaTreinos',
+            X: 'agua',
+            AB: 'tempoObjetivos',
+            AC: 'dispostoMudanca',
+            AD: 'comentarios'
+        };
+
         const fieldMap = {
             email: ['email', 'e-mail', 'mail'],
             nome: ['nome', 'nomecompleto', 'name'],
@@ -133,7 +166,14 @@ router.get('/alunos/:alunoId/anamnese/sheet', verifyToken, async (req, res) => {
 
         const headers = rows[0].map(h => h.trim());
         const normalizedHeaders = headers.map(h => normalize(h));
-        const emailIdx = normalizedHeaders.findIndex(h => fieldMap.email.some(f => h.includes(normalize(f))));
+        let emailIdx = normalizedHeaders.findIndex(h => fieldMap.email.some(f => h.includes(normalize(f))));
+        if (emailIdx === -1) {
+            const col = Object.entries(columnMap).find(([, field]) => field === 'email');
+            if (col) {
+                const idx = columnToIndex(col[0]);
+                if (idx < headers.length) emailIdx = idx;
+            }
+        }
         if (emailIdx === -1) return res.json(null);
 
         const row = rows.find((r, i) => i > 0 && r[emailIdx] && r[emailIdx].toLowerCase() === email.toLowerCase());
@@ -150,6 +190,10 @@ router.get('/alunos/:alunoId/anamnese/sheet', verifyToken, async (req, res) => {
             }
             headerToField[idx] = h;
         });
+        for (const [col, field] of Object.entries(columnMap)) {
+            const idx = columnToIndex(col);
+            if (idx < headers.length) headerToField[idx] = field;
+        }
 
         const data = {};
         Object.entries(headerToField).forEach(([idx, field]) => {
