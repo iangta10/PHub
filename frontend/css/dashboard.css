@@ -384,6 +384,10 @@ body {
     margin-bottom: 10px;
 }
 
+.avaliacao-part {
+    margin-top: 20px;
+}
+
 .sem-avaliacoes {
     text-align: center;
     margin: 20px 0;

@@ -53,7 +53,18 @@
         document.getElementById('voltar').addEventListener('click', () => {
             window.location.href = `nova_avaliacao.html?id=${id}`;
         });
-        document.getElementById('flexForm').addEventListener('submit', e => {
+        const form = document.getElementById('flexForm');
+
+        const avalId = localStorage.getItem(`currentAvalId_${id}`);
+        if (avalId) {
+            const local = localStorage.getItem(`avaliacao_${id}_${avalId}_flexibilidade`);
+            if (local) {
+                const obj = JSON.parse(local);
+                Object.keys(obj).forEach(k => { const el = form.querySelector(`[name="${k}"]`); if (el) el.value = obj[k]; });
+            }
+        }
+
+        form.addEventListener('submit', e => {
             e.preventDefault();
             const avalId = localStorage.getItem(`currentAvalId_${id}`);
             const dados = {};

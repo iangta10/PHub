@@ -31,6 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!avalId) {
         avalId = Date.now().toString();
         localStorage.setItem(`currentAvalId_${id}`, avalId);
+    } else {
+        const lista = JSON.parse(localStorage.getItem(`avaliacoes_${id}`) || '[]');
+        const existente = lista.find(a => a.id === avalId);
+        if (existente && document.getElementById('proximaAvaliacao')) {
+            document.getElementById('proximaAvaliacao').value = existente.proxima || '';
+        }
     }
 
     const finalizar = document.getElementById('finalizarAvaliacao');
