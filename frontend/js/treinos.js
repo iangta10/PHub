@@ -46,6 +46,7 @@ export async function loadTreinosSection(alunoIdParam = '') {
             </form>
             <button id="cancelEdit" class="hidden" type="button">Cancelar Edição</button>
             <div id="mensagemTreino"></div>
+            <pre id="treinoGerado" class="treinoGerado"></pre>
             <h2>Treinos do Aluno</h2>
             <div id="listaTreinos"></div>
         `;
@@ -318,10 +319,16 @@ export async function gerarTreinoComIA(alunoId) {
     const msg = document.getElementById('mensagemTreino');
     msg.textContent = 'Gerando treino...';
     try {
-        const resp = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${alunoId}/gerarTreinoIA`, { method: 'POST' });
+        const resp = await fetchWithFreshToken('http://localhost:3000/treino/gerar-ia', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ alunoId })
+        });
         if (!resp.ok) throw new Error('Falha ao gerar treino');
+        const data = await resp.json();
         msg.textContent = 'Treino gerado com sucesso!';
-        loadTreinosAluno(alunoId);
+        const content = document.getElementById('treinoGerado');
+        if (content) content.textContent = data.treino;
     } catch (err) {
         console.error('Erro ao gerar treino com IA:', err);
         msg.textContent = 'Erro ao gerar treino com IA';
