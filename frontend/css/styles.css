@@ -204,3 +204,10 @@ select:focus {
 .dados-aluno input[type="date"] {
     width: auto;
 }
+
+.avaliacao-actions {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+}

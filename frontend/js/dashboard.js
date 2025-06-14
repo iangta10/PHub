@@ -53,6 +53,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             greet.textContent = `Olá, ${roleText}`;
         }
+        const params = new URLSearchParams(window.location.search);
+        const sec = params.get('section');
+        if (sec) {
+            const li = document.querySelector(`.sidebar li[data-section="${sec}"]`);
+            if (li) li.click();
+        }
     } catch (err) {
         console.error('Erro ao obter role:', err);
     }
