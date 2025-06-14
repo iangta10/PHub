@@ -6,4 +6,5 @@ serviceAccountKey.json
 # ignore firebase config
 firebase-config.js
 
-.env
+# Ignore root environment secrets
+/.env
