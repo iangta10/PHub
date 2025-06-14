@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visualizar Avaliação</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="stylesheet" href="./css/dashboard.css" />
+</head>
+<body>
+    <div class="avaliacao-container">
+        <h2>Avaliação</h2>
+        <div id="dadosAvaliacao"></div>
+        <div class="form-actions">
+            <button type="button" id="voltar">Voltar</button>
+        </div>
+    </div>
+    <script type="module">
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const alunoId = params.get('alunoId');
+            const avalId = params.get('avaliacaoId');
+            const container = document.getElementById('dadosAvaliacao');
+            if (!alunoId || !avalId) {
+                container.textContent = 'Avaliação não encontrada';
+                return;
+            }
+            const lista = JSON.parse(localStorage.getItem(`avaliacoes_${alunoId}`) || '[]');
+            const avaliacao = lista.find(a => String(a.id) === avalId);
+            if (!avaliacao) {
+                container.textContent = 'Avaliação não encontrada';
+                return;
+            }
+            const partes = ['anamnese','composicao','perimetria','flexibilidade','postural'];
+            const dadosPartes = partes.map(p => {
+                const dados = localStorage.getItem(`avaliacao_${alunoId}_${avalId}_${p}`);
+                if (dados) return `<h3>${p}</h3><pre>${JSON.stringify(JSON.parse(dados), null, 2)}</pre>`;
+                return '';
+            }).join('');
+            container.innerHTML = `<p>Data: ${new Date(avaliacao.data).toLocaleDateString()}</p>` +
+                `<p>Próxima Avaliação: ${avaliacao.proxima || '-'}</p>` + dadosPartes;
+            document.getElementById('voltar').addEventListener('click', () => window.history.back());
+        });
+    </script>
+</body>
+</html>

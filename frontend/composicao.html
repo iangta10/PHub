@@ -55,6 +55,10 @@
         });
         document.getElementById('compForm').addEventListener('submit', e => {
             e.preventDefault();
+            const avalId = localStorage.getItem(`currentAvalId_${id}`);
+            const dados = {};
+            Array.from(e.target.elements).forEach(el => { if (el.name) dados[el.name] = el.value; });
+            if (avalId) localStorage.setItem(`avaliacao_${id}_${avalId}_composicao`, JSON.stringify(dados));
             window.location.href = `nova_avaliacao.html?id=${id}`;
         });
     </script>

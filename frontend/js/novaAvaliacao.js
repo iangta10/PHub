@@ -26,27 +26,42 @@ document.addEventListener('DOMContentLoaded', () => {
     carregarCabecalho(id);
     renderOpcoes(id, 'avaliacaoOpcoes');
 
+    // cria/recupera id da avaliacao em andamento
+    let avalId = localStorage.getItem(`currentAvalId_${id}`);
+    if (!avalId) {
+        avalId = Date.now().toString();
+        localStorage.setItem(`currentAvalId_${id}`, avalId);
+    }
+
     const finalizar = document.getElementById('finalizarAvaliacao');
     const cancelar = document.getElementById('cancelarAvaliacao');
 
     if (cancelar) {
         cancelar.addEventListener('click', () => {
+            localStorage.removeItem(`currentAvalId_${id}`);
             window.location.href = 'dashboard.html?section=avaliacoes';
         });
     }
 
     if (finalizar) {
         finalizar.addEventListener('click', () => {
+            const avalId = localStorage.getItem(`currentAvalId_${id}`);
             const proxima = document.getElementById('proximaAvaliacao');
             const avaliacao = {
-                id: Date.now(),
+                id: avalId,
                 data: new Date().toISOString(),
                 proxima: proxima ? proxima.value : ''
             };
             const chave = `avaliacoes_${id}`;
             const lista = JSON.parse(localStorage.getItem(chave) || '[]');
-            lista.push(avaliacao);
+            const idx = lista.findIndex(a => a.id === avalId);
+            if (idx >= 0) {
+                lista[idx] = avaliacao;
+            } else {
+                lista.push(avaliacao);
+            }
             localStorage.setItem(chave, JSON.stringify(lista));
+            localStorage.removeItem(`currentAvalId_${id}`);
             window.location.href = 'dashboard.html?section=avaliacoes';
         });
     }
