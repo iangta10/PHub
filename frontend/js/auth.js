@@ -84,3 +84,9 @@ export async function fetchUserRole() {
     const data = await res.json();
     return data.role;
 }
+
+export async function fetchUserInfo() {
+    const res = await fetchWithFreshToken('http://localhost:3000/users/me');
+    if (!res.ok) return null;
+    return await res.json();
+}
