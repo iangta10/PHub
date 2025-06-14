@@ -37,6 +37,7 @@ export async function loadTreinosSection(alunoIdParam = '') {
                     <option value="">Selecione o aluno</option>
                     ${alunos.map(a => `<option value="${a.id}">${a.nome}</option>`).join('')}
                 </select>
+                <button type="button" id="gerarTreinoIA" disabled>Gerar treino com IA</button>
                 <h3>Nome da ficha</h3>
                 <input type="text" name="nome" placeholder="Nome da ficha" required />
                 <div id="diasContainer"></div>
@@ -53,9 +54,13 @@ export async function loadTreinosSection(alunoIdParam = '') {
         addDia();
 
         const alunoSel = document.querySelector('#novoTreinoForm select[name="aluno"]');
+        const gerarBtn = document.getElementById('gerarTreinoIA');
         const urlAluno = alunoIdParam || new URLSearchParams(window.location.search).get('aluno') || '';
         if (urlAluno) alunoSel.value = urlAluno;
-        alunoSel.addEventListener('change', () => loadTreinosAluno(alunoSel.value));
+        const toggleGerar = () => { gerarBtn.disabled = !alunoSel.value; };
+        alunoSel.addEventListener('change', () => { loadTreinosAluno(alunoSel.value); toggleGerar(); });
+        toggleGerar();
+        gerarBtn.addEventListener('click', () => gerarTreinoComIA(alunoSel.value));
         loadTreinosAluno(alunoSel.value);
 
         document.getElementById('cancelEdit').addEventListener('click', () => {
@@ -306,4 +311,19 @@ function renderTreino(treino) {
         return `<div class="diaCard"><h4>${d.nome}</h4><ul>${exs}</ul></div>`;
     }).join('');
     return `<div class="treinoCard"><h3>${treino.nome}</h3>${diasHtml}</div>`;
+}
+
+export async function gerarTreinoComIA(alunoId) {
+    if (!alunoId) return;
+    const msg = document.getElementById('mensagemTreino');
+    msg.textContent = 'Gerando treino...';
+    try {
+        const resp = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${alunoId}/gerarTreinoIA`, { method: 'POST' });
+        if (!resp.ok) throw new Error('Falha ao gerar treino');
+        msg.textContent = 'Treino gerado com sucesso!';
+        loadTreinosAluno(alunoId);
+    } catch (err) {
+        console.error('Erro ao gerar treino com IA:', err);
+        msg.textContent = 'Erro ao gerar treino com IA';
+    }
 }

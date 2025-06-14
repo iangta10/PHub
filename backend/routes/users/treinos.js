@@ -116,4 +116,103 @@ router.get('/me/treinos', verifyToken, async (req, res) => {
     }
 });
 
+// Gerar treino automaticamente com IA para um aluno
+router.post('/alunos/:alunoId/gerarTreinoIA', verifyToken, async (req, res) => {
+    const personalId = req.user.uid;
+    const alunoId = req.params.alunoId;
+
+    try {
+        const alunoDoc = await admin.firestore()
+            .collection('users').doc(personalId)
+            .collection('alunos').doc(alunoId)
+            .get();
+
+        if (!alunoDoc.exists) {
+            return res.status(404).json({ error: 'Aluno não encontrado' });
+        }
+
+        const alunoData = alunoDoc.data();
+
+        const prompt = `Gere um plano de treino em JSON considerando os dados a seguir:\n` +
+            `Nome: ${alunoData.nome}\n` +
+            `Idade: ${alunoData.idade}\n` +
+            `Altura: ${alunoData.altura}\n` +
+            `Peso: ${alunoData.peso}\n` +
+            `Nivel: ${alunoData.nivel}\n` +
+            `Objetivo: ${alunoData.objetivo}\n` +
+            `Frequencia: ${alunoData.frequencia}`;
+
+        const hfUrl = process.env.HF_ENDPOINT || '';
+        const hfToken = process.env.HF_TOKEN || '';
+
+        const hfResp = await fetch(hfUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(hfToken ? { 'Authorization': `Bearer ${hfToken}` } : {})
+            },
+            body: JSON.stringify({ prompt })
+        });
+
+        if (!hfResp.ok) {
+            return res.status(500).json({ error: 'Falha ao gerar treino via IA' });
+        }
+
+        const treinoIA = await hfResp.json();
+
+        if (!treinoIA || !Array.isArray(treinoIA.dias)) {
+            return res.status(400).json({ error: 'Resposta de IA inválida' });
+        }
+
+        const [globaisSnap, pessoaisSnap] = await Promise.all([
+            admin.firestore().collection('exerciciosSistema').get(),
+            admin.firestore().collection('users').doc(personalId).collection('exercicios').get()
+        ]);
+
+        const exerciciosValidos = new Set();
+        globaisSnap.forEach(d => { if (d.data().nome) exerciciosValidos.add(d.data().nome); });
+        pessoaisSnap.forEach(d => { if (d.data().nome) exerciciosValidos.add(d.data().nome); });
+
+        const diasSalvos = [];
+
+        treinoIA.dias.forEach(dia => {
+            if (!Array.isArray(dia.exercicios)) return;
+            const exs = [];
+            dia.exercicios.forEach(ex => {
+                if (exerciciosValidos.has(ex.nome)) {
+                    exs.push({
+                        nome: ex.nome,
+                        series: ex.series || null,
+                        repeticoes: ex.repeticoes || null
+                    });
+                } else {
+                    console.warn(`Exercício não encontrado: ${ex.nome}`);
+                }
+            });
+            if (exs.length) {
+                diasSalvos.push({
+                    nome: dia.dia || dia.nome || '',
+                    grupo: dia.grupo || null,
+                    exercicios: exs
+                });
+            }
+        });
+
+        const docRef = await admin.firestore()
+            .collection('users').doc(personalId)
+            .collection('alunos').doc(alunoId)
+            .collection('treinos')
+            .add({
+                nome: `Treino IA - ${new Date().toLocaleDateString('pt-BR')}`,
+                dias: diasSalvos,
+                criadoEm: new Date().toISOString()
+            });
+
+        res.json({ id: docRef.id, dias: diasSalvos });
+    } catch (err) {
+        console.error('Erro ao gerar treino com IA:', err);
+        res.status(500).json({ error: 'Erro ao gerar treino com IA' });
+    }
+});
+
 module.exports = router;
