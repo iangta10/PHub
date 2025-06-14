@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router({ mergeParams: true });
 const admin = require('../../firebase-admin');
 const verifyToken = require('../../middleware/verifyToken');
+const path = require('path');
 
 // Obter anamnese de um aluno
 router.get('/alunos/:alunoId/anamnese', verifyToken, async (req, res) => {
@@ -49,7 +50,10 @@ router.get('/alunos/:alunoId/anamnese/sheet', verifyToken, async (req, res) => {
 
     try {
         const { google } = require('googleapis');
+        const keyFile = process.env.GOOGLE_APPLICATION_CREDENTIALS
+            || path.join(__dirname, '..', '..', 'serviceAccountKey.json');
         const auth = new google.auth.GoogleAuth({
+            keyFile,
             scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly']
         });
         const client = await auth.getClient();
