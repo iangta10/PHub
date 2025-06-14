@@ -79,6 +79,7 @@ function renderForms(container, exercicios, metodos) {
         <ul id="listaMetodos">${metodos.map(m => `<li data-id="${m.id}" data-global="${m.global}" data-series="${m.series || ''}" data-repeticoes="${m.repeticoes || ''}" data-observacoes="${m.observacoes || ''}">${m.nome} <button class="editMetodo">Editar</button> <button class="delMetodo">Excluir</button></li>`).join('')}</ul>
         <h2>Buscar Exercícios</h2>
         <div id="filtros">
+            <input type="text" id="fNome" placeholder="Nome" />
             <input type="text" id="fCategoria" placeholder="Categoria" />
             <input type="text" id="fGrupo" placeholder="Grupo muscular" />
             <button id="buscarEx">Buscar</button>
@@ -174,9 +175,10 @@ function renderForms(container, exercicios, metodos) {
     });
 
     document.getElementById('buscarEx').addEventListener('click', () => {
+        const nome = document.getElementById('fNome').value;
         const categoria = document.getElementById('fCategoria').value;
         const grupo = document.getElementById('fGrupo').value;
-        loadExerciciosSection({ categoria, grupo });
+        loadExerciciosSection({ nome, categoria, grupo });
     });
 
     document.querySelectorAll('#listaExercicios .delEx').forEach(btn => {

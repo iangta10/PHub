@@ -12,28 +12,94 @@
     <div class="avaliacao-container">
         <h2>Anamnese</h2>
         <form id="anamneseForm" class="avaliacao-grid">
-            <input type="email" name="email" placeholder="Endereço de e-mail" />
-            <input type="text" name="nome" placeholder="Nome" />
-            <input type="number" name="idade" placeholder="Idade" />
-            <input type="text" name="genero" placeholder="Gênero" />
-            <textarea name="objetivos" placeholder="Objetivos"></textarea>
-            <textarea name="doencas" placeholder="Já teve ou tem alguma doença? Se sim, quais?"></textarea>
-            <textarea name="doencasFamilia" placeholder="Alguém da família tem alguma doença? Se sim, quais?"></textarea>
-            <textarea name="medicamentos" placeholder="Faz uso de medicamentos? Quais?"></textarea>
-            <textarea name="cirurgias" placeholder="Já passou por cirurgias? Quais?"></textarea>
-            <textarea name="doresLesoes" placeholder="Possui dores ou lesões?"></textarea>
-            <textarea name="limitacoes" placeholder="Alguma limitação para exercícios físicos?"></textarea>
-            <input type="text" name="fuma" placeholder="Você Fuma?" />
-            <input type="text" name="bebe" placeholder="Você Bebe? Se sim, com qual frequência?" />
-            <input type="text" name="qualidadeSono" placeholder="Qualidade do sono" />
-            <input type="number" step="0.1" name="horasSono" placeholder="Horas de sono por noite" />
-            <input type="text" name="nivelAtividade" placeholder="Nível de atividade física atual" />
-            <input type="text" name="tiposExercicio" placeholder="Tipos de exercício que pratica ou já praticou" />
-            <input type="text" name="frequenciaTreinos" placeholder="Frequência de treinos pretendida" />
-            <input type="text" name="agua" placeholder="Consome água com frequência? (litros/dia)" />
-            <input type="text" name="tempoObjetivos" placeholder="Em quanto tempo gostaria de alcançar seus objetivos?" />
-            <input type="text" name="dispostoMudanca" placeholder="Está disposto(a) a mudar hábitos alimentares e de treino?" />
-            <textarea name="comentarios" placeholder="Qualquer comentário ou observação que queira fazer"></textarea>
+            <div class="form-field">
+                <label for="email">Endereço de e-mail</label>
+                <input id="email" type="email" name="email" placeholder="Endereço de e-mail" />
+            </div>
+            <div class="form-field">
+                <label for="nome">Nome</label>
+                <input id="nome" type="text" name="nome" placeholder="Nome" />
+            </div>
+            <div class="form-field">
+                <label for="idade">Idade</label>
+                <input id="idade" type="number" name="idade" placeholder="Idade" />
+            </div>
+            <div class="form-field">
+                <label for="genero">Gênero</label>
+                <input id="genero" type="text" name="genero" placeholder="Gênero" />
+            </div>
+            <div class="form-field">
+                <label for="objetivos">Objetivos</label>
+                <textarea id="objetivos" name="objetivos" placeholder="Objetivos"></textarea>
+            </div>
+            <div class="form-field">
+                <label for="doencas">Já teve ou tem alguma doença? Se sim, quais?</label>
+                <textarea id="doencas" name="doencas" placeholder="Já teve ou tem alguma doença? Se sim, quais?"></textarea>
+            </div>
+            <div class="form-field">
+                <label for="doencasFamilia">Alguém da família tem alguma doença? Se sim, quais?</label>
+                <textarea id="doencasFamilia" name="doencasFamilia" placeholder="Alguém da família tem alguma doença? Se sim, quais?"></textarea>
+            </div>
+            <div class="form-field">
+                <label for="medicamentos">Faz uso de medicamentos? Quais?</label>
+                <textarea id="medicamentos" name="medicamentos" placeholder="Faz uso de medicamentos? Quais?"></textarea>
+            </div>
+            <div class="form-field">
+                <label for="cirurgias">Já passou por cirurgias? Quais?</label>
+                <textarea id="cirurgias" name="cirurgias" placeholder="Já passou por cirurgias? Quais?"></textarea>
+            </div>
+            <div class="form-field">
+                <label for="doresLesoes">Possui dores ou lesões?</label>
+                <textarea id="doresLesoes" name="doresLesoes" placeholder="Possui dores ou lesões?"></textarea>
+            </div>
+            <div class="form-field">
+                <label for="limitacoes">Alguma limitação para exercícios físicos?</label>
+                <textarea id="limitacoes" name="limitacoes" placeholder="Alguma limitação para exercícios físicos?"></textarea>
+            </div>
+            <div class="form-field">
+                <label for="fuma">Você Fuma?</label>
+                <input id="fuma" type="text" name="fuma" placeholder="Você Fuma?" />
+            </div>
+            <div class="form-field">
+                <label for="bebe">Você Bebe? Se sim, com qual frequência?</label>
+                <input id="bebe" type="text" name="bebe" placeholder="Você Bebe? Se sim, com qual frequência?" />
+            </div>
+            <div class="form-field">
+                <label for="qualidadeSono">Qualidade do sono</label>
+                <input id="qualidadeSono" type="text" name="qualidadeSono" placeholder="Qualidade do sono" />
+            </div>
+            <div class="form-field">
+                <label for="horasSono">Horas de sono por noite</label>
+                <input id="horasSono" type="number" step="0.1" name="horasSono" placeholder="Horas de sono por noite" />
+            </div>
+            <div class="form-field">
+                <label for="nivelAtividade">Nível de atividade física atual</label>
+                <input id="nivelAtividade" type="text" name="nivelAtividade" placeholder="Nível de atividade física atual" />
+            </div>
+            <div class="form-field">
+                <label for="tiposExercicio">Tipos de exercício que pratica ou já praticou</label>
+                <input id="tiposExercicio" type="text" name="tiposExercicio" placeholder="Tipos de exercício que pratica ou já praticou" />
+            </div>
+            <div class="form-field">
+                <label for="frequenciaTreinos">Frequência de treinos pretendida</label>
+                <input id="frequenciaTreinos" type="text" name="frequenciaTreinos" placeholder="Frequência de treinos pretendida" />
+            </div>
+            <div class="form-field">
+                <label for="agua">Consome água com frequência? (litros/dia)</label>
+                <input id="agua" type="text" name="agua" placeholder="Consome água com frequência? (litros/dia)" />
+            </div>
+            <div class="form-field">
+                <label for="tempoObjetivos">Em quanto tempo gostaria de alcançar seus objetivos?</label>
+                <input id="tempoObjetivos" type="text" name="tempoObjetivos" placeholder="Em quanto tempo gostaria de alcançar seus objetivos?" />
+            </div>
+            <div class="form-field">
+                <label for="dispostoMudanca">Está disposto(a) a mudar hábitos alimentares e de treino?</label>
+                <input id="dispostoMudanca" type="text" name="dispostoMudanca" placeholder="Está disposto(a) a mudar hábitos alimentares e de treino?" />
+            </div>
+            <div class="form-field" style="grid-column: span 2;">
+                <label for="comentarios">Qualquer comentário ou observação que queira fazer</label>
+                <textarea id="comentarios" name="comentarios" placeholder="Qualquer comentário ou observação que queira fazer"></textarea>
+            </div>
             <div class="form-actions">
                 <button type="button" id="voltar">Voltar</button>
                 <button type="button" id="importarPlanilha">Importar do Google Sheets</button>
