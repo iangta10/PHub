@@ -179,15 +179,13 @@ router.post('/alunos/:alunoId/gerarTreinoIA', verifyToken, async (req, res) => {
             if (!Array.isArray(dia.exercicios)) return;
             const exs = [];
             dia.exercicios.forEach(ex => {
-                if (exerciciosValidos.has(ex.nome)) {
-                    exs.push({
-                        nome: ex.nome,
-                        series: ex.series || null,
-                        repeticoes: ex.repeticoes || null
-                    });
-                } else {
-                    console.warn(`Exercício não encontrado: ${ex.nome}`);
-                }
+                if (!ex.nome) return;
+                exs.push({
+                    nome: ex.nome,
+                    series: ex.series || null,
+                    repeticoes: ex.repeticoes || null,
+                    invalido: exerciciosValidos.has(ex.nome) ? undefined : true
+                });
             });
             if (exs.length) {
                 diasSalvos.push({
