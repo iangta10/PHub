@@ -52,13 +52,13 @@ router.post('/gerar-ia', verifyToken, async (req, res) => {
       if (!Array.isArray(dia.exercicios)) return;
       const exs = [];
       dia.exercicios.forEach(ex => {
-        if (exerciciosValidos.has(ex.nome)) {
-          exs.push({
-            nome: ex.nome,
-            series: ex.series || null,
-            repeticoes: ex.repeticoes || null
-          });
-        }
+        if (!ex.nome) return;
+        exs.push({
+          nome: ex.nome,
+          series: ex.series || null,
+          repeticoes: ex.repeticoes || null,
+          invalido: exerciciosValidos.has(ex.nome) ? undefined : true
+        });
       });
       if (exs.length) {
         diasProcessados.push({
