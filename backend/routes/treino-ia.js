@@ -22,8 +22,16 @@ router.post('/gerar-ia', verifyToken, async (req, res) => {
     if (!alunoDoc.exists) {
       return res.status(404).json({ error: 'Aluno não encontrado' });
     }
+    const anamneseDoc = await admin.firestore()
+      .collection('users').doc(personalId)
+      .collection('alunos').doc(alunoId)
+      .collection('anamnese').doc('respostas')
+      .get();
 
-    const treino = await gerarTreinoIA(alunoDoc.data());
+    const alunoData = alunoDoc.data();
+    const anamneseData = anamneseDoc.exists ? anamneseDoc.data() : {};
+
+    const treino = await gerarTreinoIA({ ...alunoData, ...anamneseData });
     res.json({ treino });
   } catch (err) {
     console.error('Erro ao gerar treino com IA:', err);
