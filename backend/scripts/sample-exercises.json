@@ -1,0 +1,14 @@
+[
+  {
+    "nome": "Agachamento",
+    "categoria": "Força",
+    "grupoMuscularPrincipal": "Quadríceps",
+    "gruposMusculares": ["Glúteos", "Posterior de coxa"]
+  },
+  {
+    "nome": "Supino Reto",
+    "categoria": "Força",
+    "grupoMuscularPrincipal": "Peito",
+    "gruposMusculares": ["Tríceps", "Ombros"]
+  }
+]
