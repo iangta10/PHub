@@ -261,7 +261,13 @@ function fillTreinoForm(alunoId, treino) {
     const form = document.getElementById('novoTreinoForm');
     form.aluno.value = alunoId;
     form.nome.value = treino.nome || '';
-    form.dataset.editar = treino.id;
+    if (treino.id) {
+        form.dataset.editar = treino.id;
+        document.getElementById('cancelEdit').classList.remove('hidden');
+    } else {
+        form.removeAttribute('data-editar');
+        document.getElementById('cancelEdit').classList.add('hidden');
+    }
     document.getElementById('diasContainer').innerHTML = '';
     (treino.dias || []).forEach((dia, idx) => {
         addDia();
@@ -281,7 +287,6 @@ function fillTreinoForm(alunoId, treino) {
             exDiv.querySelector('.observacoes').value = exData.observacoes || '';
         });
     });
-    document.getElementById('cancelEdit').classList.remove('hidden');
     form.scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -326,9 +331,11 @@ export async function gerarTreinoComIA(alunoId) {
         });
         if (!resp.ok) throw new Error('Falha ao gerar treino');
         const data = await resp.json();
-        msg.textContent = 'Treino gerado com sucesso!';
+        if (!Array.isArray(data.dias)) throw new Error('Resposta inválida');
+        fillTreinoForm(alunoId, { nome: '', dias: data.dias });
+        msg.textContent = 'Treino gerado! Revise e clique em Criar.';
         const content = document.getElementById('treinoGerado');
-        if (content) content.textContent = data.treino;
+        if (content) content.textContent = JSON.stringify(data.dias, null, 2);
     } catch (err) {
         console.error('Erro ao gerar treino com IA:', err);
         msg.textContent = 'Erro ao gerar treino com IA';
