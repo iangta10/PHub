@@ -21,9 +21,21 @@ async function gerarTreinoIA(aluno) {
     messages: [{ role: "user", content: prompt }],
   });
 
-  const text = chat.choices[0].message.content.trim();
+  const text = chat.choices?.[0]?.message?.content?.trim() || '';
+  let jsonText = text;
+
+  const codeBlock = jsonText.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (codeBlock) {
+    jsonText = codeBlock[1];
+  } else {
+    const braceMatch = jsonText.match(/{[\s\S]*}/);
+    if (braceMatch) {
+      jsonText = braceMatch[0];
+    }
+  }
+
   try {
-    return JSON.parse(text);
+    return JSON.parse(jsonText);
   } catch (err) {
     throw new Error('Resposta de IA inválida');
   }
