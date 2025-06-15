@@ -31,8 +31,45 @@ router.post('/gerar-ia', verifyToken, async (req, res) => {
     const alunoData = alunoDoc.data();
     const anamneseData = anamneseDoc.exists ? anamneseDoc.data() : {};
 
-    const treino = await gerarTreinoIA({ ...alunoData, ...anamneseData });
-    res.json({ treino });
+    const treinoIA = await gerarTreinoIA({ ...alunoData, ...anamneseData });
+
+    if (!treinoIA || !Array.isArray(treinoIA.dias)) {
+      return res.status(400).json({ error: 'Resposta de IA invalida' });
+    }
+
+    const [globaisSnap, pessoaisSnap] = await Promise.all([
+      admin.firestore().collection('exerciciosSistema').get(),
+      admin.firestore().collection('users').doc(personalId).collection('exercicios').get()
+    ]);
+
+    const exerciciosValidos = new Set();
+    globaisSnap.forEach(d => { if (d.data().nome) exerciciosValidos.add(d.data().nome); });
+    pessoaisSnap.forEach(d => { if (d.data().nome) exerciciosValidos.add(d.data().nome); });
+
+    const diasProcessados = [];
+
+    treinoIA.dias.forEach(dia => {
+      if (!Array.isArray(dia.exercicios)) return;
+      const exs = [];
+      dia.exercicios.forEach(ex => {
+        if (exerciciosValidos.has(ex.nome)) {
+          exs.push({
+            nome: ex.nome,
+            series: ex.series || null,
+            repeticoes: ex.repeticoes || null
+          });
+        }
+      });
+      if (exs.length) {
+        diasProcessados.push({
+          nome: dia.dia || dia.nome || '',
+          grupo: dia.grupo || null,
+          exercicios: exs
+        });
+      }
+    });
+
+    res.json({ dias: diasProcessados });
   } catch (err) {
     console.error('Erro ao gerar treino com IA:', err);
     res.status(500).json({ error: 'Erro ao gerar treino com IA' });
