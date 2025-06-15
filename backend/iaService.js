@@ -15,14 +15,13 @@ async function gerarTreinoIA(aluno) {
     `Objetivo: ${objetivo}\n` +
     `Frequencia: ${frequencia}`;
 
-  const generation = await client.textGeneration({
-    provider: 'featherless-ai',
-    model: 'mistralai/Magistral-Small-2506',
-    inputs: prompt,
-    parameters: { max_new_tokens: 512 }
+  const chat = await client.chatCompletion({
+    provider: "featherless-ai",
+    model: "mistralai/Magistral-Small-2506",
+    messages: [{ role: "user", content: prompt }],
   });
 
-  const text = generation.generated_text?.trim() || '';
+  const text = chat.choices?.[0]?.message?.content?.trim() || '';
   let jsonText = text;
 
   const codeBlock = jsonText.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
