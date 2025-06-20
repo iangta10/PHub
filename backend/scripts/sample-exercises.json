@@ -1,14 +1,62 @@
 [
   {
-    "nome": "Agachamento",
-    "categoria": "Força",
-    "grupoMuscularPrincipal": "Quadríceps",
-    "gruposMusculares": ["Glúteos", "Posterior de coxa"]
-  },
-  {
-    "nome": "Supino Reto",
+    "nome": "Supino Inclinado",
     "categoria": "Força",
     "grupoMuscularPrincipal": "Peito",
     "gruposMusculares": ["Tríceps", "Ombros"]
+  },
+  {
+    "nome": "Crucifixo na Polia",
+    "categoria": "Força",
+    "grupoMuscularPrincipal": "Peito",
+    "gruposMusculares": ["Tríceps", "Ombros"]
+  },
+  {
+    "nome": "Barra Fixa",
+    "categoria": "Força",
+    "grupoMuscularPrincipal": "Costas",
+    "gruposMusculares": ["Bíceps", "Antebraço"]
+  },
+  {
+    "nome": "Remada Curvada",
+    "categoria": "Força",
+    "grupoMuscularPrincipal": "Costas",
+    "gruposMusculares": ["Bíceps", "Lombar"]
+  },
+  {
+    "nome": "Puxada Alta",
+    "categoria": "Força",
+    "grupoMuscularPrincipal": "Costas",
+    "gruposMusculares": ["Bíceps", "Dorsal"]
+  },
+  {
+    "nome": "Desenvolvimento Militar",
+    "categoria": "Força",
+    "grupoMuscularPrincipal": "Ombros",
+    "gruposMusculares": ["Tríceps", "Trapézio"]
+  },
+  {
+    "nome": "Encolhimento",
+    "categoria": "Força",
+    "grupoMuscularPrincipal": "Ombros",
+    "gruposMusculares": ["Trapézio"]
+  },
+  {
+    "nome": "Rosca Direta",
+    "categoria": "Força",
+    "grupoMuscularPrincipal": "Braços",
+    "gruposMusculares": ["Bíceps"]
+  },
+  {
+    "nome": "Tríceps Corda",
+    "categoria": "Força",
+    "grupoMuscularPrincipal": "Braços",
+    "gruposMusculares": ["Tríceps"]
+  },
+  {
+    "nome": "Martelo",
+    "categoria": "Força",
+    "grupoMuscularPrincipal": "Braços",
+    "gruposMusculares": ["Bíceps", "Antebraço"]
   }
 ]
