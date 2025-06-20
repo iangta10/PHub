@@ -31,20 +31,22 @@ router.post('/gerar-ia', verifyToken, async (req, res) => {
     const alunoData = alunoDoc.data();
     const anamneseData = anamneseDoc.exists ? anamneseDoc.data() : {};
 
-    const treinoIA = await gerarTreinoIA({ ...alunoData, ...anamneseData });
-
-    if (!treinoIA || !Array.isArray(treinoIA.dias)) {
-      return res.status(400).json({ error: 'Resposta de IA invalida' });
-    }
-
     const [globaisSnap, pessoaisSnap] = await Promise.all([
       admin.firestore().collection('exerciciosSistema').get(),
       admin.firestore().collection('users').doc(personalId).collection('exercicios').get()
     ]);
 
-    const exerciciosValidos = new Set();
-    globaisSnap.forEach(d => { if (d.data().nome) exerciciosValidos.add(d.data().nome); });
-    pessoaisSnap.forEach(d => { if (d.data().nome) exerciciosValidos.add(d.data().nome); });
+    const nomesExercicios = [];
+    globaisSnap.forEach(d => { if (d.data().nome) nomesExercicios.push(d.data().nome); });
+    pessoaisSnap.forEach(d => { if (d.data().nome) nomesExercicios.push(d.data().nome); });
+
+    const treinoIA = await gerarTreinoIA({ ...alunoData, ...anamneseData }, nomesExercicios);
+
+    if (!treinoIA || !Array.isArray(treinoIA.dias)) {
+      return res.status(400).json({ error: 'Resposta de IA invalida' });
+    }
+
+    const exerciciosValidos = new Set(nomesExercicios);
 
     const diasProcessados = [];
 
