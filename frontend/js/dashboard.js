@@ -13,12 +13,16 @@ document.querySelectorAll(".sidebar li").forEach(item => {
                 const { loadTreinosSection } = await import("./treinos.js");
                 const aluno = new URLSearchParams(window.location.search).get('aluno') || '';
                 loadTreinosSection(aluno);
-            } else if (section === "exercicios") {
-                const { loadExerciciosSection } = await import("./exercicios.js");
-                loadExerciciosSection();
-            } else if (section === "avaliacoes") {
-                const { loadAvaliacoesSection } = await import("./avaliacoes.js");
-                loadAvaliacoesSection();
+           } else if (section === "exercicios") {
+               const { loadExerciciosSection } = await import("./exercicios.js");
+               loadExerciciosSection();
+           } else if (section === "avaliacoes") {
+               const { loadAvaliacoesSection } = await import("./avaliacoes.js");
+               loadAvaliacoesSection();
+            } else if (section === "agenda") {
+                const { loadAgendaSection } = await import("./agenda.js");
+                const aluno = new URLSearchParams(window.location.search).get('aluno') || '';
+                loadAgendaSection(aluno);
             } else if (section === "meus-treinos") {
                 const { loadMeusTreinos } = await import("./treinos.js");
                 loadMeusTreinos();
