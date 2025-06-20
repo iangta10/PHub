@@ -494,3 +494,58 @@ body {
     padding: 6px 0;
     border-bottom: 1px solid #333;
 }
+
+/* ===== Agenda ===== */
+.agenda-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.calendario {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.cal-head {
+    text-align: center;
+    font-weight: bold;
+    padding-bottom: 4px;
+}
+
+.cal-cell {
+    min-height: 80px;
+    background-color: #1e1e1e;
+    border-radius: 4px;
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+}
+
+.cal-dia {
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.evt {
+    padding: 2px 4px;
+    border-radius: 4px;
+    margin-bottom: 2px;
+    color: #000;
+    font-size: 11px;
+}
+.agendada { background-color: #f58725; }
+.realizada { background-color: #4caf50; }
+.cancelada { background-color: #f44336; }
+.disponibilidade { background-color: #2196f3; }
+.bloqueado { background-color: #757575; }
