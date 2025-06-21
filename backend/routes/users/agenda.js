@@ -102,7 +102,17 @@ router.post('/agenda/aulas', verifyToken, async (req, res) => {
             alunoEmail = req.user.email;
         }
 
-        // Limite de 2 aulas por semana
+        // Limite de aulas por semana conforme plano do aluno
+        let aulasSemana = 2;
+        if (alunoId) {
+            const alunoDoc = await admin.firestore()
+                .collection('users').doc(personalId)
+                .collection('alunos').doc(alunoId).get();
+            if (alunoDoc.exists && alunoDoc.data().aulasPorSemana) {
+                aulasSemana = alunoDoc.data().aulasPorSemana;
+            }
+        }
+
         const inicioDate = new Date(inicio);
         const semanaInicio = new Date(inicioDate);
         semanaInicio.setUTCHours(0,0,0,0);
@@ -117,7 +127,7 @@ router.post('/agenda/aulas', verifyToken, async (req, res) => {
             .where('inicio', '>=', semanaInicio.toISOString())
             .where('inicio', '<', semanaFim.toISOString())
             .get();
-        if (semanaSnap.size >= 2) {
+        if (semanaSnap.size >= aulasSemana) {
             return res.status(400).json({ error: 'Limite semanal atingido' });
         }
 

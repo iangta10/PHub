@@ -5,7 +5,7 @@ const verifyToken = require('../../middleware/verifyToken');
 
 // Criar aluno
 router.post('/alunos', verifyToken, async (req, res) => {
-    const { nome, email, observacoes } = req.body;
+    const { nome, email, observacoes, aulasPorSemana } = req.body;
     const personalId = req.user.uid;
 
     try {
@@ -17,6 +17,7 @@ router.post('/alunos', verifyToken, async (req, res) => {
                 nome,
                 email,
                 observacoes,
+                aulasPorSemana: aulasPorSemana || 2,
                 criadoEm: new Date().toISOString()
             });
 
@@ -84,7 +85,7 @@ router.get('/alunos/:id', verifyToken, async (req, res) => {
 router.put('/alunos/:id', verifyToken, async (req, res) => {
     const personalId = req.user.uid;
     const alunoId = req.params.id;
-    const { nome, email, observacoes } = req.body;
+    const { nome, email, observacoes, aulasPorSemana } = req.body;
 
     try {
         const alunoRef = admin.firestore()
@@ -97,12 +98,35 @@ router.put('/alunos/:id', verifyToken, async (req, res) => {
         if (nome !== undefined) updateData.nome = nome;
         if (email !== undefined) updateData.email = email;
         if (observacoes !== undefined) updateData.observacoes = observacoes;
+        if (aulasPorSemana !== undefined) updateData.aulasPorSemana = aulasPorSemana;
 
         await alunoRef.update(updateData);
         res.status(200).json({ message: 'Aluno atualizado' });
     } catch (err) {
         console.error('Erro ao atualizar aluno:', err);
         res.status(500).json({ error: 'Erro ao atualizar aluno' });
+    }
+});
+
+// Definir plano de um aluno (após confirmação de pagamento)
+router.post('/alunos/:id/plan', verifyToken, async (req, res) => {
+    const personalId = req.user.uid;
+    const alunoId = req.params.id;
+    const { planId, aulasPorSemana } = req.body;
+
+    if (!aulasPorSemana) {
+        return res.status(400).json({ error: 'Dados incompletos' });
+    }
+
+    try {
+        const alunoRef = admin.firestore()
+            .collection('users').doc(personalId)
+            .collection('alunos').doc(alunoId);
+        await alunoRef.set({ planId: planId || null, aulasPorSemana }, { merge: true });
+        res.json({ message: 'Plano definido' });
+    } catch (err) {
+        console.error('Erro ao definir plano:', err);
+        res.status(500).json({ error: 'Erro ao definir plano' });
     }
 });
 
