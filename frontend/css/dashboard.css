@@ -560,3 +560,21 @@ body {
 .cancelada { background-color: #f44336; }
 .disponibilidade { background-color: #2196f3; }
 .bloqueado { background-color: #757575; }
+
+/* === Disponibilidade Modal === */
+.disp-container {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.disp-container > div {
+    flex: 1;
+    min-width: 240px;
+}
+
+.dia-semana {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
