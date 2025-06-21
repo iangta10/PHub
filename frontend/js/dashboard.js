@@ -57,7 +57,7 @@ function loadHomeSection() {
             <button class="quick-btn" data-action="novo-aluno"><i class="fas fa-user-plus"></i>Cadastrar novo aluno</button>
             <button class="quick-btn" data-action="nova-avaliacao"><i class="fas fa-notes-medical"></i>Nova avaliação</button>
             <button class="quick-btn" data-action="nova-aula"><i class="fas fa-calendar-plus"></i>Agendar aula</button>
-            <button class="quick-btn" data-action="fichas"><i class="fas fa-folder-open"></i>Ver fichas dos alunos</button>
+            <button class="quick-btn" data-action="invite-link"><i class="fas fa-link"></i>Gerar link de convite</button>
             <button class="quick-btn" data-action="relatorio"><i class="fas fa-chart-line"></i>Relatorio mensal</button>
             <button class="quick-btn" data-action="criar-treino"><i class="fas fa-dumbbell"></i>Criar treino</button>
         </section>
@@ -78,6 +78,7 @@ function loadHomeSection() {
     const novaAvalBtn = content.querySelector('[data-action="nova-avaliacao"]');
     const novaAulaBtn = content.querySelector('[data-action="nova-aula"]');
     const criarTreinoBtn = content.querySelector('[data-action="criar-treino"]');
+    const inviteLinkBtn = content.querySelector('[data-action="invite-link"]');
 
     if (novoAlunoBtn) {
         novoAlunoBtn.addEventListener('click', async () => {
@@ -101,6 +102,24 @@ function loadHomeSection() {
     if (criarTreinoBtn) {
         criarTreinoBtn.addEventListener('click', () => {
             openAlunoSelectModal(id => window.location.href = `dashboard.html?section=treinos&aluno=${id}`);
+        });
+    }
+
+    if (inviteLinkBtn) {
+        inviteLinkBtn.addEventListener('click', async () => {
+            try {
+                const res = await fetchWithFreshToken('http://localhost:3000/users/personal-page');
+                const page = await res.json();
+                if (!page.slug) {
+                    alert('Defina sua página em Perfil antes de gerar o link.');
+                    return;
+                }
+                const link = `${window.location.origin}/personal_landing.html?slug=${encodeURIComponent(page.slug)}`;
+                await navigator.clipboard.writeText(link);
+                alert('Link copiado para a área de transferência.');
+            } catch (err) {
+                alert('Erro ao gerar link.');
+            }
         });
     }
 }
