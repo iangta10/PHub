@@ -26,6 +26,9 @@ document.querySelectorAll(".sidebar li").forEach(item => {
             } else if (section === "meus-treinos") {
                 const { loadMeusTreinos } = await import("./treinos.js");
                 loadMeusTreinos();
+            } else if (section === "perfil") {
+                const { loadProfileSection } = await import("./profile.js");
+                loadProfileSection();
             } else if (section === "home") {
                 loadHomeSection();
             } else {
