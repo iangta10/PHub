@@ -4,7 +4,7 @@ const admin = require('../../firebase-admin');
 const verifyToken = require('../../middleware/verifyToken');
 
 router.post('/register', verifyToken, async (req, res) => {
-    const { email, username, tipo, codigo } = req.body;
+    const { email, username, tipo, codigo, nome, personalSlug, aulasPorSemana } = req.body;
     const uid = req.user.uid;
 
     if (!email || !tipo) {
@@ -53,7 +53,35 @@ router.post('/register', verifyToken, async (req, res) => {
         }
 
         if (tipo === 'aluno') {
-            // ✅ Verifica se email está registrado em qualquer subcoleção /alunos
+            if (personalSlug) {
+                const snap = await admin.firestore()
+                    .collection('users')
+                    .where('page.slug', '==', personalSlug)
+                    .limit(1)
+                    .get();
+                if (snap.empty) {
+                    return res.status(404).json({ message: 'Personal não encontrado' });
+                }
+                const personalId = snap.docs[0].id;
+                const now = new Date().toISOString();
+                await admin.firestore().collection('users').doc(uid).set({
+                    email,
+                    role: 'aluno',
+                    personalId,
+                    aulasPorSemana: aulasPorSemana ? parseInt(aulasPorSemana) : 1,
+                    nome: nome || '',
+                    createdAt: now
+                });
+                await admin.firestore().collection('users').doc(personalId)
+                    .collection('alunos').doc(uid).set({
+                        nome: nome || '',
+                        email,
+                        aulasPorSemana: aulasPorSemana ? parseInt(aulasPorSemana) : 1,
+                        criadoEm: now
+                    });
+                return res.status(200).json({ message: 'Aluno registrado com sucesso' });
+            }
+
             const snapshot = await admin.firestore()
                 .collectionGroup('alunos')
                 .where('email', '==', email)
