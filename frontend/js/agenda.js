@@ -100,31 +100,37 @@ export async function loadAgendaSection(alunoParam = '') {
             const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
             modal.innerHTML = `
                 <div class="modal-content">
-                    <h3>Disponibilidade Semanal</h3>
-                    <form id="formDisp">
-                        ${dias.map((n,i)=>{
-                            const item = semana.find(d=>d.diaSemana===i) || {};
-                            return `<div>
-                                <label>${n}</label>
-                                <input type="time" name="inicio${i}" value="${item.inicio||''}" />
-                                <input type="time" name="fim${i}" value="${item.fim||''}" />
-                            </div>`;
-                        }).join('')}
-                        <div>
-                            <button type="submit">Salvar</button>
-                            <button type="button" class="cancelModal">Fechar</button>
+                    <div class="disp-container">
+                        <div class="disp-semanal">
+                            <h3>Disponibilidade Semanal</h3>
+                            <form id="formDisp">
+                                ${dias.map((n,i)=>{
+                                    const item = semana.find(d=>d.diaSemana===i) || {};
+                                    const checked = item.inicio ? 'checked' : '';
+                                    return `<div class="dia-semana">
+                                        <label><input type="checkbox" name="chk${i}" ${checked}> ${n}</label>
+                                        <input type="time" name="hora${i}" value="${item.inicio||''}" />
+                                    </div>`;
+                                }).join('')}
+                                <div>
+                                    <button type="submit">Salvar</button>
+                                    <button type="button" class="cancelModal">Fechar</button>
+                                </div>
+                            </form>
                         </div>
-                    </form>
-                    <h3>Ajustes de Dias</h3>
-                    <ul id="ajustesList">
-                        ${disp.filter(d=>d.dia).map(d=>`<li data-id="${d.id}">${d.dia} ${d.inicio}-${d.fim} <button class="remAjuste">Excluir</button></li>`).join('')}
-                    </ul>
-                    <form id="novoAjusteForm">
-                        <input type="date" name="dia" required />
-                        <input type="time" name="inicio" required />
-                        <input type="time" name="fim" required />
-                        <button type="submit">Adicionar</button>
-                    </form>
+                        <div class="disp-ajustes">
+                            <h3>Dia Específico</h3>
+                            <ul id="ajustesList">
+                                ${disp.filter(d=>d.dia).map(d=>`<li data-id="${d.id}">${d.dia} ${d.inicio}-${d.fim} <button class="remAjuste">Excluir</button></li>`).join('')}
+                            </ul>
+                            <form id="novoAjusteForm">
+                                <input type="date" name="dia" required />
+                                <input type="time" name="inicio" required />
+                                <input type="time" name="fim" required />
+                                <button type="submit">Adicionar</button>
+                            </form>
+                        </div>
+                    </div>
                 </div>`;
             document.body.appendChild(modal);
             const remove = () => modal.remove();
@@ -134,21 +140,22 @@ export async function loadAgendaSection(alunoParam = '') {
                 e.preventDefault();
                 const form = e.target;
                 for(let i=0;i<7;i++){
-                    const inicio = form[`inicio${i}`].value;
-                    const fim = form[`fim${i}`].value;
+                    const checked = form[`chk${i}`].checked;
+                    const hora = form[`hora${i}`].value;
                     const item = semana.find(d=>d.diaSemana===i);
-                    if(inicio && fim){
+                    if(checked && hora){
+                        const body = {diaSemana:i,inicio:hora,fim:hora};
                         if(item){
                             await fetchWithFreshToken(`http://localhost:3000/users/agenda/disponibilidade/${item.id}`,{
                                 method:'PUT',
                                 headers:{'Content-Type':'application/json'},
-                                body: JSON.stringify({diaSemana:i,inicio,fim})
+                                body: JSON.stringify(body)
                             });
                         }else{
                             await fetchWithFreshToken('http://localhost:3000/users/agenda/disponibilidade',{
                                 method:'POST',
                                 headers:{'Content-Type':'application/json'},
-                                body: JSON.stringify({diaSemana:i,inicio,fim})
+                                body: JSON.stringify(body)
                             });
                         }
                     }else if(item){
