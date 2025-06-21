@@ -54,8 +54,9 @@ export async function loadAgendaSection(alunoParam = '') {
                             ${alunos.map(a => `<option value="${a.id}">${a.nome}</option>`).join('')}
                         </select>
                         <input type="date" name="dia" required />
-                        <input type="time" name="inicio" required />
-                        <input type="time" name="fim" required />
+                        <select name="hora" disabled required>
+                            <option value="">Selecione o horário</option>
+                        </select>
                         <div>
                             <button type="submit">Agendar</button>
                             <button type="button" class="cancelModal">Cancelar</button>
@@ -66,12 +67,34 @@ export async function loadAgendaSection(alunoParam = '') {
             const remove = () => modal.remove();
             modal.addEventListener('click', e => { if (e.target === modal) remove(); });
             modal.querySelector('.cancelModal').addEventListener('click', remove);
-            modal.querySelector('#formAgendamento').addEventListener('submit', async e => {
-                e.preventDefault();
-                const form = e.target;
+            const form = modal.querySelector('#formAgendamento');
+            const selectHora = form.hora;
+            form.dia.addEventListener('change', async () => {
                 const dia = form.dia.value;
-                const inicio = `${dia}T${form.inicio.value}:00.000Z`;
-                const fim = `${dia}T${form.fim.value}:00.000Z`;
+                if(!dia){
+                    selectHora.innerHTML = '<option value="">Selecione o horário</option>';
+                    selectHora.disabled = true;
+                    return;
+                }
+                const [respDisp, respAulas] = await Promise.all([
+                    fetchWithFreshToken('http://localhost:3000/users/agenda/disponibilidade'),
+                    fetchWithFreshToken(`http://localhost:3000/users/agenda/aulas?inicio=${dia}T00:00:00.000Z&fim=${dia}T23:59:59.999Z`)
+                ]);
+                const disp = await respDisp.json();
+                const aulas = await respAulas.json();
+                const horarios = horariosDisponiveis(disp, aulas, dia);
+                selectHora.innerHTML = '<option value="">Selecione o horário</option>' +
+                    horarios.map(h=>`<option value="${h}">${h}</option>`).join('');
+                selectHora.disabled = horarios.length===0;
+            });
+
+            form.addEventListener('submit', async e => {
+                e.preventDefault();
+                const dia = form.dia.value;
+                const inicio = `${dia}T${form.hora.value}:00.000Z`;
+                const fimDate = new Date(inicio);
+                fimDate.setUTCHours(fimDate.getUTCHours()+1);
+                const fim = fimDate.toISOString();
                 const body = { alunoId: form.aluno.value, inicio, fim };
                 const r = await fetchWithFreshToken('http://localhost:3000/users/agenda/aulas', {
                     method: 'POST',
@@ -109,7 +132,10 @@ export async function loadAgendaSection(alunoParam = '') {
                                     const checked = item.inicio ? 'checked' : '';
                                     return `<div class="dia-semana">
                                         <label><input type="checkbox" name="chk${i}" ${checked}> ${n}</label>
-                                        <input type="time" name="hora${i}" value="${item.inicio||''}" />
+                                        <div class="hora-container">
+                                            <input type="time" name="inicio${i}" value="${item.inicio||''}" />
+                                            <input type="time" name="fim${i}" value="${item.fim||''}" />
+                                        </div>
                                     </div>`;
                                 }).join('')}
                                 <div>
@@ -121,7 +147,12 @@ export async function loadAgendaSection(alunoParam = '') {
                         <div class="disp-ajustes">
                             <h3>Dia Específico</h3>
                             <ul id="ajustesList">
-                                ${disp.filter(d=>d.dia).map(d=>`<li data-id="${d.id}">${d.dia} ${d.inicio}-${d.fim} <button class="remAjuste">Excluir</button></li>`).join('')}
+                                ${disp.filter(d=>d.dia).map(d=>`
+                                    <li data-id="${d.id}" data-dia="${d.dia}" data-inicio="${d.inicio}" data-fim="${d.fim}">
+                                        ${d.dia} ${d.inicio}-${d.fim}
+                                        <button class="editAjuste">Editar</button>
+                                        <button class="remAjuste">Excluir</button>
+                                    </li>`).join('')}
                             </ul>
                             <form id="novoAjusteForm">
                                 <input type="date" name="dia" required />
@@ -141,10 +172,11 @@ export async function loadAgendaSection(alunoParam = '') {
                 const form = e.target;
                 for(let i=0;i<7;i++){
                     const checked = form[`chk${i}`].checked;
-                    const hora = form[`hora${i}`].value;
+                    const inicio = form[`inicio${i}`].value;
+                    const fim = form[`fim${i}`].value;
                     const item = semana.find(d=>d.diaSemana===i);
-                    if(checked && hora){
-                        const body = {diaSemana:i,inicio:hora,fim:hora};
+                    if(checked && inicio && fim){
+                        const body = {diaSemana:i,inicio,fim};
                         if(item){
                             await fetchWithFreshToken(`http://localhost:3000/users/agenda/disponibilidade/${item.id}`,{
                                 method:'PUT',
@@ -187,6 +219,24 @@ export async function loadAgendaSection(alunoParam = '') {
                 btn.addEventListener('click', async ()=>{
                     const id = btn.parentElement.getAttribute('data-id');
                     await fetchWithFreshToken(`http://localhost:3000/users/agenda/disponibilidade/${id}`,{ method:'DELETE' });
+                    remove();
+                    render();
+                });
+            });
+            modal.querySelectorAll('.editAjuste').forEach(btn=>{
+                btn.addEventListener('click', async ()=>{
+                    const li = btn.parentElement;
+                    const id = li.getAttribute('data-id');
+                    const dia = li.getAttribute('data-dia');
+                    const inicio = prompt('Início', li.getAttribute('data-inicio'));
+                    if(!inicio) return;
+                    const fim = prompt('Fim', li.getAttribute('data-fim'));
+                    if(!fim) return;
+                    await fetchWithFreshToken(`http://localhost:3000/users/agenda/disponibilidade/${id}`,{
+                        method:'PUT',
+                        headers:{'Content-Type':'application/json'},
+                        body: JSON.stringify({dia,inicio,fim})
+                    });
                     remove();
                     render();
                 });
@@ -284,6 +334,29 @@ export async function loadAgendaSection(alunoParam = '') {
             const aluno = ev.alunoNome ? ` - ${ev.alunoNome}` : '';
             return `<li>${data}${aluno}</li>`;
         }).join('');
+    }
+
+    function horariosDisponiveis(disponibilidade, aulas, dia){
+        const resultado = [];
+        const d = new Date(dia + 'T00:00:00Z');
+        let itens = disponibilidade.filter(it=>it.dia===dia);
+        if(itens.length===0){
+            itens = disponibilidade.filter(it=>it.diaSemana===d.getUTCDay());
+        }
+        itens.forEach(it=>{
+            let hInicio = parseInt(it.inicio.split(':')[0]);
+            let hFim = parseInt(it.fim.split(':')[0]);
+            for(let h=hInicio; h<hFim; h++){
+                resultado.push(`${String(h).padStart(2,'0')}:00`);
+            }
+        });
+        aulas.filter(a=>a.inicio.startsWith(dia)).forEach(a=>{
+            const h = new Date(a.inicio).getUTCHours();
+            const hora = `${String(h).padStart(2,'0')}:00`;
+            const idx = resultado.indexOf(hora);
+            if(idx>=0) resultado.splice(idx,1);
+        });
+        return Array.from(new Set(resultado));
     }
 
     render();
