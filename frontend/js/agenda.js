@@ -5,11 +5,11 @@ export async function loadAgendaSection(alunoParam = '') {
     content.innerHTML = '<h2>Carregando agenda...</h2>';
 
     const hoje = new Date();
-    let currentMonth = new Date(Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth(), 1));
+    let currentMonth = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
 
     async function render() {
         const inicio = new Date(currentMonth);
-        const fim = new Date(Date.UTC(currentMonth.getUTCFullYear(), currentMonth.getUTCMonth() + 1, 0));
+        const fim = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
         const url = `http://localhost:3000/users/agenda/aulas?inicio=${inicio.toISOString()}&fim=${fim.toISOString()}` + (alunoParam ? `&aluno=${alunoParam}` : '');
         const resp = await fetchWithFreshToken(url);
         const eventos = await resp.json();
@@ -22,12 +22,14 @@ export async function loadAgendaSection(alunoParam = '') {
             </div>
             <div id="calendario" class="calendario"></div>
             <button id="novoAgendamento">Novo agendamento</button>
+            <ul id="proximasAulas" class="lista-aulas"></ul>
         `;
-        document.getElementById('prevMes').addEventListener('click', () => { currentMonth.setUTCMonth(currentMonth.getUTCMonth() - 1); render(); });
-        document.getElementById('nextMes').addEventListener('click', () => { currentMonth.setUTCMonth(currentMonth.getUTCMonth() + 1); render(); });
+        document.getElementById('prevMes').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth() - 1); render(); });
+        document.getElementById('nextMes').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth() + 1); render(); });
         document.getElementById('novoAgendamento').addEventListener('click', showNovoAgendamentoModal);
         document.getElementById('mesAtual').textContent = currentMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
         desenharCalendario(inicio, fim, eventos);
+        mostrarProximasAulas(eventos);
     }
 
     async function showNovoAgendamentoModal() {
@@ -84,8 +86,8 @@ export async function loadAgendaSection(alunoParam = '') {
     function desenharCalendario(inicio, fim, eventos) {
         const cal = document.getElementById('calendario');
         cal.innerHTML = '';
-        const diasNoMes = fim.getUTCDate();
-        const primeiroDiaSemana = new Date(inicio).getUTCDay();
+        const diasNoMes = fim.getDate();
+        const primeiroDiaSemana = new Date(inicio).getDay();
         const grid = document.createElement('div');
         grid.className = 'cal-grid';
         cal.appendChild(grid);
@@ -103,7 +105,7 @@ export async function loadAgendaSection(alunoParam = '') {
             const cell = document.createElement('div');
             cell.className = 'cal-cell';
             cell.innerHTML = `<span class="cal-dia">${dia}</span>`;
-            const dataStr = new Date(Date.UTC(inicio.getUTCFullYear(), inicio.getUTCMonth(), dia)).toISOString().substring(0,10);
+            const dataStr = new Date(Date.UTC(inicio.getFullYear(), inicio.getMonth(), dia)).toISOString().substring(0,10);
             eventos.filter(ev => ev.inicio.startsWith(dataStr)).forEach(ev => {
                 const div = document.createElement('div');
                 div.className = `evt ${ev.status || ev.tipo}`;
@@ -112,6 +114,28 @@ export async function loadAgendaSection(alunoParam = '') {
             });
             grid.appendChild(cell);
         }
+    }
+
+    function mostrarProximasAulas(eventos) {
+        const lista = document.getElementById('proximasAulas');
+        if (!lista) return;
+        const agora = new Date();
+        const proximas = eventos
+            .filter(ev => new Date(ev.inicio) >= agora)
+            .sort((a, b) => new Date(a.inicio) - new Date(b.inicio))
+            .slice(0, 5);
+        if (proximas.length === 0) {
+            lista.innerHTML = '<li>Sem aulas futuras</li>';
+            return;
+        }
+        lista.innerHTML = proximas.map(ev => {
+            const data = new Date(ev.inicio).toLocaleString('pt-BR', {
+                dateStyle: 'short',
+                timeStyle: 'short'
+            });
+            const aluno = ev.alunoNome ? ` - ${ev.alunoNome}` : '';
+            return `<li>${data}${aluno}</li>`;
+        }).join('');
     }
 
     render();
