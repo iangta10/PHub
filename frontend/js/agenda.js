@@ -105,7 +105,12 @@ export async function loadAgendaSection(alunoParam = '') {
                     remove();
                     render();
                 } else {
-                    alert('Erro ao agendar aula');
+                    let msg = 'Erro ao agendar aula';
+                    try {
+                        const data = await r.json();
+                        if (data && data.error) msg = data.error;
+                    } catch {}
+                    alert(msg);
                 }
             });
         } catch (err) {
