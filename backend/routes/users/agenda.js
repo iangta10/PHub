@@ -6,17 +6,20 @@ const verifyToken = require('../../middleware/verifyToken');
 // === Disponibilidade ===
 router.post('/agenda/disponibilidade', verifyToken, async (req, res) => {
     const personalId = req.user.uid;
-    const { diaSemana, inicio, fim } = req.body;
+    const { diaSemana, dia, inicio, fim } = req.body;
 
-    if (diaSemana === undefined || !inicio || !fim) {
+    if ((diaSemana === undefined && !dia) || !inicio || !fim) {
         return res.status(400).json({ error: 'Dados incompletos' });
     }
 
     try {
+        const payload = { inicio, fim };
+        if (diaSemana !== undefined) payload.diaSemana = Number(diaSemana);
+        if (dia) payload.dia = dia;
         const docRef = await admin.firestore()
             .collection('users').doc(personalId)
             .collection('disponibilidade')
-            .add({ diaSemana: Number(diaSemana), inicio, fim });
+            .add(payload);
 
         res.status(201).json({ id: docRef.id });
     } catch (err) {
@@ -36,6 +39,38 @@ router.get('/agenda/disponibilidade', verifyToken, async (req, res) => {
     } catch (err) {
         console.error('Erro ao obter disponibilidade:', err);
         res.status(500).json({ error: 'Erro ao obter disponibilidade' });
+    }
+});
+
+router.put('/agenda/disponibilidade/:id', verifyToken, async (req, res) => {
+    const personalId = req.user.uid;
+    const { diaSemana, dia, inicio, fim } = req.body;
+    try {
+        const payload = { inicio, fim };
+        if (diaSemana !== undefined) payload.diaSemana = Number(diaSemana);
+        if (dia) payload.dia = dia;
+        await admin.firestore()
+            .collection('users').doc(personalId)
+            .collection('disponibilidade').doc(req.params.id)
+            .update(payload);
+        res.json({ message: 'Atualizado' });
+    } catch (err) {
+        console.error('Erro ao atualizar disponibilidade:', err);
+        res.status(500).json({ error: 'Erro ao atualizar disponibilidade' });
+    }
+});
+
+router.delete('/agenda/disponibilidade/:id', verifyToken, async (req, res) => {
+    const personalId = req.user.uid;
+    try {
+        await admin.firestore()
+            .collection('users').doc(personalId)
+            .collection('disponibilidade').doc(req.params.id)
+            .delete();
+        res.json({ message: 'Removido' });
+    } catch (err) {
+        console.error('Erro ao remover disponibilidade:', err);
+        res.status(500).json({ error: 'Erro ao remover disponibilidade' });
     }
 });
 

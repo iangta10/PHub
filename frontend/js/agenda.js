@@ -11,8 +11,13 @@ export async function loadAgendaSection(alunoParam = '') {
         const inicio = new Date(currentMonth);
         const fim = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
         const url = `http://localhost:3000/users/agenda/aulas?inicio=${inicio.toISOString()}&fim=${fim.toISOString()}` + (alunoParam ? `&aluno=${alunoParam}` : '');
-        const resp = await fetchWithFreshToken(url);
-        const eventos = await resp.json();
+        const [respAulas, respDisp] = await Promise.all([
+            fetchWithFreshToken(url),
+            fetchWithFreshToken('http://localhost:3000/users/agenda/disponibilidade')
+        ]);
+        const aulas = await respAulas.json();
+        const disponibilidade = await respDisp.json();
+        const eventos = aulas.concat(expandirDisponibilidade(disponibilidade, inicio, fim));
         content.innerHTML = `
             <h2>Agenda</h2>
             <div class="agenda-controls">
@@ -22,11 +27,13 @@ export async function loadAgendaSection(alunoParam = '') {
             </div>
             <div id="calendario" class="calendario"></div>
             <button id="novoAgendamento">Novo agendamento</button>
+            <button id="editarDisponibilidade">Editar disponibilidade</button>
             <ul id="proximasAulas" class="lista-aulas"></ul>
         `;
         document.getElementById('prevMes').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth() - 1); render(); });
         document.getElementById('nextMes').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth() + 1); render(); });
         document.getElementById('novoAgendamento').addEventListener('click', showNovoAgendamentoModal);
+        document.getElementById('editarDisponibilidade').addEventListener('click', showDisponibilidadeModal);
         document.getElementById('mesAtual').textContent = currentMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
         desenharCalendario(inicio, fim, eventos);
         mostrarProximasAulas(eventos);
@@ -83,6 +90,140 @@ export async function loadAgendaSection(alunoParam = '') {
         }
     }
 
+    async function showDisponibilidadeModal() {
+        try {
+            const resp = await fetchWithFreshToken('http://localhost:3000/users/agenda/disponibilidade');
+            const disp = await resp.json();
+            const semana = disp.filter(d => d.diaSemana !== undefined);
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>Disponibilidade Semanal</h3>
+                    <form id="formDisp">
+                        ${dias.map((n,i)=>{
+                            const item = semana.find(d=>d.diaSemana===i) || {};
+                            return `<div>
+                                <label>${n}</label>
+                                <input type="time" name="inicio${i}" value="${item.inicio||''}" />
+                                <input type="time" name="fim${i}" value="${item.fim||''}" />
+                            </div>`;
+                        }).join('')}
+                        <div>
+                            <button type="submit">Salvar</button>
+                            <button type="button" class="cancelModal">Fechar</button>
+                        </div>
+                    </form>
+                    <h3>Ajustes de Dias</h3>
+                    <ul id="ajustesList">
+                        ${disp.filter(d=>d.dia).map(d=>`<li data-id="${d.id}">${d.dia} ${d.inicio}-${d.fim} <button class="remAjuste">Excluir</button></li>`).join('')}
+                    </ul>
+                    <form id="novoAjusteForm">
+                        <input type="date" name="dia" required />
+                        <input type="time" name="inicio" required />
+                        <input type="time" name="fim" required />
+                        <button type="submit">Adicionar</button>
+                    </form>
+                </div>`;
+            document.body.appendChild(modal);
+            const remove = () => modal.remove();
+            modal.addEventListener('click', e=>{ if(e.target===modal) remove(); });
+            modal.querySelector('.cancelModal').addEventListener('click', remove);
+            modal.querySelector('#formDisp').addEventListener('submit', async e=>{
+                e.preventDefault();
+                const form = e.target;
+                for(let i=0;i<7;i++){
+                    const inicio = form[`inicio${i}`].value;
+                    const fim = form[`fim${i}`].value;
+                    const item = semana.find(d=>d.diaSemana===i);
+                    if(inicio && fim){
+                        if(item){
+                            await fetchWithFreshToken(`http://localhost:3000/users/agenda/disponibilidade/${item.id}`,{
+                                method:'PUT',
+                                headers:{'Content-Type':'application/json'},
+                                body: JSON.stringify({diaSemana:i,inicio,fim})
+                            });
+                        }else{
+                            await fetchWithFreshToken('http://localhost:3000/users/agenda/disponibilidade',{
+                                method:'POST',
+                                headers:{'Content-Type':'application/json'},
+                                body: JSON.stringify({diaSemana:i,inicio,fim})
+                            });
+                        }
+                    }else if(item){
+                        await fetchWithFreshToken(`http://localhost:3000/users/agenda/disponibilidade/${item.id}`,{
+                            method:'DELETE'
+                        });
+                    }
+                }
+                remove();
+                render();
+            });
+            modal.querySelector('#novoAjusteForm').addEventListener('submit', async e=>{
+                e.preventDefault();
+                const form = e.target;
+                const body = {
+                    dia: form.dia.value,
+                    inicio: form.inicio.value,
+                    fim: form.fim.value
+                };
+                await fetchWithFreshToken('http://localhost:3000/users/agenda/disponibilidade',{
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify(body)
+                });
+                remove();
+                render();
+            });
+            modal.querySelectorAll('.remAjuste').forEach(btn=>{
+                btn.addEventListener('click', async ()=>{
+                    const id = btn.parentElement.getAttribute('data-id');
+                    await fetchWithFreshToken(`http://localhost:3000/users/agenda/disponibilidade/${id}`,{ method:'DELETE' });
+                    remove();
+                    render();
+                });
+            });
+        } catch(err){
+            console.error('Erro ao editar disponibilidade:', err);
+        }
+    }
+
+    function expandirDisponibilidade(lista, inicio, fim){
+        const eventos = [];
+        const start = new Date(inicio);
+        start.setUTCHours(0,0,0,0);
+        const end = new Date(fim);
+        end.setUTCHours(23,59,59,999);
+        lista.forEach(item=>{
+            if(item.dia){
+                const d = new Date(item.dia);
+                if(d>=start && d<=end){
+                    const diaStr = item.dia;
+                    eventos.push({
+                        tipo:'disponibilidade',
+                        inicio:`${diaStr}T${item.inicio}:00.000Z`,
+                        fim:`${diaStr}T${item.fim}:00.000Z`
+                    });
+                }
+            } else if(item.diaSemana!==undefined){
+                const c = new Date(start);
+                while(c<=end){
+                    if(c.getUTCDay()===item.diaSemana){
+                        const dstr = c.toISOString().substring(0,10);
+                        eventos.push({
+                            tipo:'disponibilidade',
+                            inicio:`${dstr}T${item.inicio}:00.000Z`,
+                            fim:`${dstr}T${item.fim}:00.000Z`
+                        });
+                    }
+                    c.setUTCDate(c.getUTCDate()+1);
+                }
+            }
+        });
+        return eventos;
+    }
+
     function desenharCalendario(inicio, fim, eventos) {
         const cal = document.getElementById('calendario');
         cal.innerHTML = '';
@@ -121,7 +262,7 @@ export async function loadAgendaSection(alunoParam = '') {
         if (!lista) return;
         const agora = new Date();
         const proximas = eventos
-            .filter(ev => new Date(ev.inicio) >= agora)
+            .filter(ev => ev.tipo === 'aula' && new Date(ev.inicio) >= agora)
             .sort((a, b) => new Date(a.inicio) - new Date(b.inicio))
             .slice(0, 5);
         if (proximas.length === 0) {
