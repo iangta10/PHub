@@ -12,6 +12,8 @@ router.use('/users', require('./users/metodos'));
 router.use('/users', require('./users/admin-invite'));
 router.use('/users', require('./users/anamnese'));
 router.use('/users', require('./users/agenda'));
+router.use('/users', require('./users/personal-page'));
+router.use('/public', require('./public'));
 router.use('/treino', require('./treino-ia'));
 
 
