@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Dados publicos
+    match /public/{document=**} {
+      allow read;
+    }
+
+    // Conjunto de usuarios
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      match /{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Convides de administradores
+    match /adminInvites/{inviteId} {
+      allow read, write: if request.auth != null && request.auth.token.role == 'admin';
+    }
+
+    // Exercicios do sistema - somente leitura para usuarios autenticados
+    match /exerciciosSistema/{docId} {
+      allow read: if request.auth != null;
+    }
+  }
+}
