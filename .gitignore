@@ -3,8 +3,6 @@ node_modules
 
 #ignore a key
 serviceAccountKey.json
-# ignore firebase config
-firebase-config.js
 
 # Ignore root environment secrets
 /.env
