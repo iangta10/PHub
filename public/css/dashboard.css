@@ -698,3 +698,46 @@ body {
 .config-ficha input[type="number"] {
     width: 60px;
 }
+
+/* === Treino Tabs === */
+.treino-tabs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.treino-tabs ul {
+    display: flex;
+    gap: 4px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-wrap: wrap;
+}
+
+.treino-tabs li {
+    padding: 6px 12px;
+    background-color: #e0e0e0;
+    color: #000;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.treino-tabs li.active {
+    background-color: #f58725;
+    color: #000;
+}
+
+.treino-tabs button#addDia {
+    background-color: #e0e0e0;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.treino-tabs button#addDia:hover {
+    background-color: #f58725;
+    color: #000;
+}
