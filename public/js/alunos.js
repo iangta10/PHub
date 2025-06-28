@@ -193,6 +193,14 @@ function showEditAlunoForm(aluno) {
         <form id="editAlunoForm">
             <input type="text" name="nome" value="${aluno.nome || ''}" placeholder="Nome" />
             <input type="email" name="email" value="${aluno.email || ''}" placeholder="Email" />
+            <input type="text" name="telefone" value="${aluno.telefone || ''}" placeholder="Telefone" />
+            <input type="date" name="dataNascimento" value="${aluno.dataNascimento || ''}" />
+            <input type="text" name="sexo" value="${aluno.sexo || ''}" placeholder="Sexo" />
+            <input type="text" name="fotoUrl" value="${aluno.fotoUrl || ''}" placeholder="URL da foto" />
+            <textarea name="objetivo" placeholder="Objetivo">${aluno.objetivo || ''}</textarea>
+            <textarea name="metas" placeholder="Metas">${aluno.metas || ''}</textarea>
+            <input type="text" name="prazoMeta" value="${aluno.prazoMeta || ''}" placeholder="Prazo" />
+            <textarea name="motivacao" placeholder="Motivação">${aluno.motivacao || ''}</textarea>
             <textarea name="observacoes" placeholder="Observações">${aluno.observacoes || ''}</textarea>
             <button type="submit">Salvar</button>
             <button type="button" id="cancelEdit">Cancelar</button>
@@ -206,6 +214,14 @@ function showEditAlunoForm(aluno) {
         const data = {
             nome: form.nome.value,
             email: form.email.value,
+            telefone: form.telefone.value,
+            dataNascimento: form.dataNascimento.value,
+            sexo: form.sexo.value,
+            fotoUrl: form.fotoUrl.value,
+            objetivo: form.objetivo.value,
+            metas: form.metas.value,
+            prazoMeta: form.prazoMeta.value,
+            motivacao: form.motivacao.value,
             observacoes: form.observacoes.value
         };
         const res = await fetchWithFreshToken(`/api/users/alunos/${aluno.id}`, {
