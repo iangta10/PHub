@@ -209,6 +209,36 @@ body {
     width: 80px;
 }
 
+.dadosTreino {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.dadosTreino textarea {
+    flex-basis: 100%;
+}
+
+.buscaEx {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.buscaEx i {
+    position: absolute;
+    left: 6px;
+    color: #888;
+}
+.buscaEx input {
+    padding-left: 20px;
+}
+
+.bisetLbl {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
 .exercicio button.removeExercicio {
     border: 1px solid #f58725;
     background: none;
@@ -225,6 +255,22 @@ body {
 .exercicio select.nomeExercicio,
 .exercicio input.observacoes {
     grid-column: span 2;
+}
+
+.exercicio button.clearExercicio {
+    background-color: #c62828;
+    color: #fff;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.dia button.addExercicio {
+    background-color: #f58725;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    color: #000;
 }
 
 .treinoCard {
