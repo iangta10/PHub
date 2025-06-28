@@ -108,7 +108,7 @@ function loadHomeSection() {
     if (inviteLinkBtn) {
         inviteLinkBtn.addEventListener('click', async () => {
             try {
-                const res = await fetchWithFreshToken('http://localhost:3000/users/personal-page');
+                const res = await fetchWithFreshToken('/api/users/personal-page');
                 const page = await res.json();
                 if (!page.slug) {
                     alert('Defina sua página em Perfil antes de gerar o link.');
@@ -130,7 +130,7 @@ function capitalize(str) {
 
 async function openAlunoSelectModal(onSelect) {
     try {
-        const res = await fetchWithFreshToken('http://localhost:3000/users/alunos');
+        const res = await fetchWithFreshToken('/api/users/alunos');
         const alunos = await res.json();
         const modal = document.createElement('div');
         modal.className = 'modal';

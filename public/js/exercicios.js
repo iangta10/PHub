@@ -30,8 +30,8 @@ export async function loadExerciciosSection(filters = {}) {
     try {
         const query = new URLSearchParams(filters).toString();
         const [exRes, metRes] = await Promise.all([
-            fetchWithFreshToken(`http://localhost:3000/users/exercicios?${query}`),
-            fetchWithFreshToken('http://localhost:3000/users/metodos')
+            fetchWithFreshToken(`/api/users/exercicios?${query}`),
+            fetchWithFreshToken('/api/users/metodos')
         ]);
         const exercicios = await exRes.json();
         const metodos = await metRes.json();
@@ -116,7 +116,7 @@ function renderForms(container, exercicios, metodos) {
             grupoMuscularPrincipal: form.grupoPrincipal.value,
             gruposMusculares: grupos
         };
-        const resp = await fetchWithFreshToken('http://localhost:3000/users/exercicios', {
+        const resp = await fetchWithFreshToken('/api/users/exercicios', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -137,7 +137,7 @@ function renderForms(container, exercicios, metodos) {
             repeticoes: form.repeticoes.value,
             observacoes: form.observacoes.value
         };
-        const resp = await fetchWithFreshToken('http://localhost:3000/users/metodos', {
+        const resp = await fetchWithFreshToken('/api/users/metodos', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -153,7 +153,7 @@ function renderForms(container, exercicios, metodos) {
         btn.addEventListener('click', async () => {
             const li = btn.parentElement;
             if (confirm('Excluir método?')) {
-                await fetchWithFreshToken(`http://localhost:3000/users/metodos/${li.dataset.id}?global=${li.dataset.global}`, { method: 'DELETE' });
+                await fetchWithFreshToken(`/api/users/metodos/${li.dataset.id}?global=${li.dataset.global}`, { method: 'DELETE' });
                 loadExerciciosSection();
             }
         });
@@ -185,7 +185,7 @@ function renderForms(container, exercicios, metodos) {
         btn.addEventListener('click', async () => {
             const tr = btn.closest('tr');
             if (confirm('Excluir exercício?')) {
-                await fetchWithFreshToken(`http://localhost:3000/users/exercicios/${tr.dataset.id}?global=${tr.dataset.global}`, { method: 'DELETE' });
+                await fetchWithFreshToken(`/api/users/exercicios/${tr.dataset.id}?global=${tr.dataset.global}`, { method: 'DELETE' });
                 loadExerciciosSection();
             }
         });
@@ -243,7 +243,7 @@ function updateTable() {
         btn.addEventListener('click', async () => {
             const tr = btn.closest('tr');
             if (confirm('Excluir exercício?')) {
-                await fetchWithFreshToken(`http://localhost:3000/users/exercicios/${tr.dataset.id}?global=${tr.dataset.global}`, { method: 'DELETE' });
+                await fetchWithFreshToken(`/api/users/exercicios/${tr.dataset.id}?global=${tr.dataset.global}`, { method: 'DELETE' });
                 loadExerciciosSection();
             }
         });
@@ -305,7 +305,7 @@ function openExercicioModal(exercicio) {
             grupoMuscularPrincipal: form.grupoPrincipal.value,
             gruposMusculares: grupos
         };
-        await fetchWithFreshToken(`http://localhost:3000/users/exercicios/${exercicio.id}?global=${exercicio.global}`, {
+        await fetchWithFreshToken(`/api/users/exercicios/${exercicio.id}?global=${exercicio.global}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -335,7 +335,7 @@ function openMetodoModal(metodo) {
             repeticoes: form.repeticoes.value,
             observacoes: form.observacoes.value
         };
-        await fetchWithFreshToken(`http://localhost:3000/users/metodos/${metodo.id}?global=${metodo.global}`, {
+        await fetchWithFreshToken(`/api/users/metodos/${metodo.id}?global=${metodo.global}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -345,7 +345,7 @@ function openMetodoModal(metodo) {
 }
 
 export async function fetchExerciciosMap() {
-    const res = await fetchWithFreshToken('http://localhost:3000/users/exercicios');
+    const res = await fetchWithFreshToken('/api/users/exercicios');
     const exercicios = await res.json();
     const map = {};
     exercicios.forEach(e => {
@@ -357,6 +357,6 @@ export async function fetchExerciciosMap() {
 }
 
 export async function fetchMetodos() {
-    const res = await fetchWithFreshToken('http://localhost:3000/users/metodos');
+    const res = await fetchWithFreshToken('/api/users/metodos');
     return await res.json();
 }

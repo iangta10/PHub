@@ -51,7 +51,7 @@ if (registerForm) {
             const cred = await createUserWithEmailAndPassword(auth, email, password);
             const token = await cred.user.getIdToken();
 
-            const res = await fetch('http://localhost:3000/users/register', {
+            const res = await fetch('/api/users/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -13,7 +13,7 @@ export async function loadTreinosSection(alunoIdParam = '') {
     const content = document.getElementById("content");
     content.innerHTML = "<h2>Carregando...</h2>";
     try {
-        const res = await fetchWithFreshToken('http://localhost:3000/users/alunos');
+        const res = await fetchWithFreshToken('/api/users/alunos');
         const alunos = await res.json();
         EXERCICIOS_MAP = await fetchExerciciosMap();
         METODOS = await fetchMetodos();
@@ -95,7 +95,7 @@ export async function loadTreinosSection(alunoIdParam = '') {
                 dias.push({ nome: nomeDia, exercicios });
             });
 
-            let url = `http://localhost:3000/users/alunos/${alunoId}/treinos`;
+            let url = `/api/users/alunos/${alunoId}/treinos`;
             let method = 'POST';
             if (form.dataset.editar) {
                 url += `/${form.dataset.editar}`;
@@ -215,7 +215,7 @@ async function loadTreinosAluno(alunoId) {
     list.innerHTML = '';
     if (!alunoId) return;
     try {
-        const res = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${alunoId}/treinos`);
+        const res = await fetchWithFreshToken(`/api/users/alunos/${alunoId}/treinos`);
         const treinos = await res.json();
         if (Array.isArray(treinos) && treinos.length) {
             list.innerHTML = treinos.map(t => renderTreinoAluno(t, alunoId)).join('');
@@ -242,7 +242,7 @@ function attachTreinoHandlers(alunoId, treinos) {
         btn.addEventListener('click', async () => {
             const card = btn.closest('.treinoCard');
             if (confirm('Excluir treino?')) {
-                await fetchWithFreshToken(`http://localhost:3000/users/alunos/${alunoId}/treinos/${card.dataset.id}`, { method: 'DELETE' });
+                await fetchWithFreshToken(`/api/users/alunos/${alunoId}/treinos/${card.dataset.id}`, { method: 'DELETE' });
                 loadTreinosAluno(alunoId);
             }
         });
@@ -294,7 +294,7 @@ export async function loadMeusTreinos() {
     const content = document.getElementById('content');
     content.innerHTML = '<h2>Carregando...</h2>';
     try {
-        const res = await fetchWithFreshToken('http://localhost:3000/users/me/treinos');
+        const res = await fetchWithFreshToken('/api/users/me/treinos');
         const treinos = await res.json();
         if (!Array.isArray(treinos) || treinos.length === 0) {
             content.innerHTML = '<p>Nenhum treino encontrado.</p>';
@@ -324,7 +324,7 @@ export async function gerarTreinoComIA(alunoId) {
     const msg = document.getElementById('mensagemTreino');
     msg.textContent = 'Gerando treino...';
     try {
-        const resp = await fetchWithFreshToken('http://localhost:3000/treino/gerar-ia', {
+        const resp = await fetchWithFreshToken('/api/treino/gerar-ia', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ alunoId })

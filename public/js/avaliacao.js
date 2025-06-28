@@ -8,7 +8,7 @@ export function getAlunoId() {
 export async function loadAlunoInfo(id, targetId = 'alunoInfo') {
     if (!id) return;
     try {
-        const res = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${id}`);
+        const res = await fetchWithFreshToken(`/api/users/alunos/${id}`);
         if (res.ok) {
             const aluno = await res.json();
             const target = document.getElementById(targetId);

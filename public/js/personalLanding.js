@@ -6,7 +6,7 @@ async function loadPage() {
         return;
     }
     try {
-        const res = await fetch(`http://localhost:3000/public/personal/${slug}`);
+        const res = await fetch(`/api/public/personal/${slug}`);
         if (!res.ok) throw new Error('not found');
         const page = await res.json();
         render(page, slug);

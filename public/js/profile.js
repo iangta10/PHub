@@ -5,8 +5,8 @@ export async function loadProfileSection() {
     content.innerHTML = '<h2>Carregando...</h2>';
     try {
         const [userRes, pageRes] = await Promise.all([
-            fetchWithFreshToken('http://localhost:3000/users/me'),
-            fetchWithFreshToken('http://localhost:3000/users/personal-page')
+            fetchWithFreshToken('/api/users/me'),
+            fetchWithFreshToken('/api/users/personal-page')
         ]);
         const user = await userRes.json();
         const page = await pageRes.json();
@@ -81,7 +81,7 @@ function showPageEditor(page) {
             }))
         };
         try {
-            await fetchWithFreshToken('http://localhost:3000/users/personal-page', {
+            await fetchWithFreshToken('/api/users/personal-page', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)

@@ -37,7 +37,7 @@ if (loginForm) {
             const idToken = await userCredential.user.getIdToken();
             localStorage.setItem('token', idToken);
 
-            const res = await fetch('http://localhost:3000/users/me', {
+            const res = await fetch('/api/users/me', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${idToken}`
@@ -80,13 +80,13 @@ export async function fetchWithFreshToken(url, options = {}) {
 
 // Obtém a role do usuário logado
 export async function fetchUserRole() {
-    const res = await fetchWithFreshToken('http://localhost:3000/users/role');
+    const res = await fetchWithFreshToken('/api/users/role');
     const data = await res.json();
     return data.role;
 }
 
 export async function fetchUserInfo() {
-    const res = await fetchWithFreshToken('http://localhost:3000/users/me');
+    const res = await fetchWithFreshToken('/api/users/me');
     if (!res.ok) return null;
     return await res.json();
 }
