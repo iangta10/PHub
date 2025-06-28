@@ -8,6 +8,7 @@ let METODOS = [];
 let TODOS_EXERCICIOS_OBJ = [];
 let CAT_OPTIONS = '';
 let GRUPO_OPTIONS = '';
+let activeDiaIndex = 0;
 
 function updateProximoOptions() {
     const select = document.querySelector('#configFicha select[name="proximoTreino"]');
@@ -17,6 +18,29 @@ function updateProximoOptions() {
         return nome || `Dia ${idx + 1}`;
     });
     select.innerHTML = dias.map((n, i) => `<option value="${i}">${n}</option>`).join('');
+}
+
+function createTab(idx, name) {
+    const ul = document.getElementById('diaTabs');
+    if (!ul) return;
+    const li = document.createElement('li');
+    li.dataset.idx = idx;
+    li.textContent = name || `Dia ${idx + 1}`;
+    li.addEventListener('click', () => activateDia(idx));
+    ul.appendChild(li);
+}
+
+function updateTabName(idx, name) {
+    const li = document.querySelector(`#diaTabs li[data-idx="${idx}"]`);
+    if (li) li.textContent = name || `Dia ${idx + 1}`;
+}
+
+function activateDia(idx) {
+    const dias = document.querySelectorAll('#diasContainer .dia');
+    const tabs = document.querySelectorAll('#diaTabs li');
+    dias.forEach((d, i) => { d.style.display = i === idx ? '' : 'none'; });
+    tabs.forEach((t, i) => { t.classList.toggle('active', i === idx); });
+    activeDiaIndex = idx;
 }
 
 export async function loadTreinosSection(alunoIdParam = '') {
@@ -63,8 +87,11 @@ export async function loadTreinosSection(alunoIdParam = '') {
                 </div>
                 <h3>Nome da ficha</h3>
                 <input type="text" name="nome" placeholder="Nome da ficha" required />
+                <div id="treinoTabs" class="treino-tabs">
+                    <ul id="diaTabs"></ul>
+                    <button type="button" id="addDia" title="Adicionar novo treino">+</button>
+                </div>
                 <div id="diasContainer"></div>
-                <button type="button" id="addDia">Adicionar Dia</button>
                 <button type="submit">Criar</button>
             </form>
             <button id="cancelEdit" class="hidden" type="button">Cancelar Edição</button>
@@ -77,10 +104,15 @@ export async function loadTreinosSection(alunoIdParam = '') {
         document.getElementById('addDia').addEventListener('click', () => { addDia(); updateProximoOptions(); });
         addDia();
         updateProximoOptions();
+        activateDia(0);
 
         const diasContainer = document.getElementById('diasContainer');
         diasContainer.addEventListener('input', e => {
-            if (e.target.classList.contains('nomeDia')) updateProximoOptions();
+            if (e.target.classList.contains('nomeDia')) {
+                const idx = Array.from(diasContainer.children).indexOf(e.target.closest('.dia'));
+                updateProximoOptions();
+                updateTabName(idx, e.target.value.trim());
+            }
         });
 
         const alunoSel = document.querySelector('#novoTreinoForm select[name="aluno"]');
@@ -175,6 +207,7 @@ function addDia() {
     const diaIndex = diasContainer.children.length;
     const diaDiv = document.createElement('div');
     diaDiv.className = 'dia';
+    diaDiv.dataset.idx = diaIndex;
     diaDiv.innerHTML = `
         <h3>Dia ${diaIndex + 1}</h3>
         <input type="text" class="nomeDia" placeholder="Nome do treino" />
@@ -182,9 +215,11 @@ function addDia() {
         <button type="button" class="addExercicio">Adicionar Exercício</button>
     `;
     diasContainer.appendChild(diaDiv);
+    createTab(diaIndex, '');
     const container = diaDiv.querySelector('.exercicios');
     diaDiv.querySelector('.addExercicio').addEventListener('click', () => addExercicio(container));
     addExercicio(container);
+    activateDia(diaIndex);
 }
 
 function addExercicio(container) {
@@ -344,9 +379,11 @@ function fillTreinoForm(alunoId, treino) {
         document.getElementById('cancelEdit').classList.add('hidden');
     }
     document.getElementById('diasContainer').innerHTML = '';
+    document.getElementById('diaTabs').innerHTML = '';
     (treino.dias || []).forEach((dia, idx) => {
         addDia();
         const diaDiv = document.querySelectorAll('#diasContainer .dia')[idx];
+        updateTabName(idx, dia.nome);
         diaDiv.querySelector('.nomeDia').value = dia.nome;
         const container = diaDiv.querySelector('.exercicios');
         container.innerHTML = '';
@@ -362,6 +399,7 @@ function fillTreinoForm(alunoId, treino) {
             exDiv.querySelector('.observacoes').value = exData.observacoes || '';
         });
     });
+    activateDia(0);
     updateProximoOptions();
     if (treino.proximoTreino !== undefined && form.proximoTreino) {
         form.proximoTreino.value = treino.proximoTreino;
