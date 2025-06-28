@@ -625,3 +625,57 @@ body {
     display: flex;
     gap: 6px;
 }
+
+/* === Perfil do Aluno === */
+.aluno-perfil {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.dados-pessoais {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background-color: #1e1e1e;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+
+.dados-pessoais img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.perfil-section {
+    background-color: #1e1e1e;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+
+.perfil-section h3 {
+    margin-top: 0;
+    color: #f58725;
+}
+
+.avaliacoes-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.avaliacoes-table th,
+.avaliacoes-table td {
+    padding: 6px;
+    border-bottom: 1px solid #333;
+    text-align: left;
+}
+
+.perfil-actions {
+    display: flex;
+    gap: 10px;
+}
