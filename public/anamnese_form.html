@@ -126,7 +126,7 @@
                 return;
             }
             try {
-                const res = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${id}/anamnese/sheet?email=${encodeURIComponent(form.email.value)}`);
+                const res = await fetchWithFreshToken(`/api/users/alunos/${id}/anamnese/sheet?email=${encodeURIComponent(form.email.value)}`);
                 if (res.ok) {
                     const data = await res.json();
                     if (data) {
@@ -150,7 +150,7 @@
             Array.from(form.elements).forEach(el => { if (el.name) dados[el.name] = el.value; });
             const avalId = localStorage.getItem(`currentAvalId_${id}`);
             try {
-                const res = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${id}/anamnese`, {
+                const res = await fetchWithFreshToken(`/api/users/alunos/${id}/anamnese`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(dados)
@@ -169,13 +169,13 @@
         async function carregar() {
             if (!id) return;
             try {
-                const alunoRes = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${id}`);
+                const alunoRes = await fetchWithFreshToken(`/api/users/alunos/${id}`);
                 if (alunoRes.ok) {
                     const aluno = await alunoRes.json();
                     if (form.nome) form.nome.value = aluno.nome || '';
                     if (form.email) form.email.value = aluno.email || '';
                 }
-                const res = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${id}/anamnese`);
+                const res = await fetchWithFreshToken(`/api/users/alunos/${id}/anamnese`);
                 if (res.ok) {
                     const data = await res.json();
                     if (data) {

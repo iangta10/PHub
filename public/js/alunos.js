@@ -5,7 +5,7 @@ export async function loadAlunosSection() {
     content.innerHTML = "<h2>Carregando alunos...</h2>";
 
     try {
-        const res = await fetchWithFreshToken('http://localhost:3000/users/alunos');
+        const res = await fetchWithFreshToken('/api/users/alunos');
         const alunos = await res.json();
 
         content.innerHTML = `
@@ -48,7 +48,7 @@ async function showAlunoDetails(id) {
     const content = document.getElementById('content');
     content.innerHTML = '<h2>Carregando...</h2>';
     try {
-        const res = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${id}`);
+        const res = await fetchWithFreshToken(`/api/users/alunos/${id}`);
         if (!res.ok) throw new Error('Erro ao buscar aluno');
         const aluno = await res.json();
 
@@ -64,7 +64,7 @@ async function showAlunoDetails(id) {
         document.getElementById('editAluno').addEventListener('click', () => showEditAlunoForm(aluno));
         document.getElementById('deleteAluno').addEventListener('click', async () => {
             if (confirm('Tem certeza que deseja remover este aluno?')) {
-                const delRes = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${id}`, { method: 'DELETE' });
+                const delRes = await fetchWithFreshToken(`/api/users/alunos/${id}`, { method: 'DELETE' });
                 if (delRes.ok) {
                     loadAlunosSection();
                 } else {
@@ -101,7 +101,7 @@ function showEditAlunoForm(aluno) {
             email: form.email.value,
             observacoes: form.observacoes.value
         };
-        const res = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${aluno.id}`, {
+        const res = await fetchWithFreshToken(`/api/users/alunos/${aluno.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -143,7 +143,7 @@ export function showNovoAlunoModal(callback) {
             observacoes: form.observacoes.value
         };
         try {
-            const res = await fetchWithFreshToken('http://localhost:3000/users/alunos', {
+            const res = await fetchWithFreshToken('/api/users/alunos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)

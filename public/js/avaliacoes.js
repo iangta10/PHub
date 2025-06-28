@@ -5,7 +5,7 @@ export async function loadAvaliacoesSection() {
     content.innerHTML = '<h2>Carregando...</h2>';
 
     try {
-        const res = await fetchWithFreshToken('http://localhost:3000/users/alunos');
+        const res = await fetchWithFreshToken('/api/users/alunos');
         const alunos = await res.json();
         render(content, alunos);
     } catch (err) {
@@ -87,7 +87,7 @@ function render(container, alunos) {
         listDiv.innerHTML = '<p>Carregando avaliações...</p>';
         let avaliacoes = [];
         try {
-            const res = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${alunoId}/avaliacoes`);
+            const res = await fetchWithFreshToken(`/api/users/alunos/${alunoId}/avaliacoes`);
             if (res.ok) {
                 avaliacoes = await res.json();
             }

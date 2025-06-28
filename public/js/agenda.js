@@ -10,10 +10,10 @@ export async function loadAgendaSection(alunoParam = '') {
     async function render() {
         const inicio = new Date(currentMonth);
         const fim = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
-        const url = `http://localhost:3000/users/agenda/aulas?inicio=${inicio.toISOString()}&fim=${fim.toISOString()}` + (alunoParam ? `&aluno=${alunoParam}` : '');
+        const url = `/api/users/agenda/aulas?inicio=${inicio.toISOString()}&fim=${fim.toISOString()}` + (alunoParam ? `&aluno=${alunoParam}` : '');
         const [respAulas, respDisp] = await Promise.all([
             fetchWithFreshToken(url),
-            fetchWithFreshToken('http://localhost:3000/users/agenda/disponibilidade')
+            fetchWithFreshToken('/api/users/agenda/disponibilidade')
         ]);
         const aulas = await respAulas.json();
         const disponibilidade = await respDisp.json();
@@ -41,7 +41,7 @@ export async function loadAgendaSection(alunoParam = '') {
 
     async function showNovoAgendamentoModal() {
         try {
-            const resp = await fetchWithFreshToken('http://localhost:3000/users/alunos');
+            const resp = await fetchWithFreshToken('/api/users/alunos');
             const alunos = await resp.json();
             const modal = document.createElement('div');
             modal.className = 'modal';
@@ -77,8 +77,8 @@ export async function loadAgendaSection(alunoParam = '') {
                     return;
                 }
                 const [respDisp, respAulas] = await Promise.all([
-                    fetchWithFreshToken('http://localhost:3000/users/agenda/disponibilidade'),
-                    fetchWithFreshToken(`http://localhost:3000/users/agenda/aulas?inicio=${dia}T00:00:00.000Z&fim=${dia}T23:59:59.999Z`)
+                    fetchWithFreshToken('/api/users/agenda/disponibilidade'),
+                    fetchWithFreshToken(`/api/users/agenda/aulas?inicio=${dia}T00:00:00.000Z&fim=${dia}T23:59:59.999Z`)
                 ]);
                 const disp = await respDisp.json();
                 const aulas = await respAulas.json();
@@ -96,7 +96,7 @@ export async function loadAgendaSection(alunoParam = '') {
                 fimDate.setUTCHours(fimDate.getUTCHours()+1);
                 const fim = fimDate.toISOString();
                 const body = { alunoId: form.aluno.value, inicio, fim };
-                const r = await fetchWithFreshToken('http://localhost:3000/users/agenda/aulas', {
+                const r = await fetchWithFreshToken('/api/users/agenda/aulas', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
@@ -120,7 +120,7 @@ export async function loadAgendaSection(alunoParam = '') {
 
     async function showDisponibilidadeModal() {
         try {
-            const resp = await fetchWithFreshToken('http://localhost:3000/users/agenda/disponibilidade');
+            const resp = await fetchWithFreshToken('/api/users/agenda/disponibilidade');
             const disp = await resp.json();
             const semana = disp.filter(d => d.diaSemana !== undefined);
             const modal = document.createElement('div');
@@ -183,20 +183,20 @@ export async function loadAgendaSection(alunoParam = '') {
                     if(checked && inicio && fim){
                         const body = {diaSemana:i,inicio,fim};
                         if(item){
-                            await fetchWithFreshToken(`http://localhost:3000/users/agenda/disponibilidade/${item.id}`,{
+                            await fetchWithFreshToken(`/api/users/agenda/disponibilidade/${item.id}`,{
                                 method:'PUT',
                                 headers:{'Content-Type':'application/json'},
                                 body: JSON.stringify(body)
                             });
                         }else{
-                            await fetchWithFreshToken('http://localhost:3000/users/agenda/disponibilidade',{
+                            await fetchWithFreshToken('/api/users/agenda/disponibilidade',{
                                 method:'POST',
                                 headers:{'Content-Type':'application/json'},
                                 body: JSON.stringify(body)
                             });
                         }
                     }else if(item){
-                        await fetchWithFreshToken(`http://localhost:3000/users/agenda/disponibilidade/${item.id}`,{
+                        await fetchWithFreshToken(`/api/users/agenda/disponibilidade/${item.id}`,{
                             method:'DELETE'
                         });
                     }
@@ -212,7 +212,7 @@ export async function loadAgendaSection(alunoParam = '') {
                     inicio: form.inicio.value,
                     fim: form.fim.value
                 };
-                await fetchWithFreshToken('http://localhost:3000/users/agenda/disponibilidade',{
+                await fetchWithFreshToken('/api/users/agenda/disponibilidade',{
                     method:'POST',
                     headers:{'Content-Type':'application/json'},
                     body: JSON.stringify(body)
@@ -223,7 +223,7 @@ export async function loadAgendaSection(alunoParam = '') {
             modal.querySelectorAll('.remAjuste').forEach(btn=>{
                 btn.addEventListener('click', async ()=>{
                     const id = btn.parentElement.getAttribute('data-id');
-                    await fetchWithFreshToken(`http://localhost:3000/users/agenda/disponibilidade/${id}`,{ method:'DELETE' });
+                    await fetchWithFreshToken(`/api/users/agenda/disponibilidade/${id}`,{ method:'DELETE' });
                     remove();
                     render();
                 });
@@ -237,7 +237,7 @@ export async function loadAgendaSection(alunoParam = '') {
                     if(!inicio) return;
                     const fim = prompt('Fim', li.getAttribute('data-fim'));
                     if(!fim) return;
-                    await fetchWithFreshToken(`http://localhost:3000/users/agenda/disponibilidade/${id}`,{
+                    await fetchWithFreshToken(`/api/users/agenda/disponibilidade/${id}`,{
                         method:'PUT',
                         headers:{'Content-Type':'application/json'},
                         body: JSON.stringify({dia,inicio,fim})

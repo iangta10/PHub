@@ -6,7 +6,7 @@ export async function loadAnamneseSection(alunoId = null) {
     content.innerHTML = '<h2>Carregando...</h2>';
 
     try {
-        const res = await fetchWithFreshToken('http://localhost:3000/users/alunos');
+        const res = await fetchWithFreshToken('/api/users/alunos');
         const alunos = await res.json();
         render(content, alunos, alunoId);
     } catch (err) {
@@ -91,13 +91,13 @@ async function loadDadosAluno(alunoId, form) {
         return;
     }
     try {
-        const alunoRes = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${alunoId}`);
+        const alunoRes = await fetchWithFreshToken(`/api/users/alunos/${alunoId}`);
         if (alunoRes.ok) {
             const aluno = await alunoRes.json();
             if (form.nome) form.nome.value = aluno.nome || '';
             if (form.email) form.email.value = aluno.email || '';
         }
-        const res = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${alunoId}/anamnese`);
+        const res = await fetchWithFreshToken(`/api/users/alunos/${alunoId}/anamnese`);
         if (res.ok) {
             const data = await res.json();
             if (data) {
@@ -119,7 +119,7 @@ async function salvarAnamnese(e, alunoId) {
         if (el.name) dados[el.name] = el.value;
     });
     try {
-        const res = await fetchWithFreshToken(`http://localhost:3000/users/alunos/${alunoId}/anamnese`, {
+        const res = await fetchWithFreshToken(`/api/users/alunos/${alunoId}/anamnese`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dados)
