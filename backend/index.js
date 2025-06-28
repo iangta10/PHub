@@ -13,7 +13,10 @@ app.use(helmet());
 const allowedOrigin = process.env.ALLOWED_ORIGIN || '*';
 app.use(cors({ origin: allowedOrigin }));
 app.use(express.json());
-app.use('/', userRoutes);
+// Mount all application routes under the /api prefix so that
+// requests like /api/users/me resolve correctly in all
+// environments (local and Vercel).
+app.use('/api', userRoutes);
 
 module.exports = app;
 
