@@ -5,7 +5,20 @@ const verifyToken = require('../../middleware/verifyToken');
 
 // Criar aluno
 router.post('/alunos', verifyToken, async (req, res) => {
-    const { nome, email, observacoes, aulasPorSemana } = req.body;
+    const {
+        nome,
+        email,
+        observacoes,
+        aulasPorSemana,
+        fotoUrl,
+        telefone,
+        dataNascimento,
+        sexo,
+        objetivo,
+        metas,
+        prazoMeta,
+        motivacao
+    } = req.body;
     const personalId = req.user.uid;
 
     try {
@@ -18,6 +31,14 @@ router.post('/alunos', verifyToken, async (req, res) => {
                 email,
                 observacoes,
                 aulasPorSemana: aulasPorSemana || 2,
+                fotoUrl: fotoUrl || null,
+                telefone: telefone || null,
+                dataNascimento: dataNascimento || null,
+                sexo: sexo || null,
+                objetivo: objetivo || null,
+                metas: metas || null,
+                prazoMeta: prazoMeta || null,
+                motivacao: motivacao || null,
                 criadoEm: new Date().toISOString()
             });
 
@@ -85,7 +106,20 @@ router.get('/alunos/:id', verifyToken, async (req, res) => {
 router.put('/alunos/:id', verifyToken, async (req, res) => {
     const personalId = req.user.uid;
     const alunoId = req.params.id;
-    const { nome, email, observacoes, aulasPorSemana } = req.body;
+    const {
+        nome,
+        email,
+        observacoes,
+        aulasPorSemana,
+        fotoUrl,
+        telefone,
+        dataNascimento,
+        sexo,
+        objetivo,
+        metas,
+        prazoMeta,
+        motivacao
+    } = req.body;
 
     try {
         const alunoRef = admin.firestore()
@@ -99,6 +133,14 @@ router.put('/alunos/:id', verifyToken, async (req, res) => {
         if (email !== undefined) updateData.email = email;
         if (observacoes !== undefined) updateData.observacoes = observacoes;
         if (aulasPorSemana !== undefined) updateData.aulasPorSemana = aulasPorSemana;
+        if (fotoUrl !== undefined) updateData.fotoUrl = fotoUrl;
+        if (telefone !== undefined) updateData.telefone = telefone;
+        if (dataNascimento !== undefined) updateData.dataNascimento = dataNascimento;
+        if (sexo !== undefined) updateData.sexo = sexo;
+        if (objetivo !== undefined) updateData.objetivo = objetivo;
+        if (metas !== undefined) updateData.metas = metas;
+        if (prazoMeta !== undefined) updateData.prazoMeta = prazoMeta;
+        if (motivacao !== undefined) updateData.motivacao = motivacao;
 
         await alunoRef.update(updateData);
         res.status(200).json({ message: 'Aluno atualizado' });

@@ -7,7 +7,7 @@ const verifyToken = require('../../middleware/verifyToken');
 router.post('/alunos/:alunoId/treinos', verifyToken, async (req, res) => {
     const personalId = req.user.uid;
     const alunoId = req.params.alunoId;
-    const { nome, dias } = req.body;
+    const { nome, dias, qtdTreinos, proximoTreino, vencimento } = req.body;
 
     try {
         const treinoRef = await admin.firestore()
@@ -17,6 +17,9 @@ router.post('/alunos/:alunoId/treinos', verifyToken, async (req, res) => {
             .add({
                 nome: nome || 'Treino',
                 dias: Array.isArray(dias) ? dias : [],
+                qtdTreinos: qtdTreinos ? parseInt(qtdTreinos) : 1,
+                proximoTreino: proximoTreino || null,
+                vencimento: vencimento || null,
                 criadoEm: new Date().toISOString()
             });
 
@@ -50,11 +53,14 @@ router.get('/alunos/:alunoId/treinos', verifyToken, async (req, res) => {
 router.put('/alunos/:alunoId/treinos/:id', verifyToken, async (req, res) => {
     const personalId = req.user.uid;
     const { alunoId, id } = req.params;
-    const { nome, dias } = req.body;
+    const { nome, dias, qtdTreinos, proximoTreino, vencimento } = req.body;
 
     const updateData = {};
     if (nome !== undefined) updateData.nome = nome;
     if (dias !== undefined) updateData.dias = Array.isArray(dias) ? dias : [];
+    if (qtdTreinos !== undefined) updateData.qtdTreinos = parseInt(qtdTreinos);
+    if (proximoTreino !== undefined) updateData.proximoTreino = proximoTreino;
+    if (vencimento !== undefined) updateData.vencimento = vencimento;
 
     try {
         const docRef = admin.firestore()

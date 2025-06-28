@@ -9,6 +9,16 @@ let TODOS_EXERCICIOS_OBJ = [];
 let CAT_OPTIONS = '';
 let GRUPO_OPTIONS = '';
 
+function updateProximoOptions() {
+    const select = document.querySelector('#configFicha select[name="proximoTreino"]');
+    if (!select) return;
+    const dias = Array.from(document.querySelectorAll('#diasContainer .dia')).map((d, idx) => {
+        const nome = d.querySelector('.nomeDia').value.trim();
+        return nome || `Dia ${idx + 1}`;
+    });
+    select.innerHTML = dias.map((n, i) => `<option value="${i}">${n}</option>`).join('');
+}
+
 export async function loadTreinosSection(alunoIdParam = '') {
     const content = document.getElementById("content");
     content.innerHTML = "<h2>Carregando...</h2>";
@@ -39,6 +49,18 @@ export async function loadTreinosSection(alunoIdParam = '') {
                     ${alunos.map(a => `<option value="${a.id}">${a.nome}</option>`).join('')}
                 </select>
                 <button type="button" id="gerarTreinoIA" disabled>Gerar treino com IA</button>
+                <div id="configFicha" class="config-ficha">
+                    <label>Qtd Treinos
+                        <input type="number" name="qtdTreinos" value="1" min="1" />
+                        <button type="button" id="incQtdTreinos">+</button>
+                    </label>
+                    <label>Próximo treino
+                        <select name="proximoTreino"></select>
+                    </label>
+                    <label>Vencimento
+                        <input type="date" name="vencimento" />
+                    </label>
+                </div>
                 <h3>Nome da ficha</h3>
                 <input type="text" name="nome" placeholder="Nome da ficha" required />
                 <div id="diasContainer"></div>
@@ -52,10 +74,20 @@ export async function loadTreinosSection(alunoIdParam = '') {
             <div id="listaTreinos"></div>
         `;
 
-        document.getElementById('addDia').addEventListener('click', () => addDia());
+        document.getElementById('addDia').addEventListener('click', () => { addDia(); updateProximoOptions(); });
         addDia();
+        updateProximoOptions();
+
+        const diasContainer = document.getElementById('diasContainer');
+        diasContainer.addEventListener('input', e => {
+            if (e.target.classList.contains('nomeDia')) updateProximoOptions();
+        });
 
         const alunoSel = document.querySelector('#novoTreinoForm select[name="aluno"]');
+        document.getElementById('incQtdTreinos').addEventListener('click', () => {
+            const input = document.querySelector('#configFicha input[name="qtdTreinos"]');
+            input.value = parseInt(input.value || '0') + 1;
+        });
         const gerarBtn = document.getElementById('gerarTreinoIA');
         const urlAluno = alunoIdParam || new URLSearchParams(window.location.search).get('aluno') || '';
         if (urlAluno) alunoSel.value = urlAluno;
@@ -73,6 +105,7 @@ export async function loadTreinosSection(alunoIdParam = '') {
             form.reset();
             document.getElementById('diasContainer').innerHTML = '';
             addDia();
+            updateProximoOptions();
             document.getElementById('cancelEdit').classList.add('hidden');
         });
 
@@ -105,15 +138,24 @@ export async function loadTreinosSection(alunoIdParam = '') {
                 method = 'PUT';
             }
 
+            const body = {
+                nome: nomeTreino,
+                dias,
+                qtdTreinos: parseInt(form.qtdTreinos.value) || 1,
+                proximoTreino: form.proximoTreino.value || null,
+                vencimento: form.vencimento.value || null
+            };
+
             const resp = await fetchWithFreshToken(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nome: nomeTreino, dias })
+                body: JSON.stringify(body)
             });
             if (resp.ok) {
                 form.reset();
                 document.getElementById('diasContainer').innerHTML = '';
                 addDia();
+                updateProximoOptions();
                 document.getElementById('mensagemTreino').textContent = 'Treino criado com sucesso!';
                 form.removeAttribute('data-editar');
                 document.getElementById('cancelEdit').classList.add('hidden');
@@ -292,6 +334,8 @@ function fillTreinoForm(alunoId, treino) {
     const form = document.getElementById('novoTreinoForm');
     form.aluno.value = alunoId;
     form.nome.value = treino.nome || '';
+    form.qtdTreinos.value = treino.qtdTreinos || 1;
+    form.vencimento.value = treino.vencimento || '';
     if (treino.id) {
         form.dataset.editar = treino.id;
         document.getElementById('cancelEdit').classList.remove('hidden');
@@ -318,6 +362,10 @@ function fillTreinoForm(alunoId, treino) {
             exDiv.querySelector('.observacoes').value = exData.observacoes || '';
         });
     });
+    updateProximoOptions();
+    if (treino.proximoTreino !== undefined && form.proximoTreino) {
+        form.proximoTreino.value = treino.proximoTreino;
+    }
     form.scrollIntoView({ behavior: 'smooth' });
 }
 
