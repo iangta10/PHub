@@ -149,6 +149,8 @@ export async function loadTreinosSection(alunoIdParam = '') {
             const dias = [];
             form.querySelectorAll('.dia').forEach((diaDiv, idx) => {
                 const nomeDia = diaDiv.querySelector('.nomeDia').value || `Dia ${idx + 1}`;
+                const descricao = diaDiv.querySelector('.descDia').value || '';
+                const diaSemanaVal = diaDiv.querySelector('.diaSemana').value || null;
                 const exercicios = [];
                 diaDiv.querySelectorAll('.exercicio').forEach(exDiv => {
                     exercicios.push({
@@ -160,7 +162,7 @@ export async function loadTreinosSection(alunoIdParam = '') {
                         observacoes: exDiv.querySelector('.observacoes').value || ''
                     });
                 });
-                dias.push({ nome: nomeDia, exercicios });
+                dias.push({ nome: nomeDia, descricao, diaSemana: diaSemanaVal, exercicios });
             });
 
             let url = `/api/users/alunos/${alunoId}/treinos`;
@@ -210,7 +212,20 @@ function addDia() {
     diaDiv.dataset.idx = diaIndex;
     diaDiv.innerHTML = `
         <h3>Dia ${diaIndex + 1}</h3>
-        <input type="text" class="nomeDia" placeholder="Nome do treino" />
+        <div class="dadosTreino">
+            <input type="text" class="nomeDia" placeholder="Nome do treino" />
+            <textarea class="descDia" placeholder="Descrição"></textarea>
+            <select class="diaSemana">
+                <option value="">Dia da semana</option>
+                <option value="0">Domingo</option>
+                <option value="1">Segunda</option>
+                <option value="2">Terça</option>
+                <option value="3">Quarta</option>
+                <option value="4">Quinta</option>
+                <option value="5">Sexta</option>
+                <option value="6">Sábado</option>
+            </select>
+        </div>
         <div class="exercicios"></div>
         <button type="button" class="addExercicio">Adicionar Exercício</button>
     `;
@@ -223,7 +238,13 @@ function addDia() {
 }
 
 function addExercicio(container) {
-    const allOptions = TODOS_EXERCICIOS.sort((a,b)=>a.localeCompare(b)).map(e => `<option value="${e}">${e}</option>`).join('');
+    const allOptions = TODOS_EXERCICIOS.sort((a,b)=>a.localeCompare(b)).map(e => `<option value="${e}"></option>`).join('');
+    if (!document.getElementById('exerciciosList')) {
+        const dl = document.createElement('datalist');
+        dl.id = 'exerciciosList';
+        dl.innerHTML = allOptions;
+        document.body.appendChild(dl);
+    }
     const exDiv = document.createElement('div');
     exDiv.className = 'exercicio';
     exDiv.innerHTML = `
@@ -235,15 +256,20 @@ function addExercicio(container) {
             <option value="">Todos os Grupos</option>
             ${GRUPO_OPTIONS}
         </select>
-        <select class="nomeExercicio">${allOptions}</select>
+        <div class="buscaEx">
+            <i class="fas fa-search"></i>
+            <input type="text" class="nomeExercicio" list="exerciciosList" placeholder="Exercício" />
+        </div>
         <select class="metodo">
             <option value="">Método</option>
             ${METODOS.map(m => `<option data-series="${m.series || ''}" data-repeticoes="${m.repeticoes || ''}" data-observacoes="${m.observacoes || ''}">${m.nome}</option>`).join('')}
         </select>
         <input type="number" class="series" placeholder="Séries" />
         <input type="number" class="repeticoes" placeholder="Reps" />
-        <input type="number" class="carga" placeholder="Carga (opcional)" />
+        <input type="number" class="carga" placeholder="Sug. Carga" />
+        <label class="bisetLbl"><input type="checkbox" class="biSet" /> bi-set</label>
         <input type="text" class="observacoes" placeholder="Observações" />
+        <button type="button" class="clearExercicio">Limpar</button>
         <button type="button" class="removeExercicio">X</button>
     `;
     container.appendChild(exDiv);
@@ -267,7 +293,8 @@ function addExercicio(container) {
             return gp === grupo || outros.includes(grupo);
         });
         const nomes = items.map(e => e.nome).sort((a,b)=>a.localeCompare(b));
-        exercicioSel.innerHTML = nomes.map(n => `<option value="${n}">${n}</option>`).join('');
+        const dl = document.getElementById('exerciciosList');
+        if (dl) dl.innerHTML = nomes.map(n => `<option value="${n}"></option>`).join('');
     }
 
     categoriaSel.addEventListener('change', updateOptions);
@@ -285,9 +312,19 @@ function addExercicio(container) {
         if (o) obsInput.value = o;
     });
 
+    exDiv.querySelector('.clearExercicio').addEventListener('click', () => {
+        exDiv.querySelectorAll('input, select').forEach(el => {
+            if (el.classList.contains('nomeExercicio')) el.value = '';
+            else if (el.type === 'checkbox') el.checked = false;
+            else el.value = '';
+        });
+    });
+
     exDiv.querySelector('.removeExercicio').addEventListener('click', () => {
         exDiv.remove();
     });
+
+    return exDiv;
 }
 
 async function updateAlunoHeader(alunoId) {
@@ -385,6 +422,8 @@ function fillTreinoForm(alunoId, treino) {
         const diaDiv = document.querySelectorAll('#diasContainer .dia')[idx];
         updateTabName(idx, dia.nome);
         diaDiv.querySelector('.nomeDia').value = dia.nome;
+        if (dia.descricao) diaDiv.querySelector('.descDia').value = dia.descricao;
+        if (dia.diaSemana !== undefined) diaDiv.querySelector('.diaSemana').value = dia.diaSemana;
         const container = diaDiv.querySelector('.exercicios');
         container.innerHTML = '';
         (dia.exercicios || []).forEach(() => addExercicio(container));
