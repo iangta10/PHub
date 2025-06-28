@@ -30,6 +30,7 @@ export async function loadTreinosSection(alunoIdParam = '') {
         GRUPO_OPTIONS = GRUPOS.slice().sort((a,b)=>a.localeCompare(b)).map(g => `<option value="${g}">${g}</option>`).join('');
 
         content.innerHTML = `
+            <div id="alunoHeader" class="aluno-header"></div>
             <h2>Novo Treino</h2>
             <form id="novoTreinoForm">
                 <h3>Aluno</h3>
@@ -59,8 +60,10 @@ export async function loadTreinosSection(alunoIdParam = '') {
         const urlAluno = alunoIdParam || new URLSearchParams(window.location.search).get('aluno') || '';
         if (urlAluno) alunoSel.value = urlAluno;
         const toggleGerar = () => { gerarBtn.disabled = !alunoSel.value; };
-        alunoSel.addEventListener('change', () => { loadTreinosAluno(alunoSel.value); toggleGerar(); });
+        const updateHeader = () => updateAlunoHeader(alunoSel.value);
+        alunoSel.addEventListener('change', () => { loadTreinosAluno(alunoSel.value); toggleGerar(); updateHeader(); });
         toggleGerar();
+        updateHeader();
         gerarBtn.addEventListener('click', () => gerarTreinoComIA(alunoSel.value));
         loadTreinosAluno(alunoSel.value);
 
@@ -208,6 +211,34 @@ function addExercicio(container) {
     exDiv.querySelector('.removeExercicio').addEventListener('click', () => {
         exDiv.remove();
     });
+}
+
+async function updateAlunoHeader(alunoId) {
+    const header = document.getElementById('alunoHeader');
+    if (!header) return;
+    if (!alunoId) {
+        header.innerHTML = '<p>Selecione o aluno</p>';
+        return;
+    }
+    try {
+        const res = await fetchWithFreshToken(`/api/users/alunos/${alunoId}`);
+        if (!res.ok) throw new Error('Erro');
+        const aluno = await res.json();
+        const foto = aluno.fotoUrl || './img/profile-placeholder.png';
+        const idade = aluno.idade ? `${aluno.idade} anos` : '';
+        const sexo = aluno.sexo || aluno.genero || '';
+        header.innerHTML = `
+            <img src="${foto}" alt="Foto do aluno">
+            <div>
+                <h3>${aluno.nome || ''}</h3>
+                <div class="aluno-cards">
+                    <span class="info-card">${idade}</span>
+                    <span class="info-card">${sexo}</span>
+                </div>
+            </div>`;
+    } catch (err) {
+        header.innerHTML = '<p>Erro ao carregar aluno</p>';
+    }
 }
 
 async function loadTreinosAluno(alunoId) {
