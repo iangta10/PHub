@@ -2,9 +2,13 @@ const express = require('express');
 const router = express.Router();
 const admin = require('../../firebase-admin');
 const verifyToken = require('../../middleware/verifyToken');
+const requireRole = require('../../middleware/requireRole');
+
+router.use(verifyToken);
+router.use(requireRole('personal', 'admin'));
 
 // Criar aluno
-router.post('/alunos', verifyToken, async (req, res) => {
+router.post('/alunos', async (req, res) => {
     const {
         nome,
         email,
@@ -50,7 +54,7 @@ router.post('/alunos', verifyToken, async (req, res) => {
 });
 
 // Listar alunos
-router.get('/alunos', verifyToken, async (req, res) => {
+router.get('/alunos', async (req, res) => {
     const personalId = req.user.uid;
 
     try {
@@ -79,7 +83,7 @@ router.get('/alunos', verifyToken, async (req, res) => {
 });
 
 // Buscar dados de um aluno especifico
-router.get('/alunos/:id', verifyToken, async (req, res) => {
+router.get('/alunos/:id', async (req, res) => {
     const personalId = req.user.uid;
     const alunoId = req.params.id;
 
@@ -103,7 +107,7 @@ router.get('/alunos/:id', verifyToken, async (req, res) => {
 });
 
 // Atualizar dados de um aluno
-router.put('/alunos/:id', verifyToken, async (req, res) => {
+router.put('/alunos/:id', async (req, res) => {
     const personalId = req.user.uid;
     const alunoId = req.params.id;
     const {
@@ -151,7 +155,7 @@ router.put('/alunos/:id', verifyToken, async (req, res) => {
 });
 
 // Definir plano de um aluno (após confirmação de pagamento)
-router.post('/alunos/:id/plan', verifyToken, async (req, res) => {
+router.post('/alunos/:id/plan', async (req, res) => {
     const personalId = req.user.uid;
     const alunoId = req.params.id;
     const { planId, aulasPorSemana } = req.body;
@@ -173,7 +177,7 @@ router.post('/alunos/:id/plan', verifyToken, async (req, res) => {
 });
 
 // Remover aluno
-router.delete('/alunos/:id', verifyToken, async (req, res) => {
+router.delete('/alunos/:id', async (req, res) => {
     const personalId = req.user.uid;
     const alunoId = req.params.id;
 

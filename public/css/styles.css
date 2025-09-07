@@ -103,6 +103,31 @@ button:hover {
     width: 100%;
 }
 
+/* Loading spinner */
+button .spinner {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    margin-left: 8px;
+    animation: spin 1s linear infinite;
+}
+
+button[aria-busy="true"] .spinner {
+    display: inline-block;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+#loginError {
+    margin-top: 10px;
+    color: #ff6b6b;
+}
+
 .user-type-selector {
     display: flex;
     justify-content: space-between;
