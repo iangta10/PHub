@@ -5,11 +5,20 @@ export async function loadAgendaSection(alunoParam = '', incluirOcupado = false)
     content.innerHTML = '<h2>Carregando agenda...</h2>';
 
     const hoje = new Date();
-    let currentMonth = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    let currentDate = new Date(hoje);
+    let viewMode = 'semana';
 
     async function render() {
-        const inicio = new Date(currentMonth);
-        const fim = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+        let inicio, fim;
+        if (viewMode === 'mensal') {
+            inicio = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+            fim = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+        } else {
+            inicio = new Date(currentDate);
+            inicio.setDate(inicio.getDate() - inicio.getDay());
+            fim = new Date(inicio);
+            fim.setDate(inicio.getDate() + 6);
+        }
         const url = `/api/users/agenda/aulas?inicio=${inicio.toISOString()}&fim=${fim.toISOString()}`
             + (alunoParam ? `&aluno=${alunoParam}` : '')
             + (incluirOcupado ? '&incluirOcupado=true' : '');
@@ -41,31 +50,51 @@ export async function loadAgendaSection(alunoParam = '', incluirOcupado = false)
         }
 
         const eventos = aulas.concat(expandirDisponibilidade(disponibilidade, inicio, fim));
+        const buttonsHtml = incluirOcupado
+            ? '<button id="solicitarAgendamento">Solicitar agendamento</button>'
+            : '<button id="novoAgendamento">Novo agendamento</button><button id="editarDisponibilidade">Editar disponibilidade</button>';
         content.innerHTML = `
             <h2>Agenda</h2>
+            <div class="view-switch">
+                <button id="viewSemana">Semanal</button>
+                <button id="viewMes">Mensal</button>
+            </div>
             <div class="agenda-controls">
-                <button id="prevMes">&#9664;</button>
-                <span id="mesAtual"></span>
-                <button id="nextMes">&#9654;</button>
+                <button id="prevPeriodo">&#9664;</button>
+                <span id="periodoAtual"></span>
+                <button id="nextPeriodo">&#9654;</button>
             </div>
             <div id="calendario" class="calendario"></div>
-            <button id="novoAgendamento">Novo agendamento</button>
-            <button id="editarDisponibilidade">Editar disponibilidade</button>
+            ${buttonsHtml}
             <ul id="proximasAulas" class="lista-aulas"></ul>
         `;
-        document.getElementById('prevMes').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth() - 1); render(); });
-        document.getElementById('nextMes').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth() + 1); render(); });
-        const novoBtn = document.getElementById('novoAgendamento');
-        const dispBtn = document.getElementById('editarDisponibilidade');
+        document.getElementById('viewSemana').addEventListener('click', () => { viewMode = 'semana'; render(); });
+        document.getElementById('viewMes').addEventListener('click', () => { viewMode = 'mensal'; render(); });
+        document.getElementById('prevPeriodo').addEventListener('click', () => {
+            if (viewMode === 'mensal') currentDate.setMonth(currentDate.getMonth() - 1);
+            else currentDate.setDate(currentDate.getDate() - 7);
+            render();
+        });
+        document.getElementById('nextPeriodo').addEventListener('click', () => {
+            if (viewMode === 'mensal') currentDate.setMonth(currentDate.getMonth() + 1);
+            else currentDate.setDate(currentDate.getDate() + 7);
+            render();
+        });
         if (incluirOcupado) {
-            novoBtn.style.display = 'none';
-            dispBtn.style.display = 'none';
+            document.getElementById('solicitarAgendamento').addEventListener('click', showSolicitarAgendamentoModal);
         } else {
-            novoBtn.addEventListener('click', showNovoAgendamentoModal);
-            dispBtn.addEventListener('click', showDisponibilidadeModal);
+            document.getElementById('novoAgendamento').addEventListener('click', showNovoAgendamentoModal);
+            document.getElementById('editarDisponibilidade').addEventListener('click', showDisponibilidadeModal);
         }
-        document.getElementById('mesAtual').textContent = currentMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-        desenharCalendario(inicio, fim, eventos);
+        if (viewMode === 'mensal') {
+            document.getElementById('periodoAtual').textContent = currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            desenharCalendario(inicio, fim, eventos);
+        } else {
+            const fimSemana = new Date(inicio);
+            fimSemana.setDate(inicio.getDate() + 6);
+            document.getElementById('periodoAtual').textContent = `${inicio.toLocaleDateString('pt-BR')} - ${fimSemana.toLocaleDateString('pt-BR')}`;
+            desenharSemana(inicio, eventos);
+        }
         mostrarProximasAulas(eventos);
     }
 
@@ -145,6 +174,74 @@ export async function loadAgendaSection(alunoParam = '', incluirOcupado = false)
             });
         } catch (err) {
             console.error('Erro ao abrir modal:', err);
+        }
+    }
+
+    async function showSolicitarAgendamentoModal() {
+        try {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>Solicitar Agendamento</h3>
+                    <form id="formSolicitar">
+                        <input type="date" name="dia" required />
+                        <select name="hora" disabled required>
+                            <option value="">Selecione o horário</option>
+                        </select>
+                        <div>
+                            <button type="submit">Solicitar</button>
+                            <button type="button" class="cancelModal">Cancelar</button>
+                        </div>
+                    </form>
+                </div>`;
+            document.body.appendChild(modal);
+            const remove = () => modal.remove();
+            modal.addEventListener('click', e => { if (e.target === modal) remove(); });
+            modal.querySelector('.cancelModal').addEventListener('click', remove);
+            const form = modal.querySelector('#formSolicitar');
+            const selectHora = form.hora;
+            form.dia.addEventListener('change', async () => {
+                const dia = form.dia.value;
+                if(!dia){
+                    selectHora.innerHTML = '<option value="">Selecione o horário</option>';
+                    selectHora.disabled = true;
+                    return;
+                }
+                const [respDisp, respAulas] = await Promise.all([
+                    fetchWithFreshToken('/api/users/agenda/disponibilidade'),
+                    fetchWithFreshToken(`/api/users/agenda/aulas?inicio=${dia}T00:00:00.000Z&fim=${dia}T23:59:59.999Z&incluirOcupado=true`)
+                ]);
+                const disp = await respDisp.json();
+                const aulas = await respAulas.json();
+                const horarios = horariosDisponiveis(disp, aulas, dia);
+                selectHora.innerHTML = '<option value="">Selecione o horário</option>' +
+                    horarios.map(h=>`<option value="${h}">${h}</option>`).join('');
+                selectHora.disabled = horarios.length===0;
+            });
+
+            form.addEventListener('submit', async e => {
+                e.preventDefault();
+                const dia = form.dia.value;
+                const inicio = `${dia}T${form.hora.value}:00.000Z`;
+                const fimDate = new Date(inicio);
+                fimDate.setUTCHours(fimDate.getUTCHours()+1);
+                const fim = fimDate.toISOString();
+                const body = { inicio, fim };
+                const r = await fetchWithFreshToken('/api/users/agenda/aulas', {
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify(body)
+                });
+                if (r.ok) {
+                    remove();
+                    render();
+                } else {
+                    alert('Erro ao solicitar agendamento');
+                }
+            });
+        } catch (err) {
+            console.error('Erro ao solicitar agendamento:', err);
         }
     }
 
@@ -339,6 +436,38 @@ export async function loadAgendaSection(alunoParam = '', incluirOcupado = false)
             cell.className = 'cal-cell';
             cell.innerHTML = `<span class="cal-dia">${dia}</span>`;
             const dataStr = new Date(Date.UTC(inicio.getFullYear(), inicio.getMonth(), dia)).toISOString().substring(0,10);
+            eventos.filter(ev => ev.inicio.startsWith(dataStr)).forEach(ev => {
+                const div = document.createElement('div');
+                div.className = `evt ${ev.status || ev.tipo}`;
+                const label = ev.alunoNome || (ev.tipo === 'ocupado' ? 'Ocupado' : ev.tipo);
+                div.textContent = label;
+                cell.appendChild(div);
+            });
+            grid.appendChild(cell);
+        }
+    }
+
+    function desenharSemana(inicio, eventos) {
+        const cal = document.getElementById('calendario');
+        cal.innerHTML = '';
+        const grid = document.createElement('div');
+        grid.className = 'cal-grid';
+        cal.appendChild(grid);
+        const nomesDias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+        nomesDias.forEach(n => {
+            const h = document.createElement('div');
+            h.className = 'cal-head';
+            h.textContent = n;
+            grid.appendChild(h);
+        });
+        for (let i = 0; i < 7; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cal-cell';
+            const d = new Date(inicio);
+            d.setDate(inicio.getDate() + i);
+            const dia = d.getDate();
+            const dataStr = d.toISOString().substring(0,10);
+            cell.innerHTML = `<span class="cal-dia">${dia}</span>`;
             eventos.filter(ev => ev.inicio.startsWith(dataStr)).forEach(ev => {
                 const div = document.createElement('div');
                 div.className = `evt ${ev.status || ev.tipo}`;

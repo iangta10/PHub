@@ -62,6 +62,10 @@ function loadHomeSection() {
             <button class="quick-btn" data-action="relatorio"><i class="fas fa-chart-line"></i>Relatorio mensal</button>
             <button class="quick-btn" data-action="criar-treino"><i class="fas fa-dumbbell"></i>Criar treino</button>
         </section>
+        <section class="solicitacoes">
+            <h3>Solicitações</h3>
+            <ul id="solicitacoesList"></ul>
+        </section>
         <section class="day-calendar">
             <h3>Agenda de Hoje</h3>
             <div class="calendar-placeholder">Sem atividades por enquanto.</div>
@@ -122,6 +126,37 @@ function loadHomeSection() {
                 alert('Erro ao gerar link.');
             }
         });
+    }
+
+    if (USER_ROLE === 'personal') {
+        try {
+            const res = await fetchWithFreshToken('/api/users/agenda/solicitacoes');
+            const solicitacoes = await res.json();
+            const lista = content.querySelector('#solicitacoesList');
+            if (lista) {
+                if (solicitacoes.length === 0) {
+                    lista.innerHTML = '<li>Sem solicitações</li>';
+                } else {
+                    lista.innerHTML = solicitacoes.map(s =>
+                        `<li data-id="${s.id}">${new Date(s.inicio).toLocaleString('pt-BR')} - ${s.alunoNome || s.alunoEmail} <button class="aceitarSolic">Aceitar</button></li>`
+                    ).join('');
+                    lista.querySelectorAll('.aceitarSolic').forEach(btn => {
+                        btn.addEventListener('click', async e => {
+                            const li = e.target.closest('li');
+                            const id = li.getAttribute('data-id');
+                            await fetchWithFreshToken(`/api/users/agenda/aulas/${id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ status: 'agendada' })
+                            });
+                            li.remove();
+                        });
+                    });
+                }
+            }
+        } catch (err) {
+            console.error('Erro ao carregar solicitações:', err);
+        }
     }
 }
 
