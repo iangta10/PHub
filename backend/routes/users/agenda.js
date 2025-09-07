@@ -151,7 +151,7 @@ router.post('/agenda/aulas', verifyToken, async (req, res) => {
 });
 
 router.get('/agenda/aulas', verifyToken, async (req, res) => {
-    const { inicio, fim, aluno } = req.query;
+    const { inicio, fim, aluno, incluirOcupado } = req.query;
     const uid = req.user.uid;
     try {
         const userDoc = await admin.firestore().collection('users').doc(uid).get();
@@ -162,12 +162,40 @@ router.get('/agenda/aulas', verifyToken, async (req, res) => {
             query = admin.firestore().collection('users').doc(uid).collection('agenda');
             if (aluno) query = query.where('alunoId', '==', aluno);
         } else {
-            query = admin.firestore().collectionGroup('agenda').where('alunoEmail', '==', req.user.email);
+            if (incluirOcupado === 'true') {
+                const snapPersonal = await admin.firestore()
+                    .collectionGroup('alunos')
+                    .where('email', '==', req.user.email)
+                    .limit(1)
+                    .get();
+                if (snapPersonal.empty) {
+                    return res.status(404).json({ error: 'Personal não encontrado' });
+                }
+                const personalId = snapPersonal.docs[0].ref.parent.parent.id;
+                query = admin.firestore().collection('users').doc(personalId).collection('agenda');
+            } else {
+                query = admin.firestore().collectionGroup('agenda').where('alunoEmail', '==', req.user.email);
+            }
         }
         if (inicio) query = query.where('inicio', '>=', inicio);
         if (fim) query = query.where('inicio', '<=', fim);
         const snap = await query.get();
-        const eventos = snap.docs.map(d => ({ id: d.id, personalId: d.ref.parent.parent.id, ...d.data() }));
+        let eventos = snap.docs.map(d => ({ id: d.id, personalId: d.ref.parent.parent.id, ...d.data() }));
+        if (role === 'aluno' && incluirOcupado === 'true') {
+            eventos = eventos.map(ev => {
+                if (ev.alunoEmail !== req.user.email) {
+                    return {
+                        id: ev.id,
+                        personalId: ev.personalId,
+                        inicio: ev.inicio,
+                        fim: ev.fim,
+                        tipo: 'ocupado',
+                        status: 'ocupado'
+                    };
+                }
+                return ev;
+            });
+        }
         res.json(eventos);
     } catch (err) {
         console.error('Erro ao listar aulas:', err);
