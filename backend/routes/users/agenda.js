@@ -86,6 +86,7 @@ router.post('/agenda/aulas', verifyToken, async (req, res) => {
     try {
         const userDoc = await admin.firestore().collection('users').doc(req.user.uid).get();
         const role = userDoc.exists ? userDoc.data().role : 'personal';
+        const status = role === 'aluno' ? 'pendente' : 'agendada';
 
         if (role === 'aluno') {
             // busca personal pelo email do aluno
@@ -140,7 +141,7 @@ router.post('/agenda/aulas', verifyToken, async (req, res) => {
                 alunoEmail: alunoEmail || null,
                 inicio,
                 fim,
-                status: 'agendada',
+                status,
                 createdAt: new Date().toISOString()
             });
         res.status(201).json({ id: docRef.id });
@@ -244,6 +245,22 @@ router.put('/agenda/aulas/:id', verifyToken, async (req, res) => {
     } catch (err) {
         console.error('Erro ao atualizar aula:', err);
         res.status(500).json({ error: 'Erro ao atualizar aula' });
+    }
+});
+
+router.get('/agenda/solicitacoes', verifyToken, async (req, res) => {
+    const personalId = req.user.uid;
+    try {
+        const snap = await admin.firestore()
+            .collection('users').doc(personalId)
+            .collection('agenda')
+            .where('status', '==', 'pendente')
+            .get();
+        const itens = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        res.json(itens);
+    } catch (err) {
+        console.error('Erro ao listar solicitações:', err);
+        res.status(500).json({ error: 'Erro ao listar solicitações' });
     }
 });
 

@@ -595,6 +595,13 @@ body {
     margin-bottom: 10px;
 }
 
+.view-switch {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
 .calendario {
     display: flex;
     flex-direction: column;
