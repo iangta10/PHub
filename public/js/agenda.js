@@ -1,6 +1,6 @@
 import { fetchWithFreshToken } from "./auth.js";
 
-export async function loadAgendaSection(alunoParam = '') {
+export async function loadAgendaSection(alunoParam = '', incluirOcupado = false) {
     const content = document.getElementById('content');
     content.innerHTML = '<h2>Carregando agenda...</h2>';
 
@@ -10,7 +10,9 @@ export async function loadAgendaSection(alunoParam = '') {
     async function render() {
         const inicio = new Date(currentMonth);
         const fim = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
-        const url = `/api/users/agenda/aulas?inicio=${inicio.toISOString()}&fim=${fim.toISOString()}` + (alunoParam ? `&aluno=${alunoParam}` : '');
+        const url = `/api/users/agenda/aulas?inicio=${inicio.toISOString()}&fim=${fim.toISOString()}`
+            + (alunoParam ? `&aluno=${alunoParam}` : '')
+            + (incluirOcupado ? '&incluirOcupado=true' : '');
         const [respAulas, respDisp] = await Promise.all([
             fetchWithFreshToken(url),
             fetchWithFreshToken('/api/users/agenda/disponibilidade')
@@ -312,7 +314,8 @@ export async function loadAgendaSection(alunoParam = '') {
             eventos.filter(ev => ev.inicio.startsWith(dataStr)).forEach(ev => {
                 const div = document.createElement('div');
                 div.className = `evt ${ev.status || ev.tipo}`;
-                div.textContent = ev.alunoNome || ev.tipo;
+                const label = ev.alunoNome || (ev.tipo === 'ocupado' ? 'Ocupado' : ev.tipo);
+                div.textContent = label;
                 cell.appendChild(div);
             });
             grid.appendChild(cell);

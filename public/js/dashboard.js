@@ -22,7 +22,8 @@ document.querySelectorAll(".sidebar li").forEach(item => {
             } else if (section === "agenda") {
                 const { loadAgendaSection } = await import("./agenda.js");
                 const aluno = new URLSearchParams(window.location.search).get('aluno') || '';
-                loadAgendaSection(aluno);
+                const incluirOcupado = USER_ROLE === 'aluno';
+                loadAgendaSection(aluno, incluirOcupado);
             } else if (section === "meus-treinos") {
                 const { loadMeusTreinos } = await import("./treinos.js");
                 loadMeusTreinos();
