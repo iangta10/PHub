@@ -49,7 +49,7 @@ function loadSection(section) {
     content.innerHTML = `<h2>${capitalize(section)}</h2><p>Conteúdo do módulo "${section}" será carregado aqui...</p>`;
 }
 
-function loadHomeSection() {
+async function loadHomeSection() {
     const content = document.getElementById("content");
     content.innerHTML = `
         <section class="welcome">
