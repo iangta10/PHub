@@ -2,43 +2,45 @@ import { fetchUserRole, fetchUserInfo, fetchWithFreshToken } from "./auth.js";
 
 let USER_ROLE = 'personal';
 
-document.querySelectorAll(".sidebar li").forEach(item => {
-    item.addEventListener("click", async () => {
-        const section = item.getAttribute("data-section");
-        if (section) {
-            if (section === "alunos") {
-                const { loadAlunosSection } = await import("./alunos.js");
-                loadAlunosSection();
-            } else if (section === "treinos") {
-                const { loadTreinosSection } = await import("./treinos.js");
-                const aluno = new URLSearchParams(window.location.search).get('aluno') || '';
-                loadTreinosSection(aluno);
-           } else if (section === "exercicios") {
-               const { loadExerciciosSection } = await import("./exercicios.js");
-               loadExerciciosSection();
-           } else if (section === "avaliacoes") {
-               const { loadAvaliacoesSection } = await import("./avaliacoes.js");
-               loadAvaliacoesSection();
-            } else if (section === "agenda") {
-                const { loadAgendaSection } = await import("./agenda.js");
-                const aluno = new URLSearchParams(window.location.search).get('aluno') || '';
-                const incluirOcupado = USER_ROLE === 'aluno';
-                loadAgendaSection(aluno, incluirOcupado);
-            } else if (section === "meus-treinos") {
-                const { loadMeusTreinos } = await import("./treinos.js");
-                loadMeusTreinos();
-            } else if (section === "perfil") {
-                const { loadProfileSection } = await import("./profile.js");
-                loadProfileSection();
-            } else if (section === "home") {
-                loadHomeSection();
-            } else {
-                loadSection(section);
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.sidebar li').forEach(item => {
+        item.addEventListener('click', async () => {
+            const section = item.getAttribute('data-section');
+            if (section) {
+                if (section === 'alunos') {
+                    const { loadAlunosSection } = await import('./alunos.js');
+                    loadAlunosSection();
+                } else if (section === 'treinos') {
+                    const { loadTreinosSection } = await import('./treinos.js');
+                    const aluno = new URLSearchParams(window.location.search).get('aluno') || '';
+                    loadTreinosSection(aluno);
+                } else if (section === 'exercicios') {
+                    const { loadExerciciosSection } = await import('./exercicios.js');
+                    loadExerciciosSection();
+                } else if (section === 'avaliacoes') {
+                    const { loadAvaliacoesSection } = await import('./avaliacoes.js');
+                    loadAvaliacoesSection();
+                } else if (section === 'agenda') {
+                    const { loadAgendaSection } = await import('./agenda.js');
+                    const aluno = new URLSearchParams(window.location.search).get('aluno') || '';
+                    const incluirOcupado = USER_ROLE === 'aluno';
+                    loadAgendaSection(aluno, incluirOcupado);
+                } else if (section === 'meus-treinos') {
+                    const { loadMeusTreinos } = await import('./treinos.js');
+                    loadMeusTreinos();
+                } else if (section === 'perfil') {
+                    const { loadProfileSection } = await import('./profile.js');
+                    loadProfileSection();
+                } else if (section === 'home') {
+                    loadHomeSection();
+                } else {
+                    loadSection(section);
+                }
+            } else if (item.id === 'logoutBtn') {
+                localStorage.removeItem('token');
+                window.location.href = 'login.html';
             }
-        } else if (item.id === "logoutBtn") {
-            localStorage.removeItem("token");
-            window.location.href = "login.html";
-        }
+        });
     });
 });
 
@@ -213,6 +215,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             greet.textContent = `Olá, ${name || roleText}`;
         }
+    } catch (err) {
+        console.error('Erro ao obter role:', err);
+    } finally {
         const params = new URLSearchParams(window.location.search);
         const sec = params.get('section');
         if (sec) {
@@ -221,7 +226,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             loadHomeSection();
         }
-    } catch (err) {
-        console.error('Erro ao obter role:', err);
     }
 });
