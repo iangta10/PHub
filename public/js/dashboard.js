@@ -2,6 +2,19 @@ import { fetchUserRole, fetchUserInfo, fetchWithFreshToken } from "./auth.js";
 
 let USER_ROLE = 'personal';
 
+function updateNavigation(role) {
+    const personalOnly = ['alunos', 'avaliacoes', 'treinos', 'exercicios', 'relatorios'];
+    const alunoOnly = ['meus-treinos', 'anamnese', 'progresso'];
+    document.querySelectorAll('.sidebar li[data-section]').forEach(li => {
+        const section = li.getAttribute('data-section');
+        if (role === 'aluno' && personalOnly.includes(section)) {
+            li.style.display = 'none';
+        } else if (role !== 'aluno' && alunoOnly.includes(section)) {
+            li.style.display = 'none';
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.sidebar li').forEach(item => {
         item.addEventListener('click', async () => {
@@ -218,6 +231,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
         console.error('Erro ao obter role:', err);
     } finally {
+        updateNavigation(USER_ROLE);
+        const isAlunoPage = window.location.pathname.endsWith('aluno.html');
+        const isDashboardPage = window.location.pathname.endsWith('dashboard.html');
+        if (USER_ROLE === 'aluno' && isDashboardPage) {
+            window.location.href = 'aluno.html';
+            return;
+        }
+        if (USER_ROLE !== 'aluno' && isAlunoPage) {
+            window.location.href = 'dashboard.html';
+            return;
+        }
         const params = new URLSearchParams(window.location.search);
         const sec = params.get('section');
         if (sec) {

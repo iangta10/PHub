@@ -1,5 +1,6 @@
 import { auth } from './firebase-config.js';
 import { signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { redirectByRole } from './roleRedirect.mjs';
 
 // Aguarda até que o Firebase defina o usuário logado
 function waitForUser() {
@@ -27,8 +28,20 @@ async function getFreshIdToken() {
 // LOGIN
 const loginForm = document.querySelector("#loginForm");
 if (loginForm) {
+    const loginBtn = loginForm.querySelector('#loginBtn');
+    const errorBox = document.getElementById('loginError');
+    let submitting = false;
+
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (submitting) return;
+        submitting = true;
+        errorBox.textContent = '';
+        if (loginBtn) {
+            loginBtn.disabled = true;
+            loginBtn.setAttribute('aria-busy', 'true');
+        }
+
         const email = e.target.email.value;
         const password = e.target.password.value;
 
@@ -49,18 +62,24 @@ if (loginForm) {
             }
 
             const userData = await res.json();
-            console.log(userData);
-
-            // O backend retorna a propriedade `role` indicando o tipo de usuário
-            if (userData.role === 'personal' || userData.role === 'admin') {
-                window.location.href = 'dashboard.html';
-            } else if (userData.role === 'aluno') {
-                window.location.href = 'aluno.html';
+            const destination = redirectByRole(userData.role);
+            if (destination) {
+                window.location.href = destination;
             } else {
-                alert('Tipo de usuário desconhecido');
+                throw new Error('Tipo de usuário desconhecido');
             }
         } catch (err) {
-            alert("Erro ao fazer login: " + err.message);
+            if (errorBox) {
+                errorBox.textContent = "Erro ao fazer login: " + err.message;
+            }
+            if (loginBtn) {
+                loginBtn.disabled = false;
+            }
+        } finally {
+            submitting = false;
+            if (loginBtn) {
+                loginBtn.removeAttribute('aria-busy');
+            }
         }
     });
 }

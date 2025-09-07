@@ -19,8 +19,12 @@
         <form id="loginForm" method="post">
             <input type="email" name="email" placeholder="E-mail" required />
             <input type="password" name="password" placeholder="Senha" required />
-            <button type="submit">Entrar</button>
+            <button type="submit" id="loginBtn">
+                <span class="button-text">Entrar</span>
+                <span class="spinner" aria-hidden="true"></span>
+            </button>
         </form>
+        <div id="loginError" role="alert" aria-live="assertive"></div>
         <p>Não tem conta? <a href="register.html">Registrar</a></p>
     </div>
 

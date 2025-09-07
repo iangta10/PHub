@@ -10,6 +10,14 @@ module.exports = async function verifyToken(req, res, next) {
 
     try {
         const decodedToken = await admin.auth().verifyIdToken(token);
+        if (!decodedToken.role) {
+            const doc = await admin.firestore().collection('users').doc(decodedToken.uid).get();
+            const role = doc.exists ? doc.data().role : null;
+            if (role) {
+                await admin.auth().setCustomUserClaims(decodedToken.uid, { role });
+                decodedToken.role = role;
+            }
+        }
         req.user = decodedToken; // ESSENCIAL
         next();
     } catch (error) {
