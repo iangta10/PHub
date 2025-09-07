@@ -17,8 +17,29 @@ export async function loadAgendaSection(alunoParam = '', incluirOcupado = false)
             fetchWithFreshToken(url),
             fetchWithFreshToken('/api/users/agenda/disponibilidade')
         ]);
-        const aulas = await respAulas.json();
-        const disponibilidade = await respDisp.json();
+
+        let aulas = [];
+        try {
+            aulas = await respAulas.json();
+            if (!Array.isArray(aulas)) {
+                console.error('Erro ao obter aulas:', aulas);
+                aulas = [];
+            }
+        } catch (err) {
+            console.error('Erro ao obter aulas:', err);
+        }
+
+        let disponibilidade = [];
+        try {
+            disponibilidade = await respDisp.json();
+            if (!Array.isArray(disponibilidade)) {
+                console.error('Erro ao obter disponibilidade:', disponibilidade);
+                disponibilidade = [];
+            }
+        } catch (err) {
+            console.error('Erro ao obter disponibilidade:', err);
+        }
+
         const eventos = aulas.concat(expandirDisponibilidade(disponibilidade, inicio, fim));
         content.innerHTML = `
             <h2>Agenda</h2>
@@ -34,8 +55,15 @@ export async function loadAgendaSection(alunoParam = '', incluirOcupado = false)
         `;
         document.getElementById('prevMes').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth() - 1); render(); });
         document.getElementById('nextMes').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth() + 1); render(); });
-        document.getElementById('novoAgendamento').addEventListener('click', showNovoAgendamentoModal);
-        document.getElementById('editarDisponibilidade').addEventListener('click', showDisponibilidadeModal);
+        const novoBtn = document.getElementById('novoAgendamento');
+        const dispBtn = document.getElementById('editarDisponibilidade');
+        if (incluirOcupado) {
+            novoBtn.style.display = 'none';
+            dispBtn.style.display = 'none';
+        } else {
+            novoBtn.addEventListener('click', showNovoAgendamentoModal);
+            dispBtn.addEventListener('click', showDisponibilidadeModal);
+        }
         document.getElementById('mesAtual').textContent = currentMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
         desenharCalendario(inicio, fim, eventos);
         mostrarProximasAulas(eventos);
