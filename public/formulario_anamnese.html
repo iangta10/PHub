@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Formulário de Anamnese | PersonalHub</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="stylesheet" href="./css/dashboard.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/public/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/public/img/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/public/img/favicon-16x16.png">
+    <link rel="manifest" href="/public/img/site.webmanifest">
+</head>
+<body class="formulario-anamnese">
+    <div class="anamnese-public-wrapper">
+        <header class="anamnese-public-header">
+            <h1><span style="color: #f58725;">Personal</span>Hub</h1>
+            <h2 id="formTitle">Formulário de anamnese</h2>
+            <p id="formSubtitle">Preencha seus dados para que possamos iniciar seu acompanhamento.</p>
+        </header>
+        <form id="newAnamneseForm" class="anamnese-public-form">
+            <fieldset class="anamnese-group">
+                <legend>Informações de contato</legend>
+                <label>
+                    Nome completo
+                    <input type="text" name="nome" placeholder="Seu nome" required />
+                </label>
+                <label>
+                    E-mail
+                    <input type="email" name="email" placeholder="seuemail@email.com" required />
+                </label>
+                <label>
+                    Telefone
+                    <input type="tel" name="telefone" placeholder="(00) 90000-0000" />
+                </label>
+                <label>
+                    Data de nascimento
+                    <input type="date" name="dataNascimento" />
+                </label>
+                <label>
+                    Melhor horário para contato
+                    <input type="text" name="horarioPreferido" placeholder="Ex.: Manhã, tarde ou noite" />
+                </label>
+                <label>
+                    Preferência de contato
+                    <select name="preferenciaContato">
+                        <option value="">Selecione</option>
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="email">E-mail</option>
+                        <option value="ligacao">Ligação</option>
+                    </select>
+                </label>
+            </fieldset>
+
+            <fieldset class="anamnese-group">
+                <legend>Objetivos e histórico</legend>
+                <label class="wide">
+                    Objetivo principal
+                    <textarea name="objetivo" placeholder="Conte-nos seu principal objetivo."></textarea>
+                </label>
+                <label class="wide">
+                    Experiência com atividades físicas
+                    <textarea name="experiencia" placeholder="Já praticou alguma atividade? Conte como foi."></textarea>
+                </label>
+                <label class="wide">
+                    Há alguma restrição ou lesão?
+                    <textarea name="restricoes" placeholder="Informe restrições médicas, lesões ou dores atuais."></textarea>
+                </label>
+                <label class="wide">
+                    Faz uso de medicamentos?
+                    <textarea name="medicamentos" placeholder="Liste os medicamentos que utiliza atualmente."></textarea>
+                </label>
+                <label class="wide">
+                    Disponibilidade semanal para treinar
+                    <textarea name="disponibilidade" placeholder="Quantos dias e horários tem disponíveis na semana."></textarea>
+                </label>
+            </fieldset>
+
+            <fieldset id="nutritionGroup" class="anamnese-group hidden">
+                <legend>Informações sobre alimentação</legend>
+                <label class="wide">
+                    Como está sua alimentação atualmente?
+                    <textarea name="alimentacaoAtual" placeholder="Descreva sua rotina alimentar."></textarea>
+                </label>
+                <label class="wide">
+                    Possui restrições ou preferências alimentares?
+                    <textarea name="restricoesAlimentares" placeholder="Informe restrições, alergias ou preferências."></textarea>
+                </label>
+            </fieldset>
+
+            <fieldset class="anamnese-group">
+                <legend>Informações adicionais</legend>
+                <label class="wide">
+                    Observações
+                    <textarea name="observacoes" placeholder="Compartilhe outras informações importantes."></textarea>
+                </label>
+            </fieldset>
+
+            <div class="anamnese-submit">
+                <button type="submit" id="submitButton">Enviar formulário</button>
+            </div>
+        </form>
+        <div id="formMessage" class="form-message" role="status"></div>
+    </div>
+
+    <script type="module">
+        const params = new URLSearchParams(window.location.search);
+        const personalId = params.get('personalId');
+        const rawType = params.get('type') || 'apenas-treino';
+        const personalName = params.get('personalName');
+        const typeLabels = {
+            'apenas-treino': 'Apenas treino',
+            'dieta-treino': 'Dieta e treino'
+        };
+
+        const normalizedType = typeLabels[rawType] ? rawType : 'apenas-treino';
+        const selectedLabel = typeLabels[normalizedType];
+
+        const formTitle = document.getElementById('formTitle');
+        const subtitle = document.getElementById('formSubtitle');
+        const nutritionGroup = document.getElementById('nutritionGroup');
+        const form = document.getElementById('newAnamneseForm');
+        const messageBox = document.getElementById('formMessage');
+        const submitButton = document.getElementById('submitButton');
+
+        formTitle.textContent = `Formulário de anamnese - ${selectedLabel}`;
+        if (personalName) {
+            subtitle.textContent = `Este formulário será enviado diretamente para ${personalName}.`;
+        }
+
+        if (normalizedType === 'dieta-treino') {
+            nutritionGroup.classList.remove('hidden');
+        }
+
+        if (!personalId) {
+            form.classList.add('hidden');
+            submitButton?.setAttribute('disabled', 'disabled');
+            messageBox.classList.add('error');
+            messageBox.textContent = 'Link inválido. Solicite um novo formulário ao seu personal.';
+        }
+
+        const showMessage = (text, type = 'info') => {
+            messageBox.textContent = text;
+            messageBox.classList.remove('error', 'success');
+            if (type === 'error') {
+                messageBox.classList.add('error');
+            }
+            if (type === 'success') {
+                messageBox.classList.add('success');
+            }
+        };
+
+        const toggleSubmitting = (isSubmitting) => {
+            if (!submitButton) return;
+            submitButton.disabled = isSubmitting;
+            submitButton.setAttribute('aria-busy', String(isSubmitting));
+            submitButton.textContent = isSubmitting ? 'Enviando...' : 'Enviar formulário';
+        };
+
+        form?.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!personalId) return;
+
+            const formData = new FormData(form);
+            const payload = Object.fromEntries(formData.entries());
+            payload.personalId = personalId;
+            payload.formType = normalizedType;
+
+            toggleSubmitting(true);
+            showMessage('Enviando suas informações...');
+
+            try {
+                const response = await fetch('/api/public/anamnese-forms', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Não foi possível enviar o formulário.');
+                }
+
+                showMessage('Recebemos suas informações! Em breve o personal entrará em contato.', 'success');
+                form.reset();
+                form.classList.add('hidden');
+            } catch (err) {
+                console.error('Erro ao enviar formulário de anamnese:', err);
+                showMessage(err.message || 'Não foi possível enviar o formulário. Tente novamente mais tarde.', 'error');
+            } finally {
+                toggleSubmitting(false);
+            }
+        });
+    </script>
+</body>
+</html>
