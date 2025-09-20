@@ -21,7 +21,7 @@
         </header>
         <form id="newAnamneseForm" class="anamnese-public-form">
             <fieldset class="anamnese-group">
-                <legend>Informações de contato</legend>
+                <legend>Informações principais</legend>
                 <label>
                     Nome completo
                     <input type="text" name="nome" placeholder="Seu nome" required />
@@ -39,17 +39,21 @@
                     <input type="date" name="dataNascimento" />
                 </label>
                 <label>
-                    Melhor horário para contato
-                    <input type="text" name="horarioPreferido" placeholder="Ex.: Manhã, tarde ou noite" />
+                    Gênero
+                    <select name="genero">
+                        <option value="">Selecione</option>
+                        <option value="masculino">Masculino</option>
+                        <option value="feminino">Feminino</option>
+                    </select>
                 </label>
                 <label>
-                    Preferência de contato
-                    <select name="preferenciaContato">
+                    Como me conheceu?
+                    <select name="comoConheceu">
                         <option value="">Selecione</option>
+                        <option value="instagram">Instagram</option>
                         <option value="whatsapp">WhatsApp</option>
-                        <option value="email">E-mail</option>
-                        <option value="ligacao">Ligação</option>
-                    </select>
+                        <option value="indicado">Indicação de amigo</option>
+                        <option value="outro">Outro</option>
                 </label>
             </fieldset>
 
