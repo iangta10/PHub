@@ -1,4 +1,23 @@
-import { fetchWithFreshToken } from "./auth.js";
+import { fetchWithFreshToken, fetchUserInfo, getCurrentUser } from "./auth.js";
+
+let personalContextPromise;
+
+async function getPersonalContext() {
+    if (!personalContextPromise) {
+        personalContextPromise = (async () => {
+            const [userInfo, authUser] = await Promise.all([
+                fetchUserInfo().catch(() => null),
+                getCurrentUser().catch(() => null)
+            ]);
+            return {
+                id: authUser?.uid || userInfo?.id || null,
+                nome: userInfo?.nome || authUser?.displayName || '',
+                email: userInfo?.email || authUser?.email || ''
+            };
+        })();
+    }
+    return personalContextPromise;
+}
 
 export async function loadAlunosSection() {
     const content = document.getElementById("content");
@@ -10,7 +29,10 @@ export async function loadAlunosSection() {
 
         content.innerHTML = `
             <h2>Meus Alunos</h2>
-            <button id="btnNovoAluno" class="quick-btn">Cadastrar novo aluno</button>
+            <div class="alunos-actions">
+                <button id="btnNovoAluno" class="quick-btn">Cadastrar novo aluno</button>
+                <button id="btnGerarAnamnese" class="quick-btn secondary">Gerar formulário de anamnese</button>
+            </div>
             <input type="text" id="searchAluno" placeholder="Buscar por nome..." />
             <ul id="alunoList">
                 ${alunos.map(aluno => `
@@ -32,10 +54,135 @@ export async function loadAlunosSection() {
         attachAlunoHandlers();
         const btnNovo = document.getElementById('btnNovoAluno');
         if (btnNovo) btnNovo.addEventListener('click', () => showNovoAlunoModal(loadAlunosSection));
+
+        const btnGerar = document.getElementById('btnGerarAnamnese');
+        if (btnGerar) {
+            btnGerar.addEventListener('click', async () => {
+                const personal = await getPersonalContext();
+                if (!personal || !personal.id) {
+                    alert('Não foi possível gerar o formulário. Faça login novamente e tente outra vez.');
+                    return;
+                }
+                showAnamneseFormModal(personal);
+            });
+        }
     } catch (err) {
         console.error("Erro ao buscar alunos:", err);
         content.innerHTML = `<p style="color:red;">Erro ao carregar alunos</p>`;
     }
+}
+
+function showAnamneseFormModal(personal) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <h3>Gerar formulário de anamnese</h3>
+            <p>Escolha o tipo de formulário que deseja enviar para o aluno.</p>
+            <div class="modal-actions">
+                <button type="button" class="quick-btn" data-form-type="apenas-treino">Apenas treino</button>
+                <button type="button" class="quick-btn" data-form-type="dieta-treino">Dieta e treino</button>
+            </div>
+            <div class="modal-link-container hidden">
+                <p>Link gerado:</p>
+                <div class="modal-link-row">
+                    <input type="text" class="modal-link-input" readonly />
+                    <button type="button" data-action="copy">Copiar link</button>
+                </div>
+                <div class="modal-link-actions">
+                    <button type="button" data-action="open">Abrir formulário</button>
+                </div>
+                <span class="modal-feedback hidden"></span>
+            </div>
+            <button type="button" data-action="close">Fechar</button>
+        </div>
+    `;
+
+    const closeModal = () => {
+        modal.remove();
+        document.removeEventListener('keydown', handleKeyDown);
+    };
+
+    const handleKeyDown = (evt) => {
+        if (evt.key === 'Escape') {
+            closeModal();
+        }
+    };
+
+    const buildLink = (type) => {
+        const url = new URL(`${window.location.origin}/formulario_anamnese.html`);
+        url.searchParams.set('personalId', personal.id);
+        url.searchParams.set('type', type);
+        if (personal.nome) {
+            url.searchParams.set('personalName', personal.nome);
+        }
+        return url.toString();
+    };
+
+    const actions = modal.querySelectorAll('[data-form-type]');
+    const linkContainer = modal.querySelector('.modal-link-container');
+    const linkInput = modal.querySelector('.modal-link-input');
+    const feedback = modal.querySelector('.modal-feedback');
+
+    actions.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const link = buildLink(btn.dataset.formType);
+            linkInput.value = link;
+            linkContainer.dataset.link = link;
+            linkContainer.classList.remove('hidden');
+            feedback.classList.add('hidden');
+            feedback.textContent = '';
+        });
+    });
+
+    const copyBtn = modal.querySelector('[data-action="copy"]');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', async () => {
+            const link = linkContainer.dataset.link;
+            if (!link) return;
+            try {
+                if (navigator.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(link);
+                } else {
+                    linkInput.focus();
+                    linkInput.select();
+                    document.execCommand('copy');
+                }
+                feedback.textContent = 'Link copiado para a área de transferência!';
+                feedback.classList.remove('hidden');
+                feedback.classList.remove('error');
+            } catch (err) {
+                console.error('Erro ao copiar link:', err);
+                feedback.textContent = 'Não foi possível copiar automaticamente. Copie o link manualmente.';
+                feedback.classList.remove('hidden');
+                feedback.classList.add('error');
+            }
+        });
+    }
+
+    const openBtn = modal.querySelector('[data-action="open"]');
+    if (openBtn) {
+        openBtn.addEventListener('click', () => {
+            const link = linkContainer.dataset.link;
+            if (link) {
+                window.open(link, '_blank');
+            }
+        });
+    }
+
+    const closeBtn = modal.querySelector('[data-action="close"]');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeModal);
+    }
+
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.body.appendChild(modal);
 }
 
 function attachAlunoHandlers() {
