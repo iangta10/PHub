@@ -336,11 +336,11 @@ body.formulario-anamnese {
 
 @media (min-width: 768px) {
     .anamnese-public-form {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
     }
 
     .anamnese-group {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 
