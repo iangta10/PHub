@@ -1,6 +1,9 @@
 import { fetchWithFreshToken, fetchUserInfo, getCurrentUser } from "./auth.js";
+import { StudentsTable } from "./components/studentsTable.js";
+import { listStudents, bulkAction, clearStudentsCache } from "./dataProviders/studentsProvider.mjs";
 
 let personalContextPromise;
+let studentsTableInstance = null;
 
 async function getPersonalContext() {
     if (!personalContextPromise) {
@@ -21,55 +24,58 @@ async function getPersonalContext() {
 
 export async function loadAlunosSection() {
     const content = document.getElementById("content");
-    content.innerHTML = "<h2>Carregando alunos...</h2>";
+    if (!content) return;
+    content.innerHTML = "";
+    const container = document.createElement('div');
+    container.className = 'students-host';
+    content.appendChild(container);
 
-    try {
-        const res = await fetchWithFreshToken('/api/users/alunos');
-        const alunos = await res.json();
-
-        content.innerHTML = `
-            <h2>Meus Alunos</h2>
-            <div class="alunos-actions">
-                <button id="btnNovoAluno" class="quick-btn">Cadastrar novo aluno</button>
-                <button id="btnGerarAnamnese" class="quick-btn secondary">Gerar formulário de anamnese</button>
-            </div>
-            <input type="text" id="searchAluno" placeholder="Buscar por nome..." />
-            <ul id="alunoList">
-                ${alunos.map(aluno => `
-                    <li data-id="${aluno.id}"><strong>${aluno.nome}</strong> (${aluno.email})</li>
-                `).join('')}
-            </ul>
-        `;
-
-        const searchInput = document.getElementById('searchAluno');
-        const list = document.getElementById('alunoList');
-        searchInput.addEventListener('input', () => {
-            const term = searchInput.value.toLowerCase();
-            list.innerHTML = alunos
-                .filter(a => a.nome && a.nome.toLowerCase().includes(term))
-                .map(aluno => `<li data-id="${aluno.id}"><strong>${aluno.nome}</strong> (${aluno.email})</li>`)
-                .join('');
-            attachAlunoHandlers();
-        });
-        attachAlunoHandlers();
-        const btnNovo = document.getElementById('btnNovoAluno');
-        if (btnNovo) btnNovo.addEventListener('click', () => showNovoAlunoModal(loadAlunosSection));
-
-        const btnGerar = document.getElementById('btnGerarAnamnese');
-        if (btnGerar) {
-            btnGerar.addEventListener('click', async () => {
-                const personal = await getPersonalContext();
-                if (!personal || !personal.id) {
-                    alert('Não foi possível gerar o formulário. Faça login novamente e tente outra vez.');
-                    return;
-                }
-                showAnamneseFormModal(personal);
-            });
-        }
-    } catch (err) {
-        console.error("Erro ao buscar alunos:", err);
-        content.innerHTML = `<p style="color:red;">Erro ao carregar alunos</p>`;
+    if (studentsTableInstance) {
+        studentsTableInstance = null;
     }
+
+    studentsTableInstance = new StudentsTable({
+        root: container,
+        provider: {
+            listStudents,
+            bulkAction
+        },
+        onCreateStudent: () => {
+            showNovoAlunoModal(async () => {
+                clearStudentsCache();
+                await studentsTableInstance?.reload({ preservePage: false });
+            });
+        },
+        onGenerateForm: async () => {
+            const personal = await getPersonalContext();
+            if (!personal || !personal.id) {
+                alert('Não foi possível gerar o formulário. Faça login novamente e tente outra vez.');
+                return;
+            }
+            showAnamneseFormModal(personal);
+        },
+        onViewStudent: (id) => {
+            if (id) {
+                showAlunoDetails(id);
+            }
+        },
+        onEditStudent: async (id) => {
+            if (!id) return;
+            await openEditAlunoFromList(id);
+        },
+        onOpenTrainings: (id) => {
+            if (id) {
+                window.location.href = `dashboard.html?section=treinos&aluno=${id}`;
+            }
+        },
+        onOpenAgenda: (id) => {
+            if (id) {
+                window.location.href = `dashboard.html?section=agenda&aluno=${id}`;
+            }
+        }
+    });
+
+    await studentsTableInstance.init();
 }
 
 function showAnamneseFormModal(personal) {
@@ -183,12 +189,6 @@ function showAnamneseFormModal(personal) {
 
     document.addEventListener('keydown', handleKeyDown);
     document.body.appendChild(modal);
-}
-
-function attachAlunoHandlers() {
-    document.querySelectorAll('#alunoList li').forEach(li => {
-        li.addEventListener('click', () => showAlunoDetails(li.dataset.id));
-    });
 }
 
 function calcularIdade(data) {
@@ -333,6 +333,20 @@ async function showAlunoDetails(id) {
     }
 }
 
+async function openEditAlunoFromList(id) {
+    try {
+        const res = await fetchWithFreshToken(`/api/users/alunos/${id}`);
+        if (!res.ok) {
+            throw new Error('Erro ao buscar aluno');
+        }
+        const aluno = await res.json();
+        showEditAlunoForm(aluno);
+    } catch (err) {
+        console.error('Erro ao abrir edição do aluno:', err);
+        alert('Não foi possível carregar os dados do aluno.');
+    }
+}
+
 function showEditAlunoForm(aluno) {
     const content = document.getElementById('content');
     content.innerHTML = `
@@ -419,6 +433,7 @@ export function showNovoAlunoModal(callback) {
                 body: JSON.stringify(body)
             });
             if (res.ok) {
+                clearStudentsCache();
                 remove();
                 if (callback) callback();
             } else {

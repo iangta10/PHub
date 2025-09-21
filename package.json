@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vercel dev",
     "start": "node api/index.js",
-    "test": "node tests/roleRedirect.test.mjs"
+    "test": "node tests/studentsTableInteractions.test.mjs && node tests/roleRedirect.test.mjs"
   },
   "keywords": [],
   "author": "",
