@@ -336,16 +336,6 @@ body.formulario-anamnese {
     color: #ff6b6b;
 }
 
-@media (min-width: 768px) {
-    .anamnese-public-form {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .anamnese-group {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
 @media (max-width: 520px) {
     body.formulario-anamnese {
         padding: 24px 12px;
