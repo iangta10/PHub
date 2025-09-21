@@ -2,6 +2,30 @@ import { fetchWithFreshToken, fetchUserInfo, getCurrentUser } from "./auth.js";
 import { StudentsTable } from "./components/studentsTable.js";
 import { listStudents, bulkAction, clearStudentsCache } from "./dataProviders/studentsProvider.mjs";
 
+const PLAN_OPTIONS = [
+    { id: 'treino-mensal', nome: 'Treino', duracao: 'Mensal', preco: 'R$80', meses: 1 },
+    { id: 'treino-trimestral', nome: 'Treino', duracao: 'Trimestral', preco: 'R$70/mês', meses: 3 },
+    { id: 'treino-semestral', nome: 'Treino', duracao: 'Semestral', preco: 'R$60/mês', meses: 6 },
+    { id: 'treino-dieta-mensal', nome: 'Treino e dieta', duracao: 'Mensal', preco: 'R$150', meses: 1 },
+    { id: 'treino-dieta-trimestral', nome: 'Treino e dieta', duracao: 'Trimestral', preco: 'R$135/mês', meses: 3 },
+    { id: 'treino-dieta-semestral', nome: 'Treino e dieta', duracao: 'Semestral', preco: 'R$120/mês', meses: 6 },
+    { id: 'presencial-1x-mensal', nome: 'Presencial 1x por semana', duracao: 'Mensal', preco: 'R$200', meses: 1 },
+    { id: 'presencial-1x-trimestral', nome: 'Presencial 1x por semana', duracao: 'Trimestral', preco: 'R$180/mês', meses: 3 },
+    { id: 'presencial-1x-semestral', nome: 'Presencial 1x por semana', duracao: 'Semestral', preco: 'R$160/mês', meses: 6 },
+    { id: 'presencial-2x-mensal', nome: 'Presencial 2x por semana', duracao: 'Mensal', preco: 'R$400', meses: 1 },
+    { id: 'presencial-2x-trimestral', nome: 'Presencial 2x por semana', duracao: 'Trimestral', preco: 'R$360/mês', meses: 3 },
+    { id: 'presencial-2x-semestral', nome: 'Presencial 2x por semana', duracao: 'Semestral', preco: 'R$320/mês', meses: 6 },
+    { id: 'presencial-3x-mensal', nome: 'Presencial 3x por semana', duracao: 'Mensal', preco: 'R$600', meses: 1 },
+    { id: 'presencial-3x-trimestral', nome: 'Presencial 3x por semana', duracao: 'Trimestral', preco: 'R$540/mês', meses: 3 },
+    { id: 'presencial-3x-semestral', nome: 'Presencial 3x por semana', duracao: 'Semestral', preco: 'R$480/mês', meses: 6 },
+    { id: 'presencial-4x-mensal', nome: 'Presencial 4x por semana', duracao: 'Mensal', preco: 'R$800', meses: 1 },
+    { id: 'presencial-4x-trimestral', nome: 'Presencial 4x por semana', duracao: 'Trimestral', preco: 'R$720/mês', meses: 3 },
+    { id: 'presencial-4x-semestral', nome: 'Presencial 4x por semana', duracao: 'Semestral', preco: 'R$640/mês', meses: 6 },
+    { id: 'presencial-5x-mensal', nome: 'Presencial 5x por semana', duracao: 'Mensal', preco: 'R$1000', meses: 1 },
+    { id: 'presencial-5x-trimestral', nome: 'Presencial 5x por semana', duracao: 'Trimestral', preco: 'R$900/mês', meses: 3 },
+    { id: 'presencial-5x-semestral', nome: 'Presencial 5x por semana', duracao: 'Semestral', preco: 'R$800/mês', meses: 6 }
+];
+
 let personalContextPromise;
 let studentsTableInstance = null;
 
@@ -242,6 +266,9 @@ async function showAlunoDetails(id) {
         const aluno = await res.json();
 
         const idade = calcularIdade(aluno.dataNascimento);
+        const planoDescricao = aluno.plano ? `${aluno.plano.nome} - ${aluno.plano.duracao} (${aluno.plano.preco})` : '';
+        const inicioPlano = aluno.inicioPlano ? new Date(aluno.inicioPlano).toLocaleDateString() : '';
+        const vencimentoPlano = aluno.vencimentoPlano ? new Date(aluno.vencimentoPlano).toLocaleDateString() : '';
         const avaliacoes = getAvaliacoesResumo(id);
         const treinos = await fetchHistoricoTreinos(id);
         const modalRows = avaliacoes.map(a => renderAvalRow(a)).join('') || '<tr><td colspan="6">Nenhuma avaliação</td></tr>';
@@ -259,6 +286,12 @@ async function showAlunoDetails(id) {
                         </div>
                         <p>${aluno.telefone || ''}</p>
                         <p>${aluno.email || ''}</p>
+                        ${(planoDescricao || inicioPlano || vencimentoPlano) ? `
+                        <div class="aluno-cards">
+                            ${planoDescricao ? `<span class="info-card">${planoDescricao}</span>` : ''}
+                            ${inicioPlano ? `<span class="info-card">Início: ${inicioPlano}</span>` : ''}
+                            ${vencimentoPlano ? `<span class="info-card">Vencimento: ${vencimentoPlano}</span>` : ''}
+                        </div>` : ''}
                     </div>
                 </div>
 
@@ -272,6 +305,14 @@ async function showAlunoDetails(id) {
                     </table>
                     <button id="abrirHistCompleto">Ver histórico completo</button>
                 </section>
+
+                ${(planoDescricao || inicioPlano || vencimentoPlano) ? `
+                <section class="perfil-section">
+                    <h3>Plano</h3>
+                    ${planoDescricao ? `<p><strong>Plano:</strong> ${planoDescricao}</p>` : ''}
+                    ${inicioPlano ? `<p><strong>Início:</strong> ${inicioPlano}</p>` : ''}
+                    ${vencimentoPlano ? `<p><strong>Vencimento:</strong> ${vencimentoPlano}</p>` : ''}
+                </section>` : ''}
 
                 <section class="perfil-section">
                     <h3>Objetivos</h3>
@@ -349,29 +390,129 @@ async function openEditAlunoFromList(id) {
 
 function showEditAlunoForm(aluno) {
     const content = document.getElementById('content');
+    const matchingPlan = aluno.plano
+        ? PLAN_OPTIONS.find(opt => opt.id === aluno.plano.id)
+            || PLAN_OPTIONS.find(opt => opt.nome === aluno.plano.nome && opt.duracao === aluno.plano.duracao)
+        : null;
+    const selectedPlanId = matchingPlan?.id || '';
+    const planOptionsHtml = PLAN_OPTIONS.map(option => `
+                <option value="${option.id}" ${option.id === selectedPlanId ? 'selected' : ''}>
+                    ${option.nome} - ${option.duracao} - ${option.preco}
+                </option>`).join('');
     content.innerHTML = `
         <h2>Editar Aluno</h2>
         <form id="editAlunoForm">
-            <input type="text" name="nome" value="${aluno.nome || ''}" placeholder="Nome" />
-            <input type="email" name="email" value="${aluno.email || ''}" placeholder="Email" />
-            <input type="text" name="telefone" value="${aluno.telefone || ''}" placeholder="Telefone" />
-            <input type="date" name="dataNascimento" value="${aluno.dataNascimento || ''}" />
-            <input type="text" name="sexo" value="${aluno.sexo || ''}" placeholder="Sexo" />
-            <input type="text" name="fotoUrl" value="${aluno.fotoUrl || ''}" placeholder="URL da foto" />
-            <textarea name="objetivo" placeholder="Objetivo">${aluno.objetivo || ''}</textarea>
-            <textarea name="metas" placeholder="Metas">${aluno.metas || ''}</textarea>
-            <input type="text" name="prazoMeta" value="${aluno.prazoMeta || ''}" placeholder="Prazo" />
-            <textarea name="motivacao" placeholder="Motivação">${aluno.motivacao || ''}</textarea>
-            <textarea name="observacoes" placeholder="Observações">${aluno.observacoes || ''}</textarea>
+            <div class="form-field">
+                <label for="editAlunoNome">Nome</label>
+                <input id="editAlunoNome" type="text" name="nome" value="${aluno.nome || ''}" />
+            </div>
+            <div class="form-field">
+                <label for="editAlunoEmail">Email</label>
+                <input id="editAlunoEmail" type="email" name="email" value="${aluno.email || ''}" />
+            </div>
+            <div class="form-field">
+                <label for="editAlunoTelefone">Telefone</label>
+                <input id="editAlunoTelefone" type="text" name="telefone" value="${aluno.telefone || ''}" />
+            </div>
+            <div class="form-field">
+                <label for="editAlunoDataNascimento">Data de nascimento</label>
+                <input id="editAlunoDataNascimento" type="date" name="dataNascimento" value="${aluno.dataNascimento || ''}" />
+            </div>
+            <div class="form-field">
+                <label for="editAlunoSexo">Sexo</label>
+                <input id="editAlunoSexo" type="text" name="sexo" value="${aluno.sexo || ''}" />
+            </div>
+            <div class="form-field">
+                <label for="editAlunoFotoUrl">URL da foto</label>
+                <input id="editAlunoFotoUrl" type="text" name="fotoUrl" value="${aluno.fotoUrl || ''}" />
+            </div>
+            <div class="form-field">
+                <label for="editAlunoPlano">Plano</label>
+                <select id="editAlunoPlano" name="plano">
+                    <option value="">Selecione um plano</option>
+                    ${planOptionsHtml}
+                </select>
+                <small class="plan-info" data-plan-info></small>
+            </div>
+            <div class="form-field">
+                <label for="editAlunoInicioPlano">Início do plano</label>
+                <input id="editAlunoInicioPlano" type="date" name="inicioPlano" value="${aluno.inicioPlano || ''}" />
+            </div>
+            <div class="form-field">
+                <label for="editAlunoVencimentoPlano">Vencimento do plano</label>
+                <input id="editAlunoVencimentoPlano" type="date" name="vencimentoPlano" value="${aluno.vencimentoPlano || ''}" readonly />
+            </div>
+            <div class="form-field">
+                <label for="editAlunoObjetivo">Objetivo</label>
+                <textarea id="editAlunoObjetivo" name="objetivo">${aluno.objetivo || ''}</textarea>
+            </div>
+            <div class="form-field">
+                <label for="editAlunoMetas">Metas</label>
+                <textarea id="editAlunoMetas" name="metas">${aluno.metas || ''}</textarea>
+            </div>
+            <div class="form-field">
+                <label for="editAlunoPrazoMeta">Prazo</label>
+                <input id="editAlunoPrazoMeta" type="text" name="prazoMeta" value="${aluno.prazoMeta || ''}" />
+            </div>
+            <div class="form-field">
+                <label for="editAlunoMotivacao">Motivação</label>
+                <textarea id="editAlunoMotivacao" name="motivacao">${aluno.motivacao || ''}</textarea>
+            </div>
+            <div class="form-field">
+                <label for="editAlunoObservacoes">Observações</label>
+                <textarea id="editAlunoObservacoes" name="observacoes">${aluno.observacoes || ''}</textarea>
+            </div>
             <button type="submit">Salvar</button>
             <button type="button" id="cancelEdit">Cancelar</button>
         </form>
     `;
 
     document.getElementById('cancelEdit').addEventListener('click', () => showAlunoDetails(aluno.id));
-    document.getElementById('editAlunoForm').addEventListener('submit', async e => {
+    const form = document.getElementById('editAlunoForm');
+
+    const planSelect = form.querySelector('#editAlunoPlano');
+    const planInfo = form.querySelector('[data-plan-info]');
+    const inicioPlanoInput = form.querySelector('#editAlunoInicioPlano');
+    const vencimentoPlanoInput = form.querySelector('#editAlunoVencimentoPlano');
+
+    const updatePlanDetails = (shouldCalculateEnd = false, { ensureStartDate = false } = {}) => {
+        const selectedPlan = PLAN_OPTIONS.find(opt => opt.id === planSelect.value);
+        if (planInfo) {
+            planInfo.textContent = selectedPlan
+                ? `${selectedPlan.nome} - ${selectedPlan.duracao} - ${selectedPlan.preco}`
+                : 'Selecione um plano para visualizar os detalhes';
+        }
+        if (!selectedPlan) {
+            if (shouldCalculateEnd) {
+                vencimentoPlanoInput.value = '';
+            }
+            return;
+        }
+        if (shouldCalculateEnd) {
+            if (ensureStartDate && !inicioPlanoInput.value) {
+                const hoje = new Date();
+                const iso = new Date(hoje.getTime() - hoje.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+                inicioPlanoInput.value = iso;
+            }
+            if (inicioPlanoInput.value) {
+                const dataInicio = new Date(inicioPlanoInput.value);
+                const dataFim = new Date(dataInicio);
+                dataFim.setMonth(dataFim.getMonth() + selectedPlan.meses);
+                const isoFim = new Date(dataFim.getTime() - dataFim.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+                vencimentoPlanoInput.value = isoFim;
+            } else {
+                vencimentoPlanoInput.value = '';
+            }
+        }
+    };
+
+    updatePlanDetails(!vencimentoPlanoInput.value && !!planSelect.value);
+
+    planSelect.addEventListener('change', () => updatePlanDetails(true, { ensureStartDate: true }));
+    inicioPlanoInput.addEventListener('change', () => updatePlanDetails(true));
+
+    form.addEventListener('submit', async e => {
         e.preventDefault();
-        const form = e.target;
         const data = {
             nome: form.nome.value,
             email: form.email.value,
@@ -385,6 +526,15 @@ function showEditAlunoForm(aluno) {
             motivacao: form.motivacao.value,
             observacoes: form.observacoes.value
         };
+        const planoSelecionado = PLAN_OPTIONS.find(opt => opt.id === form.plano.value);
+        data.plano = planoSelecionado ? {
+            id: planoSelecionado.id,
+            nome: planoSelecionado.nome,
+            duracao: planoSelecionado.duracao,
+            preco: planoSelecionado.preco
+        } : null;
+        data.inicioPlano = form.inicioPlano.value || null;
+        data.vencimentoPlano = form.vencimentoPlano.value || null;
         const res = await fetchWithFreshToken(`/api/users/alunos/${aluno.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },

@@ -21,7 +21,10 @@ router.post('/alunos', async (req, res) => {
         objetivo,
         metas,
         prazoMeta,
-        motivacao
+        motivacao,
+        plano,
+        inicioPlano,
+        vencimentoPlano
     } = req.body;
     const personalId = req.user.uid;
 
@@ -43,6 +46,9 @@ router.post('/alunos', async (req, res) => {
                 metas: metas || null,
                 prazoMeta: prazoMeta || null,
                 motivacao: motivacao || null,
+                plano: plano || null,
+                inicioPlano: inicioPlano || null,
+                vencimentoPlano: vencimentoPlano || null,
                 criadoEm: new Date().toISOString()
             });
 
@@ -122,7 +128,10 @@ router.put('/alunos/:id', async (req, res) => {
         objetivo,
         metas,
         prazoMeta,
-        motivacao
+        motivacao,
+        plano,
+        inicioPlano,
+        vencimentoPlano
     } = req.body;
 
     try {
@@ -145,6 +154,9 @@ router.put('/alunos/:id', async (req, res) => {
         if (metas !== undefined) updateData.metas = metas;
         if (prazoMeta !== undefined) updateData.prazoMeta = prazoMeta;
         if (motivacao !== undefined) updateData.motivacao = motivacao;
+        if (plano !== undefined) updateData.plano = plano;
+        if (inicioPlano !== undefined) updateData.inicioPlano = inicioPlano;
+        if (vencimentoPlano !== undefined) updateData.vencimentoPlano = vencimentoPlano;
 
         await alunoRef.update(updateData);
         res.status(200).json({ message: 'Aluno atualizado' });
