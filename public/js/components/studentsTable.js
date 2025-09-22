@@ -4,7 +4,7 @@ const DEFAULT_VISIBLE_COLUMNS = {
     email: true,
     status: true,
     plan: true,
-    lastSession: true,
+    dueDate: true,
     actions: true
 };
 
@@ -13,7 +13,7 @@ const COLUMN_DEFINITIONS = [
     { key: "email", label: "Email", sortable: false },
     { key: "status", label: "Status", sortable: true, sortKey: "status" },
     { key: "plan", label: "Plano", sortable: true, sortKey: "plan" },
-    { key: "lastSession", label: "Última sessão", sortable: true, sortKey: "lastActivity" },
+    { key: "dueDate", label: "Vencimento", sortable: true, sortKey: "dueDate" },
     { key: "actions", label: "Ações", sortable: false }
 ];
 
@@ -22,13 +22,6 @@ function formatDate(value) {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "-";
     return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
-}
-
-function formatDateTime(value) {
-    if (!value) return "-";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "-";
-    return date.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 }
 
 function initialsFromName(name) {
@@ -136,7 +129,9 @@ export class StudentsTable {
         if (Array.isArray(data.plan)) this.state.plan = data.plan;
         if (typeof data.startDate === "string") this.state.startDate = data.startDate;
         if (typeof data.endDate === "string") this.state.endDate = data.endDate;
-        if (typeof data.sortBy === "string") this.state.sortBy = data.sortBy;
+        if (typeof data.sortBy === "string") {
+            this.state.sortBy = data.sortBy === "lastSession" ? "dueDate" : data.sortBy;
+        }
         if (typeof data.sortOrder === "string") this.state.sortOrder = data.sortOrder;
         if (Number.isInteger(data.pageSize)) this.state.pageSize = data.pageSize;
         if (data.visibleColumns) {
@@ -144,6 +139,10 @@ export class StudentsTable {
                 ...DEFAULT_VISIBLE_COLUMNS,
                 ...data.visibleColumns
             };
+            if (Object.prototype.hasOwnProperty.call(this.state.visibleColumns, "lastSession")) {
+                this.state.visibleColumns.dueDate = this.state.visibleColumns.lastSession;
+                delete this.state.visibleColumns.lastSession;
+            }
         }
     }
 
@@ -227,6 +226,7 @@ export class StudentsTable {
                                 <button type="button" class="btn ghost" data-bulk="anamnese">Enviar formulário de anamnese</button>
                                 <button type="button" class="btn ghost" data-bulk="invite">Convidar para sessão</button>
                                 <button type="button" class="btn danger" data-bulk="deactivate">Desativar</button>
+                                <button type="button" class="btn danger" data-bulk="delete">Excluir selecionados</button>
                             </div>
                         </div>
                     </div>
@@ -255,6 +255,7 @@ export class StudentsTable {
                                     <option value="lastActivity">Últimas atividades</option>
                                     <option value="status">Status</option>
                                     <option value="plan">Plano</option>
+                                    <option value="dueDate">Vencimento do plano</option>
                                 </select>
                                 <button type="button" class="btn icon" data-action="toggle-sort" aria-label="Alternar ordem de ordenação">
                                     <span data-element="sort-icon" aria-hidden="true"></span>
@@ -773,14 +774,19 @@ export class StudentsTable {
         const planCell = document.createElement('td');
         planCell.className = 'cell plan-cell';
         planCell.dataset.column = 'plan';
-        planCell.textContent = record.planLabel || record.plan || '—';
+        const planText = record.planDisplay || record.planLabel || record.plan;
+        const normalizedPlanText = typeof planText === 'string' ? planText.trim() : '';
+        const hasPlan = normalizedPlanText && normalizedPlanText.toLowerCase() !== 'sem plano';
+        planCell.textContent = planText ? planText : 'sem plano';
         row.appendChild(planCell);
 
-        const lastCell = document.createElement('td');
-        lastCell.className = 'cell last-session-cell';
-        lastCell.dataset.column = 'lastSession';
-        lastCell.textContent = formatDateTime(record.lastSession || record.lastActivity);
-        row.appendChild(lastCell);
+        const dueCell = document.createElement('td');
+        dueCell.className = 'cell due-date-cell';
+        dueCell.dataset.column = 'dueDate';
+        dueCell.textContent = record.planDueDate
+            ? formatDate(record.planDueDate)
+            : hasPlan ? '—' : 'sem plano';
+        row.appendChild(dueCell);
 
         const actionsCell = document.createElement('td');
         actionsCell.className = 'cell actions-cell';
@@ -837,12 +843,21 @@ export class StudentsTable {
             this.showFeedback('Selecione ao menos um aluno.', 'warning');
             return;
         }
+        if (type === 'delete' && typeof window !== 'undefined') {
+            const confirmed = window.confirm('Tem certeza que deseja excluir os alunos selecionados? Essa ação não poderá ser desfeita.');
+            if (!confirmed) {
+                return;
+            }
+        }
         try {
             const response = await this.provider.bulkAction(type, ids);
             const message = response?.message || 'Ação executada com sucesso.';
             this.showFeedback(message, 'success');
             this.state.selection.clear();
             this.updateSelectionUI();
+            if (type === 'delete') {
+                await this.fetchPage({ reset: true });
+            }
         } catch (error) {
             console.error('Erro na ação em massa:', error);
             this.showFeedback('Não foi possível concluir a ação.', 'error');
