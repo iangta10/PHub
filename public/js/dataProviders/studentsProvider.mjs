@@ -7,8 +7,13 @@ const STATUS_LABELS = {
 const PLAN_LABELS = {
     mensal: "Mensal",
     trimestral: "Trimestral",
-    semestral: "Semestral"
+    semestral: "Semestral",
+    "sem-plano": "sem plano",
+    "sem plano": "sem plano"
 };
+
+const NO_PLAN_LABEL = "sem plano";
+const NO_PLAN_KEY = "sem-plano";
 
 let cache = {
     data: null,
@@ -39,16 +44,125 @@ function parseDate(value, fallbackOffset = 0) {
     return date.toISOString();
 }
 
+function parseOptionalDate(value) {
+    if (!value) return null;
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toISOString();
+}
+
+function normalizeFilterValue(value) {
+    if (value === undefined || value === null) return "";
+    const normalized = value.toString().trim().toLowerCase();
+    if (!normalized) return "";
+    if (normalized === "sem plano" || normalized === NO_PLAN_KEY) {
+        return NO_PLAN_KEY;
+    }
+    return normalized;
+}
+
+function normalizePlanInfo(rawPlan) {
+    const filters = new Set();
+    if (!rawPlan) {
+        filters.add(NO_PLAN_KEY);
+        return {
+            key: NO_PLAN_KEY,
+            label: NO_PLAN_LABEL,
+            display: NO_PLAN_LABEL,
+            filters: Array.from(filters)
+        };
+    }
+    if (typeof rawPlan === "string") {
+        const key = normalizeFilterValue(rawPlan);
+        if (key) filters.add(key);
+        const resolved = PLAN_LABELS[key] || rawPlan;
+        const display = resolved || NO_PLAN_LABEL;
+        return {
+            key: key || NO_PLAN_KEY,
+            label: resolved || display,
+            display,
+            filters: Array.from(filters.size ? filters : [NO_PLAN_KEY])
+        };
+    }
+    if (typeof rawPlan === "object") {
+        const candidateValues = [
+            rawPlan.id,
+            rawPlan.slug,
+            rawPlan.identificador,
+            rawPlan.codigo,
+            rawPlan.nome,
+            rawPlan.name,
+            rawPlan.tipo,
+            rawPlan.type,
+            rawPlan.category
+        ];
+        candidateValues.forEach(value => {
+            const normalized = normalizeFilterValue(value);
+            if (normalized) filters.add(normalized);
+        });
+        const durationValues = [
+            rawPlan.duracao,
+            rawPlan.duração,
+            rawPlan.duration,
+            rawPlan.periodo,
+            rawPlan.period,
+            rawPlan.meses ? `${rawPlan.meses} meses` : null
+        ];
+        durationValues.forEach(value => {
+            const normalized = normalizeFilterValue(value);
+            if (normalized) filters.add(normalized);
+        });
+        const price = rawPlan.preco || rawPlan.price;
+        const name = rawPlan.nome || rawPlan.name;
+        const duration = rawPlan.duracao || rawPlan.duração || rawPlan.duration;
+        const displayParts = [name, duration, price].filter(Boolean);
+        const display = displayParts.join(" - ") || rawPlan.label || name || "";
+        const nameFilter = normalizeFilterValue(name);
+        const durationFilter = normalizeFilterValue(duration);
+        let label = display
+            || (nameFilter && PLAN_LABELS[nameFilter])
+            || (durationFilter && PLAN_LABELS[durationFilter])
+            || NO_PLAN_LABEL;
+        if (!filters.size) {
+            if (durationFilter) {
+                filters.add(durationFilter);
+            } else if (nameFilter) {
+                filters.add(nameFilter);
+            }
+        }
+        if (!filters.size) {
+            filters.add(NO_PLAN_KEY);
+        }
+        const key = Array.from(filters)[0] || NO_PLAN_KEY;
+        const resolvedDisplay = display || label || NO_PLAN_LABEL;
+        return {
+            key,
+            label: label || NO_PLAN_LABEL,
+            display: resolvedDisplay,
+            filters: Array.from(filters)
+        };
+    }
+    return {
+        key: NO_PLAN_KEY,
+        label: NO_PLAN_LABEL,
+        display: NO_PLAN_LABEL,
+        filters: [NO_PLAN_KEY]
+    };
+}
+
 function normalizeStudent(raw, index = 0) {
     const fallbackOffset = index * 36_000_000; // 10 horas entre registros
     const id = String(raw.id || raw.uid || raw.userId || `student-${index}`);
     const nome = raw.nome || raw.name || raw.displayName || "Aluno sem nome";
     const email = raw.email || raw.contato?.email || raw.contact?.email || "";
     const statusKey = (raw.status || raw.situacao || "ativo").toString().toLowerCase();
-    const planoKey = (raw.plano || raw.plan || raw.membershipPlan || "mensal").toString().toLowerCase();
+    const rawPlan = raw.plano ?? raw.plan ?? raw.membershipPlan ?? null;
+    const planInfo = normalizePlanInfo(rawPlan);
+    const planObject = rawPlan && typeof rawPlan === "object" ? rawPlan : null;
     const joinedAt = parseDate(raw.criadoEm || raw.createdAt || raw.dataCadastro, fallbackOffset + 7_200_000);
     const lastActivity = parseDate(raw.ultimaAtividade || raw.lastActivity || raw.updatedAt, fallbackOffset);
-    const lastSession = parseDate(raw.ultimaSessao || raw.lastSession || raw.lastWorkout, fallbackOffset);
+    const planStart = parseOptionalDate(raw.inicioPlano || planObject?.inicio || planObject?.inicioPlano || planObject?.start || planObject?.startDate);
+    const planDueDate = parseOptionalDate(raw.vencimentoPlano || planObject?.vencimento || planObject?.vencimentoPlano || planObject?.fim || planObject?.endDate);
     return {
         id,
         name: nome,
@@ -56,11 +170,14 @@ function normalizeStudent(raw, index = 0) {
         avatar: raw.fotoUrl || raw.avatar || raw.photoURL || "",
         status: STATUS_LABELS[statusKey] ? statusKey : "ativo",
         statusLabel: STATUS_LABELS[statusKey] || STATUS_LABELS.ativo,
-        plan: PLAN_LABELS[planoKey] ? planoKey : "mensal",
-        planLabel: PLAN_LABELS[planoKey] || PLAN_LABELS.mensal,
+        plan: planInfo.key || NO_PLAN_KEY,
+        planLabel: planInfo.label || PLAN_LABELS[planInfo.key] || NO_PLAN_LABEL,
+        planDisplay: planInfo.display || planInfo.label || NO_PLAN_LABEL,
+        planFilters: Array.isArray(planInfo.filters) && planInfo.filters.length ? planInfo.filters : [planInfo.key || NO_PLAN_KEY],
         joinedAt,
         lastActivity,
-        lastSession
+        planStart,
+        planDueDate
     };
 }
 
@@ -72,9 +189,11 @@ function ensureDataset(data) {
     return Array.from({ length: 60 }, (_, index) => {
         const base = now - index * 86_400_000;
         const statusKeys = Object.keys(STATUS_LABELS);
-        const planKeys = Object.keys(PLAN_LABELS);
+        const planKeys = ["mensal", "trimestral", "semestral"];
         const status = statusKeys[index % statusKeys.length];
         const plan = planKeys[index % planKeys.length];
+        const startDate = new Date(base - 30 * 86_400_000);
+        const dueDate = new Date(base + 30 * 86_400_000);
         return {
             id: `mock-${index}`,
             name: `Aluno Exemplo ${index + 1}`,
@@ -84,9 +203,12 @@ function ensureDataset(data) {
             statusLabel: STATUS_LABELS[status],
             plan,
             planLabel: PLAN_LABELS[plan],
+            planDisplay: PLAN_LABELS[plan],
+            planFilters: [plan],
             joinedAt: new Date(base - 604_800_000).toISOString(),
             lastActivity: new Date(base - 12 * 3_600_000).toISOString(),
-            lastSession: new Date(base).toISOString()
+            planStart: startDate.toISOString(),
+            planDueDate: dueDate.toISOString()
         };
     });
 }
@@ -129,6 +251,23 @@ function getFilterArray(value) {
     return [];
 }
 
+function removeFromCache(ids) {
+    if (!Array.isArray(cache.data) || !Array.isArray(ids) || !ids.length) {
+        return;
+    }
+    const idSet = new Set(ids.map(value => String(value)));
+    cache = {
+        data: cache.data.filter(item => {
+            const candidate = item?.id ?? item?.uid ?? item?.userId;
+            if (candidate === undefined || candidate === null) {
+                return true;
+            }
+            return !idSet.has(String(candidate));
+        }),
+        fetchedAt: Date.now()
+    };
+}
+
 function applyFilters(dataset, params) {
     const term = (params.search || params.searchTerm || "").trim().toLowerCase();
     const statusFilters = getFilterArray(params.status).map(v => v.toLowerCase());
@@ -144,8 +283,17 @@ function applyFilters(dataset, params) {
         if (statusFilters.length && !statusFilters.includes(item.status)) {
             return false;
         }
-        if (planFilters.length && !planFilters.includes(item.plan)) {
-            return false;
+        if (planFilters.length) {
+            const itemPlans = Array.isArray(item.planFilters) && item.planFilters.length
+                ? item.planFilters
+                : [item.plan];
+            const normalizedPlans = itemPlans
+                .filter(Boolean)
+                .map(value => value.toString().toLowerCase());
+            const hasMatch = normalizedPlans.some(planValue => planFilters.includes(planValue));
+            if (!hasMatch) {
+                return false;
+            }
         }
         if (start) {
             const joined = new Date(item.joinedAt);
@@ -172,6 +320,19 @@ function sortDataset(dataset, sortBy = "name", sortOrder = "asc") {
                 return collator.compare(a.statusLabel, b.statusLabel) * order;
             case "plan":
                 return collator.compare(a.planLabel, b.planLabel) * order;
+            case "dueDate": {
+                const getTime = value => {
+                    if (!value) return null;
+                    const date = new Date(value);
+                    return Number.isNaN(date.getTime()) ? null : date.getTime();
+                };
+                const aTime = getTime(a.planDueDate);
+                const bTime = getTime(b.planDueDate);
+                if (aTime === null && bTime === null) return 0;
+                if (aTime === null) return order === 1 ? 1 : -1;
+                if (bTime === null) return order === 1 ? -1 : 1;
+                return (aTime - bTime) * order;
+            }
             case "lastActivity":
                 return (new Date(a.lastActivity) - new Date(b.lastActivity)) * order;
             case "joinedAt":
@@ -214,9 +375,16 @@ export async function bulkAction(type, ids) {
         if (!response.ok) {
             throw new Error(`Falha ao executar ação (${response.status})`);
         }
-        return await response.json();
+        const result = await response.json();
+        if (type === "delete") {
+            removeFromCache(ids);
+        }
+        return result;
     } catch (error) {
         console.warn("Ação em massa tratada localmente:", error);
+        if (type === "delete") {
+            removeFromCache(ids);
+        }
         return { success: true, message: "Ação registrada localmente." };
     }
 }

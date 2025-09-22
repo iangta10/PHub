@@ -395,6 +395,14 @@ function showEditAlunoForm(aluno) {
             || PLAN_OPTIONS.find(opt => opt.nome === aluno.plano.nome && opt.duracao === aluno.plano.duracao)
         : null;
     const selectedPlanId = matchingPlan?.id || '';
+    const statusNormalized = (aluno.status || '').toString().toLowerCase();
+    const initialStatus = statusNormalized === 'inativo' ? 'inativo'
+        : statusNormalized === 'ativo' ? 'ativo'
+            : statusNormalized === 'pendente' ? 'pendente' : 'ativo';
+    const isStatusActive = initialStatus === 'ativo';
+    const isStatusInactive = initialStatus === 'inativo';
+    const statusLabel = aluno.statusLabel || aluno.status || '';
+
     const planOptionsHtml = PLAN_OPTIONS.map(option => `
                 <option value="${option.id}" ${option.id === selectedPlanId ? 'selected' : ''}>
                     ${option.nome} - ${option.duracao} - ${option.preco}
@@ -413,6 +421,15 @@ function showEditAlunoForm(aluno) {
             <div class="form-field">
                 <label for="editAlunoTelefone">Telefone</label>
                 <input id="editAlunoTelefone" type="text" name="telefone" value="${aluno.telefone || ''}" />
+            </div>
+            <div class="form-field status-field">
+                <span>Status</span>
+                <div class="status-buttons" role="group" aria-label="Status do aluno">
+                    <button type="button" class="status-button${isStatusActive ? ' active' : ''}" data-status="ativo">Ativo</button>
+                    <button type="button" class="status-button${isStatusInactive ? ' active' : ''}" data-status="inativo">Inativo</button>
+                </div>
+                <input type="hidden" name="status" value="${initialStatus}" />
+                ${initialStatus !== 'ativo' && initialStatus !== 'inativo' && statusLabel ? `<small>Status atual: ${statusLabel}</small>` : ''}
             </div>
             <div class="form-field">
                 <label for="editAlunoDataNascimento">Data de nascimento</label>
@@ -474,6 +491,17 @@ function showEditAlunoForm(aluno) {
     const planInfo = form.querySelector('[data-plan-info]');
     const inicioPlanoInput = form.querySelector('#editAlunoInicioPlano');
     const vencimentoPlanoInput = form.querySelector('#editAlunoVencimentoPlano');
+    const statusInput = form.querySelector('input[name="status"]');
+    const statusButtons = form.querySelectorAll('.status-button');
+
+    statusButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const value = button.dataset.status;
+            if (!value || !statusInput) return;
+            statusInput.value = value;
+            statusButtons.forEach(btn => btn.classList.toggle('active', btn === button));
+        });
+    });
 
     const updatePlanDetails = (shouldCalculateEnd = false, { ensureStartDate = false } = {}) => {
         const selectedPlan = PLAN_OPTIONS.find(opt => opt.id === planSelect.value);
@@ -524,7 +552,8 @@ function showEditAlunoForm(aluno) {
             metas: form.metas.value,
             prazoMeta: form.prazoMeta.value,
             motivacao: form.motivacao.value,
-            observacoes: form.observacoes.value
+            observacoes: form.observacoes.value,
+            status: statusInput?.value || initialStatus || 'ativo'
         };
         const planoSelecionado = PLAN_OPTIONS.find(opt => opt.id === form.plano.value);
         data.plano = planoSelecionado ? {

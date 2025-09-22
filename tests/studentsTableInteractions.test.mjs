@@ -16,10 +16,12 @@ const PLAN_LABELS = {
 function createDataset(count = 60) {
     return Array.from({ length: count }, (_, index) => {
         const statusKeys = Object.keys(STATUS_LABELS);
-        const planKeys = Object.keys(PLAN_LABELS);
+        const planKeys = ["mensal", "trimestral", "semestral"];
         const status = statusKeys[index % statusKeys.length];
         const plan = planKeys[index % planKeys.length];
         const base = new Date(Date.UTC(2024, 0, 1 + index));
+        const dueDate = new Date(base.getTime() + 30 * 24 * 60 * 60 * 1000);
+        const startDate = new Date(base.getTime() - 30 * 24 * 60 * 60 * 1000);
         return {
             id: `mock-${index + 1}`,
             name: `Aluno ${index + 1}`,
@@ -28,9 +30,12 @@ function createDataset(count = 60) {
             statusLabel: STATUS_LABELS[status],
             plan,
             planLabel: PLAN_LABELS[plan],
+            planDisplay: PLAN_LABELS[plan],
+            planFilters: [plan],
             joinedAt: base.toISOString(),
             lastActivity: new Date(base.getTime() + 2_592_000).toISOString(),
-            lastSession: new Date(base.getTime() + 86_400_000).toISOString(),
+            planStart: startDate.toISOString(),
+            planDueDate: dueDate.toISOString(),
             avatar: ""
         };
     });
