@@ -317,10 +317,13 @@ async function showAlunoDetails(id) {
                 <section class="perfil-section">
                     <h3>Objetivos</h3>
                     <p><strong>Objetivo principal:</strong> ${aluno.objetivo || ''}</p>
-                    <p><strong>Metas específicas:</strong> ${aluno.metas || ''}</p>
-                    <p><strong>Prazo:</strong> ${aluno.prazoMeta || ''}</p>
-                    <p>${aluno.motivacao || ''}</p>
                 </section>
+
+                ${aluno.observacoes ? `
+                <section class="perfil-section">
+                    <h3>Observações</h3>
+                    <p>${aluno.observacoes}</p>
+                </section>` : ''}
 
                 <section class="perfil-section">
                     <h3>Histórico de Treinos</h3>
@@ -464,18 +467,6 @@ function showEditAlunoForm(aluno) {
                 <textarea id="editAlunoObjetivo" name="objetivo">${aluno.objetivo || ''}</textarea>
             </div>
             <div class="form-field">
-                <label for="editAlunoMetas">Metas</label>
-                <textarea id="editAlunoMetas" name="metas">${aluno.metas || ''}</textarea>
-            </div>
-            <div class="form-field">
-                <label for="editAlunoPrazoMeta">Prazo</label>
-                <input id="editAlunoPrazoMeta" type="text" name="prazoMeta" value="${aluno.prazoMeta || ''}" />
-            </div>
-            <div class="form-field">
-                <label for="editAlunoMotivacao">Motivação</label>
-                <textarea id="editAlunoMotivacao" name="motivacao">${aluno.motivacao || ''}</textarea>
-            </div>
-            <div class="form-field">
                 <label for="editAlunoObservacoes">Observações</label>
                 <textarea id="editAlunoObservacoes" name="observacoes">${aluno.observacoes || ''}</textarea>
             </div>
@@ -549,9 +540,6 @@ function showEditAlunoForm(aluno) {
             sexo: form.sexo.value,
             fotoUrl: form.fotoUrl.value,
             objetivo: form.objetivo.value,
-            metas: form.metas.value,
-            prazoMeta: form.prazoMeta.value,
-            motivacao: form.motivacao.value,
             observacoes: form.observacoes.value,
             status: statusInput?.value || initialStatus || 'ativo'
         };
@@ -580,31 +568,228 @@ function showEditAlunoForm(aluno) {
 export function showNovoAlunoModal(callback) {
     const modal = document.createElement('div');
     modal.className = 'modal';
+    const planOptionsHtml = PLAN_OPTIONS.map(option => `
+                    <option value="${option.id}">${option.nome} - ${option.duracao} - ${option.preco}</option>
+                `).join('');
+
     modal.innerHTML = `
         <div class="modal-content">
-            <form id="novoAlunoForm">
+            <form id="novoAlunoForm" class="novo-aluno-form">
                 <h3>Novo Aluno</h3>
-                <input type="text" name="nome" placeholder="Nome" required />
-                <input type="email" name="email" placeholder="Email" />
-                <textarea name="observacoes" placeholder="Observações"></textarea>
-                <div>
-                    <button type="submit">Cadastrar</button>
+                <div class="form-field">
+                    <label for="novoAlunoNome">Nome</label>
+                    <input id="novoAlunoNome" type="text" name="nome" placeholder="Nome" required />
+                </div>
+                <div class="form-field">
+                    <label for="novoAlunoEmail">Email</label>
+                    <input id="novoAlunoEmail" type="email" name="email" placeholder="Email" />
+                </div>
+                <div class="form-field">
+                    <label for="novoAlunoObservacoes">Observações</label>
+                    <textarea id="novoAlunoObservacoes" name="observacoes" placeholder="Observações"></textarea>
+                </div>
+                <div class="complete-fields" data-complete hidden>
+                    <div class="form-field">
+                        <label for="novoAlunoTelefone">Telefone</label>
+                        <input id="novoAlunoTelefone" type="text" name="telefone" placeholder="Telefone" />
+                    </div>
+                    <div class="form-field">
+                        <label for="novoAlunoDataNascimento">Data de nascimento</label>
+                        <input id="novoAlunoDataNascimento" type="date" name="dataNascimento" />
+                    </div>
+                    <div class="form-field">
+                        <label for="novoAlunoSexo">Sexo</label>
+                        <input id="novoAlunoSexo" type="text" name="sexo" placeholder="Sexo" />
+                    </div>
+                    <div class="form-field">
+                        <label for="novoAlunoFotoUrl">URL da foto</label>
+                        <input id="novoAlunoFotoUrl" type="text" name="fotoUrl" placeholder="https://..." />
+                    </div>
+                    <div class="form-field">
+                        <label for="novoAlunoAulas">Aulas por semana</label>
+                        <input id="novoAlunoAulas" type="number" min="1" name="aulasPorSemana" placeholder="2" />
+                    </div>
+                    <div class="form-field">
+                        <label for="novoAlunoObjetivo">Objetivo</label>
+                        <textarea id="novoAlunoObjetivo" name="objetivo" placeholder="Objetivo do aluno"></textarea>
+                    </div>
+                    <div class="form-field">
+                        <label for="novoAlunoPlano">Plano</label>
+                        <select id="novoAlunoPlano" name="plano">
+                            <option value="">Selecione um plano</option>
+                            ${planOptionsHtml}
+                        </select>
+                        <small class="plan-info" data-plan-info>Selecione um plano para visualizar os detalhes</small>
+                    </div>
+                    <div class="form-field">
+                        <label for="novoAlunoInicioPlano">Início do plano</label>
+                        <input id="novoAlunoInicioPlano" type="date" name="inicioPlano" />
+                    </div>
+                    <div class="form-field">
+                        <label for="novoAlunoVencimentoPlano">Vencimento do plano</label>
+                        <input id="novoAlunoVencimentoPlano" type="date" name="vencimentoPlano" readonly />
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" data-action="show-complete">Cadastro completo</button>
+                    <button type="submit">Salvar</button>
                     <button type="button" class="cancelModal">Cancelar</button>
                 </div>
             </form>
         </div>`;
+
     document.body.appendChild(modal);
-    const remove = () => modal.remove();
-    modal.querySelector('.cancelModal').addEventListener('click', remove);
-    modal.addEventListener('click', e => { if (e.target === modal) remove(); });
-    modal.querySelector('#novoAlunoForm').addEventListener('submit', async e => {
+
+    const remove = () => {
+        modal.remove();
+        document.removeEventListener('keydown', handleKeyDown);
+    };
+
+    const handleKeyDown = (evt) => {
+        if (evt.key === 'Escape') {
+            remove();
+        }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    const cancelBtn = modal.querySelector('.cancelModal');
+    cancelBtn?.addEventListener('click', remove);
+
+    modal.addEventListener('click', e => {
+        if (e.target === modal) {
+            remove();
+        }
+    });
+
+    const form = modal.querySelector('#novoAlunoForm');
+    const completeSection = modal.querySelector('[data-complete]');
+    const showCompleteBtn = modal.querySelector('[data-action="show-complete"]');
+    const planSelect = form.querySelector('#novoAlunoPlano');
+    const planInfo = form.querySelector('[data-plan-info]');
+    const inicioPlanoInput = form.querySelector('#novoAlunoInicioPlano');
+    const vencimentoPlanoInput = form.querySelector('#novoAlunoVencimentoPlano');
+
+    if (showCompleteBtn && completeSection) {
+        showCompleteBtn.addEventListener('click', () => {
+            completeSection.hidden = false;
+            showCompleteBtn.remove();
+            form.classList.add('is-complete');
+            setTimeout(() => {
+                form.querySelector('#novoAlunoTelefone')?.focus();
+            }, 0);
+        });
+    }
+
+    const updatePlanDetails = (shouldCalculateEnd = false, { ensureStartDate = false } = {}) => {
+        if (!planSelect) return;
+        const selectedPlan = PLAN_OPTIONS.find(opt => opt.id === planSelect.value);
+        if (planInfo) {
+            planInfo.textContent = selectedPlan
+                ? `${selectedPlan.nome} - ${selectedPlan.duracao} - ${selectedPlan.preco}`
+                : 'Selecione um plano para visualizar os detalhes';
+        }
+        if (!selectedPlan) {
+            if (shouldCalculateEnd && vencimentoPlanoInput) {
+                vencimentoPlanoInput.value = '';
+            }
+            return;
+        }
+        if (shouldCalculateEnd && inicioPlanoInput && vencimentoPlanoInput) {
+            if (ensureStartDate && !inicioPlanoInput.value) {
+                const hoje = new Date();
+                const iso = new Date(hoje.getTime() - hoje.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+                inicioPlanoInput.value = iso;
+            }
+            if (inicioPlanoInput.value) {
+                const dataInicio = new Date(inicioPlanoInput.value);
+                const dataFim = new Date(dataInicio);
+                dataFim.setMonth(dataFim.getMonth() + selectedPlan.meses);
+                const isoFim = new Date(dataFim.getTime() - dataFim.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+                vencimentoPlanoInput.value = isoFim;
+            } else {
+                vencimentoPlanoInput.value = '';
+            }
+        }
+    };
+
+    updatePlanDetails(false);
+
+    planSelect?.addEventListener('change', () => updatePlanDetails(true, { ensureStartDate: true }));
+    inicioPlanoInput?.addEventListener('change', () => updatePlanDetails(true));
+
+    form.addEventListener('submit', async e => {
         e.preventDefault();
-        const form = e.target;
+        const nome = form.nome.value.trim();
+        if (!nome) {
+            alert('Informe o nome do aluno.');
+            form.nome.focus();
+            return;
+        }
+
         const body = {
-            nome: form.nome.value,
-            email: form.email.value,
-            observacoes: form.observacoes.value
+            nome,
+            observacoes: form.observacoes.value.trim()
         };
+
+        const email = form.email.value.trim();
+        if (email) {
+            body.email = email;
+        }
+
+        const telefone = form.telefone.value.trim();
+        if (telefone) {
+            body.telefone = telefone;
+        }
+
+        const dataNascimento = form.dataNascimento.value;
+        if (dataNascimento) {
+            body.dataNascimento = dataNascimento;
+        }
+
+        const sexo = form.sexo.value.trim();
+        if (sexo) {
+            body.sexo = sexo;
+        }
+
+        const fotoUrl = form.fotoUrl.value.trim();
+        if (fotoUrl) {
+            body.fotoUrl = fotoUrl;
+        }
+
+        const aulasPorSemana = form.aulasPorSemana.value;
+        if (aulasPorSemana) {
+            const aulas = Number(aulasPorSemana);
+            if (!Number.isNaN(aulas)) {
+                body.aulasPorSemana = aulas;
+            }
+        }
+
+        const objetivo = form.objetivo.value.trim();
+        if (objetivo) {
+            body.objetivo = objetivo;
+        }
+
+        const planoSelecionado = PLAN_OPTIONS.find(opt => opt.id === form.plano.value);
+        if (planoSelecionado) {
+            body.plano = {
+                id: planoSelecionado.id,
+                nome: planoSelecionado.nome,
+                duracao: planoSelecionado.duracao,
+                preco: planoSelecionado.preco
+            };
+        }
+
+        const inicioPlano = form.inicioPlano.value;
+        if (inicioPlano) {
+            body.inicioPlano = inicioPlano;
+        }
+
+        const vencimentoPlano = form.vencimentoPlano.value;
+        if (vencimentoPlano) {
+            body.vencimentoPlano = vencimentoPlano;
+        }
+
         try {
             const res = await fetchWithFreshToken('/api/users/alunos', {
                 method: 'POST',
