@@ -3,27 +3,27 @@ import { StudentsTable } from "./components/studentsTable.js";
 import { listStudents, bulkAction, clearStudentsCache } from "./dataProviders/studentsProvider.mjs";
 
 const PLAN_OPTIONS = [
-    { id: 'treino-mensal', nome: 'Treino', duracao: 'Mensal', preco: 'R$80', meses: 1 },
-    { id: 'treino-trimestral', nome: 'Treino', duracao: 'Trimestral', preco: 'R$70/mês', meses: 3 },
-    { id: 'treino-semestral', nome: 'Treino', duracao: 'Semestral', preco: 'R$60/mês', meses: 6 },
-    { id: 'treino-dieta-mensal', nome: 'Treino e dieta', duracao: 'Mensal', preco: 'R$150', meses: 1 },
-    { id: 'treino-dieta-trimestral', nome: 'Treino e dieta', duracao: 'Trimestral', preco: 'R$135/mês', meses: 3 },
-    { id: 'treino-dieta-semestral', nome: 'Treino e dieta', duracao: 'Semestral', preco: 'R$120/mês', meses: 6 },
-    { id: 'presencial-1x-mensal', nome: 'Presencial 1x por semana', duracao: 'Mensal', preco: 'R$200', meses: 1 },
-    { id: 'presencial-1x-trimestral', nome: 'Presencial 1x por semana', duracao: 'Trimestral', preco: 'R$180/mês', meses: 3 },
-    { id: 'presencial-1x-semestral', nome: 'Presencial 1x por semana', duracao: 'Semestral', preco: 'R$160/mês', meses: 6 },
-    { id: 'presencial-2x-mensal', nome: 'Presencial 2x por semana', duracao: 'Mensal', preco: 'R$400', meses: 1 },
-    { id: 'presencial-2x-trimestral', nome: 'Presencial 2x por semana', duracao: 'Trimestral', preco: 'R$360/mês', meses: 3 },
-    { id: 'presencial-2x-semestral', nome: 'Presencial 2x por semana', duracao: 'Semestral', preco: 'R$320/mês', meses: 6 },
-    { id: 'presencial-3x-mensal', nome: 'Presencial 3x por semana', duracao: 'Mensal', preco: 'R$600', meses: 1 },
-    { id: 'presencial-3x-trimestral', nome: 'Presencial 3x por semana', duracao: 'Trimestral', preco: 'R$540/mês', meses: 3 },
-    { id: 'presencial-3x-semestral', nome: 'Presencial 3x por semana', duracao: 'Semestral', preco: 'R$480/mês', meses: 6 },
-    { id: 'presencial-4x-mensal', nome: 'Presencial 4x por semana', duracao: 'Mensal', preco: 'R$800', meses: 1 },
-    { id: 'presencial-4x-trimestral', nome: 'Presencial 4x por semana', duracao: 'Trimestral', preco: 'R$720/mês', meses: 3 },
-    { id: 'presencial-4x-semestral', nome: 'Presencial 4x por semana', duracao: 'Semestral', preco: 'R$640/mês', meses: 6 },
-    { id: 'presencial-5x-mensal', nome: 'Presencial 5x por semana', duracao: 'Mensal', preco: 'R$1000', meses: 1 },
-    { id: 'presencial-5x-trimestral', nome: 'Presencial 5x por semana', duracao: 'Trimestral', preco: 'R$900/mês', meses: 3 },
-    { id: 'presencial-5x-semestral', nome: 'Presencial 5x por semana', duracao: 'Semestral', preco: 'R$800/mês', meses: 6 }
+    { id: 'treino-mensal', nome: 'Treino', duracao: 'Mensal', preco: 'R$80', meses: 1, modalidade: 'online', dieta: false },
+    { id: 'treino-trimestral', nome: 'Treino', duracao: 'Trimestral', preco: 'R$70/mês', meses: 3, modalidade: 'online', dieta: false },
+    { id: 'treino-semestral', nome: 'Treino', duracao: 'Semestral', preco: 'R$60/mês', meses: 6, modalidade: 'online', dieta: false },
+    { id: 'treino-dieta-mensal', nome: 'Treino e dieta', duracao: 'Mensal', preco: 'R$150', meses: 1, modalidade: 'online', dieta: true },
+    { id: 'treino-dieta-trimestral', nome: 'Treino e dieta', duracao: 'Trimestral', preco: 'R$135/mês', meses: 3, modalidade: 'online', dieta: true },
+    { id: 'treino-dieta-semestral', nome: 'Treino e dieta', duracao: 'Semestral', preco: 'R$120/mês', meses: 6, modalidade: 'online', dieta: true },
+    { id: 'presencial-1x-mensal', nome: 'Presencial 1x por semana', duracao: 'Mensal', preco: 'R$200', meses: 1, modalidade: 'presencial', dieta: false },
+    { id: 'presencial-1x-trimestral', nome: 'Presencial 1x por semana', duracao: 'Trimestral', preco: 'R$180/mês', meses: 3, modalidade: 'presencial', dieta: false },
+    { id: 'presencial-1x-semestral', nome: 'Presencial 1x por semana', duracao: 'Semestral', preco: 'R$160/mês', meses: 6, modalidade: 'presencial', dieta: false },
+    { id: 'presencial-2x-mensal', nome: 'Presencial 2x por semana', duracao: 'Mensal', preco: 'R$400', meses: 1, modalidade: 'presencial', dieta: false },
+    { id: 'presencial-2x-trimestral', nome: 'Presencial 2x por semana', duracao: 'Trimestral', preco: 'R$360/mês', meses: 3, modalidade: 'presencial', dieta: false },
+    { id: 'presencial-2x-semestral', nome: 'Presencial 2x por semana', duracao: 'Semestral', preco: 'R$320/mês', meses: 6, modalidade: 'presencial', dieta: false },
+    { id: 'presencial-3x-mensal', nome: 'Presencial 3x por semana', duracao: 'Mensal', preco: 'R$600', meses: 1, modalidade: 'presencial', dieta: false },
+    { id: 'presencial-3x-trimestral', nome: 'Presencial 3x por semana', duracao: 'Trimestral', preco: 'R$540/mês', meses: 3, modalidade: 'presencial', dieta: false },
+    { id: 'presencial-3x-semestral', nome: 'Presencial 3x por semana', duracao: 'Semestral', preco: 'R$480/mês', meses: 6, modalidade: 'presencial', dieta: false },
+    { id: 'presencial-4x-mensal', nome: 'Presencial 4x por semana', duracao: 'Mensal', preco: 'R$800', meses: 1, modalidade: 'presencial', dieta: false },
+    { id: 'presencial-4x-trimestral', nome: 'Presencial 4x por semana', duracao: 'Trimestral', preco: 'R$720/mês', meses: 3, modalidade: 'presencial', dieta: false },
+    { id: 'presencial-4x-semestral', nome: 'Presencial 4x por semana', duracao: 'Semestral', preco: 'R$640/mês', meses: 6, modalidade: 'presencial', dieta: false },
+    { id: 'presencial-5x-mensal', nome: 'Presencial 5x por semana', duracao: 'Mensal', preco: 'R$1000', meses: 1, modalidade: 'presencial', dieta: false },
+    { id: 'presencial-5x-trimestral', nome: 'Presencial 5x por semana', duracao: 'Trimestral', preco: 'R$900/mês', meses: 3, modalidade: 'presencial', dieta: false },
+    { id: 'presencial-5x-semestral', nome: 'Presencial 5x por semana', duracao: 'Semestral', preco: 'R$800/mês', meses: 6, modalidade: 'presencial', dieta: false }
 ];
 
 let personalContextPromise;
@@ -568,9 +568,6 @@ function showEditAlunoForm(aluno) {
 export function showNovoAlunoModal(callback) {
     const modal = document.createElement('div');
     modal.className = 'modal';
-    const planOptionsHtml = PLAN_OPTIONS.map(option => `
-                    <option value="${option.id}">${option.nome} - ${option.duracao} - ${option.preco}</option>
-                `).join('');
 
     modal.innerHTML = `
         <div class="modal-content">
@@ -599,15 +596,35 @@ export function showNovoAlunoModal(callback) {
                     </div>
                     <div class="form-field">
                         <label for="novoAlunoSexo">Sexo</label>
-                        <input id="novoAlunoSexo" type="text" name="sexo" placeholder="Sexo" />
+                        <select id="novoAlunoSexo" name="sexo">
+                            <option value="">Selecione</option>
+                            <option value="masculino">Masculino</option>
+                            <option value="feminino">Feminino</option>
+                            <option value="prefiro nao dizer">Prefiro não dizer</option>
+                        </select>
                     </div>
                     <div class="form-field">
                         <label for="novoAlunoFotoUrl">URL da foto</label>
                         <input id="novoAlunoFotoUrl" type="text" name="fotoUrl" placeholder="https://..." />
                     </div>
-                    <div class="form-field">
+                    <div class="form-field" data-modalidade-wrapper>
+                        <span>Modalidade</span>
+                        <div class="modalidade-actions">
+                            <button type="button" data-modalidade="presencial">Presencial</button>
+                            <button type="button" data-modalidade="online">Online</button>
+                        </div>
+                    </div>
+                    <div class="form-field" data-presencial-field hidden>
                         <label for="novoAlunoAulas">Aulas por semana</label>
                         <input id="novoAlunoAulas" type="number" min="1" name="aulasPorSemana" placeholder="2" />
+                    </div>
+                    <div class="form-field" data-dieta-field hidden>
+                        <label for="novoAlunoDieta">Dieta</label>
+                        <select id="novoAlunoDieta" name="dieta">
+                            <option value="">Selecione</option>
+                            <option value="sim">Sim</option>
+                            <option value="nao">Não</option>
+                        </select>
                     </div>
                     <div class="form-field">
                         <label for="novoAlunoObjetivo">Objetivo</label>
@@ -615,9 +632,8 @@ export function showNovoAlunoModal(callback) {
                     </div>
                     <div class="form-field">
                         <label for="novoAlunoPlano">Plano</label>
-                        <select id="novoAlunoPlano" name="plano">
+                        <select id="novoAlunoPlano" name="plano" disabled>
                             <option value="">Selecione um plano</option>
-                            ${planOptionsHtml}
                         </select>
                         <small class="plan-info" data-plan-info>Selecione um plano para visualizar os detalhes</small>
                     </div>
@@ -669,19 +685,17 @@ export function showNovoAlunoModal(callback) {
     const planInfo = form.querySelector('[data-plan-info]');
     const inicioPlanoInput = form.querySelector('#novoAlunoInicioPlano');
     const vencimentoPlanoInput = form.querySelector('#novoAlunoVencimentoPlano');
+    const modalidadeButtons = form.querySelectorAll('[data-modalidade]');
+    const presencialField = form.querySelector('[data-presencial-field]');
+    const dietaField = form.querySelector('[data-dieta-field]');
+    const dietaSelect = form.querySelector('#novoAlunoDieta');
 
-    if (showCompleteBtn && completeSection) {
-        showCompleteBtn.addEventListener('click', () => {
-            completeSection.hidden = false;
-            showCompleteBtn.remove();
-            form.classList.add('is-complete');
-            setTimeout(() => {
-                form.querySelector('#novoAlunoTelefone')?.focus();
-            }, 0);
-        });
-    }
+    let selectedModalidade = '';
+    let selectedDieta = '';
 
-    const updatePlanDetails = (shouldCalculateEnd = false, { ensureStartDate = false } = {}) => {
+    modalidadeButtons.forEach(btn => btn.setAttribute('aria-pressed', 'false'));
+
+    function updatePlanDetails(shouldCalculateEnd = false, { ensureStartDate = false } = {}) {
         if (!planSelect) return;
         const selectedPlan = PLAN_OPTIONS.find(opt => opt.id === planSelect.value);
         if (planInfo) {
@@ -711,7 +725,113 @@ export function showNovoAlunoModal(callback) {
                 vencimentoPlanoInput.value = '';
             }
         }
+    }
+
+    const updatePlanOptions = () => {
+        if (!planSelect) return;
+        const previousValue = planSelect.value;
+        planSelect.innerHTML = '<option value="">Selecione um plano</option>';
+        if (!selectedModalidade) {
+            planSelect.disabled = true;
+            planSelect.value = '';
+            updatePlanDetails(false);
+            return;
+        }
+
+        planSelect.disabled = false;
+
+        const filteredPlans = PLAN_OPTIONS.filter(option => {
+            if (option.modalidade !== selectedModalidade) {
+                return false;
+            }
+            if (selectedModalidade !== 'online') {
+                return true;
+            }
+            if (!selectedDieta) {
+                return true;
+            }
+            return selectedDieta === 'sim' ? option.dieta : !option.dieta;
+        });
+
+        filteredPlans.forEach(option => {
+            const opt = document.createElement('option');
+            opt.value = option.id;
+            opt.textContent = `${option.nome} - ${option.duracao} - ${option.preco}`;
+            planSelect.appendChild(opt);
+        });
+
+        if (!filteredPlans.some(plan => plan.id === previousValue)) {
+            planSelect.value = '';
+        } else {
+            planSelect.value = previousValue;
+        }
+
+        updatePlanDetails(false);
     };
+
+    if (showCompleteBtn && completeSection) {
+        showCompleteBtn.addEventListener('click', () => {
+            completeSection.hidden = false;
+            showCompleteBtn.remove();
+            form.classList.add('is-complete');
+            setTimeout(() => {
+                form.querySelector('#novoAlunoTelefone')?.focus();
+            }, 0);
+        });
+    }
+
+    modalidadeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const modalidade = button.dataset.modalidade || '';
+            if (!modalidade) {
+                return;
+            }
+
+            selectedModalidade = modalidade;
+
+            modalidadeButtons.forEach(btn => {
+                const isActive = btn === button;
+                btn.classList.toggle('is-active', isActive);
+                btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            });
+
+            if (selectedModalidade === 'presencial') {
+                if (presencialField) {
+                    presencialField.hidden = false;
+                }
+                if (dietaField) {
+                    dietaField.hidden = true;
+                }
+                if (dietaSelect) {
+                    dietaSelect.value = '';
+                }
+                selectedDieta = '';
+            } else if (selectedModalidade === 'online') {
+                if (presencialField) {
+                    presencialField.hidden = true;
+                    const aulasInput = presencialField.querySelector('input[name="aulasPorSemana"]');
+                    if (aulasInput) {
+                        aulasInput.value = '';
+                    }
+                }
+                if (dietaField) {
+                    dietaField.hidden = false;
+                }
+                if (dietaSelect) {
+                    selectedDieta = dietaSelect.value || '';
+                }
+            }
+
+            updatePlanOptions();
+        });
+    });
+
+    dietaSelect?.addEventListener('change', () => {
+        selectedDieta = dietaSelect.value;
+        updatePlanOptions();
+    });
+
+    updatePlanOptions();
 
     updatePlanDetails(false);
 
@@ -731,6 +851,10 @@ export function showNovoAlunoModal(callback) {
             nome,
             observacoes: form.observacoes.value.trim()
         };
+
+        if (selectedModalidade) {
+            body.modalidade = selectedModalidade;
+        }
 
         const email = form.email.value.trim();
         if (email) {
@@ -755,6 +879,13 @@ export function showNovoAlunoModal(callback) {
         const fotoUrl = form.fotoUrl.value.trim();
         if (fotoUrl) {
             body.fotoUrl = fotoUrl;
+        }
+
+        if (selectedModalidade === 'online') {
+            const dieta = dietaSelect?.value.trim();
+            if (dieta) {
+                body.dieta = dieta;
+            }
         }
 
         const aulasPorSemana = form.aulasPorSemana.value;
