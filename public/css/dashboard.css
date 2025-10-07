@@ -147,6 +147,194 @@ body {
     margin: 0px 0 5px;
 }
 
+.custom-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.custom-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #1e1e1e;
+    border: 1px solid #2c2c2c;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.custom-checkbox input {
+    display: none;
+}
+
+.custom-checkbox .checkbox-box {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #555;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.custom-checkbox .checkbox-label {
+    font-size: 14px;
+}
+
+.custom-checkbox:hover .checkbox-box {
+    border-color: #f58725;
+}
+
+.custom-checkbox input:checked + .checkbox-box {
+    background-color: #f58725;
+    border-color: #f58725;
+}
+
+
+
+.repeticoes-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.repeticoes-inputs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.repeticao-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+}
+
+.repeticao-wrapper .repeticao-input {
+    width: 70px;
+    text-align: center;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    background-color: #121212;
+    color: #fff;
+}
+
+.repeticao-wrapper .fillAllReps {
+    background: transparent;
+    border: 1px solid #f58725;
+    color: #f58725;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.repeticao-wrapper .fillAllReps:hover {
+    background-color: rgba(245, 135, 37, 0.1);
+}
+
+.bulk-edit {
+    background-color: #1e1e1e;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.bulk-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.bulk-controls select {
+    background-color: #121212;
+    color: #fff;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+
+.bulk-controls button {
+    background-color: #f58725;
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.bulk-controls button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.bulk-edit small {
+    color: #aaa;
+    font-size: 12px;
+}
+
+.lista-metodos {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.lista-metodos .metodo-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    background-color: #1e1e1e;
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.lista-metodos .metodo-text strong {
+    display: block;
+}
+
+.lista-metodos .metodo-text small {
+    display: block;
+    margin-top: 4px;
+    color: #bbb;
+}
+
+.metodo-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.metodo-actions button {
+    background-color: #2a2a2a;
+    color: #fff;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.metodo-actions button:hover {
+    background-color: #f58725;
+    color: #000;
+}
+
 .aluno-header {
     display: flex;
     align-items: center;

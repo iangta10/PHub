@@ -3,6 +3,27 @@ const router = express.Router();
 const admin = require('../../firebase-admin');
 const verifyToken = require('../../middleware/verifyToken');
 
+function normalizeRepeticoes(value) {
+    if (Array.isArray(value)) {
+        return value
+            .map(v => (v !== undefined && v !== null ? String(v).trim() : ''))
+            .filter(v => v !== '');
+    }
+    if (value === null || value === undefined) {
+        return [];
+    }
+    const str = String(value).trim();
+    return str ? [str] : [];
+}
+
+function parseSeries(value) {
+    if (value === undefined || value === null) return null;
+    const str = String(value).trim();
+    if (!str) return null;
+    const num = Number(str);
+    return Number.isNaN(num) ? null : num;
+}
+
 // Criar método de treino
 router.post('/metodos', verifyToken, async (req, res) => {
     const personalId = req.user.uid;
@@ -22,8 +43,8 @@ router.post('/metodos', verifyToken, async (req, res) => {
 
         const docRef = await collectionRef.add({
             nome,
-            series: series !== undefined ? Number(series) : null,
-            repeticoes: repeticoes !== undefined ? Number(repeticoes) : null,
+            series: parseSeries(series),
+            repeticoes: normalizeRepeticoes(repeticoes),
             observacoes: observacoes || '',
             criadoEm: new Date().toISOString()
         });
@@ -78,8 +99,8 @@ router.put('/metodos/:id', verifyToken, async (req, res) => {
 
         const updateData = {};
         if (nome !== undefined) updateData.nome = nome;
-        if (series !== undefined) updateData.series = Number(series);
-        if (repeticoes !== undefined) updateData.repeticoes = Number(repeticoes);
+        if (series !== undefined) updateData.series = parseSeries(series);
+        if (repeticoes !== undefined) updateData.repeticoes = normalizeRepeticoes(repeticoes);
         if (observacoes !== undefined) updateData.observacoes = observacoes;
 
         await docRef.update(updateData);

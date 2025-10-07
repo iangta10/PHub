@@ -10,6 +10,19 @@ let CAT_OPTIONS = '';
 let GRUPO_OPTIONS = '';
 let activeDiaIndex = 0;
 
+function escapeHtml(value = '') {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function escapeAttribute(value = '') {
+    return escapeHtml(value)
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function updateProximoOptions() {
     const select = document.querySelector('#configFicha select[name="proximoTreino"]');
     if (!select) return;
@@ -245,6 +258,13 @@ function addExercicio(container) {
         dl.innerHTML = allOptions;
         document.body.appendChild(dl);
     }
+    const metodoOptions = METODOS.map(m => {
+        const repsList = Array.isArray(m.repeticoes) ? m.repeticoes : (m.repeticoes ? [m.repeticoes] : []);
+        const firstRep = repsList.length ? String(repsList[0]) : '';
+        const obs = m.observacoes || '';
+        const repsData = escapeAttribute(encodeURIComponent(JSON.stringify(repsList)));
+        return `<option data-series="${escapeAttribute(m.series || '')}" data-repeticoes="${escapeAttribute(firstRep)}" data-repeticoes-list="${repsData}" data-observacoes="${escapeAttribute(obs)}">${escapeHtml(m.nome)}</option>`;
+    }).join('');
     const exDiv = document.createElement('div');
     exDiv.className = 'exercicio';
     exDiv.innerHTML = `
@@ -262,7 +282,7 @@ function addExercicio(container) {
         </div>
         <select class="metodo">
             <option value="">Método</option>
-            ${METODOS.map(m => `<option data-series="${m.series || ''}" data-repeticoes="${m.repeticoes || ''}" data-observacoes="${m.observacoes || ''}">${m.nome}</option>`).join('')}
+            ${metodoOptions}
         </select>
         <input type="number" class="series" placeholder="Séries" />
         <input type="number" class="repeticoes" placeholder="Reps" />

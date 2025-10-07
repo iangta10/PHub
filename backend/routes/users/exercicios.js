@@ -112,6 +112,58 @@ router.put('/exercicios/:id', verifyToken, async (req, res) => {
     }
 });
 
+// Atualização em massa de exercícios (categoria e grupo principal)
+router.put('/exercicios', verifyToken, async (req, res) => {
+    const personalId = req.user.uid;
+    const { exercicios, categoria, grupoMuscularPrincipal } = req.body;
+
+    if (!Array.isArray(exercicios) || exercicios.length === 0) {
+        return res.status(400).json({ error: 'Nenhum exercício selecionado' });
+    }
+
+    const hasUpdates = categoria !== undefined || grupoMuscularPrincipal !== undefined;
+    if (!hasUpdates) {
+        return res.status(400).json({ error: 'Nenhum campo para atualizar' });
+    }
+
+    try {
+        const userDoc = await admin.firestore().collection('users').doc(personalId).get();
+        const role = userDoc.exists ? userDoc.data().role : 'personal';
+
+        const batch = admin.firestore().batch();
+        let hasAnyUpdate = false;
+
+        for (const item of exercicios) {
+            if (!item || !item.id) continue;
+            const isGlobal = Boolean(item.global);
+            if (isGlobal && role !== 'admin') {
+                return res.status(403).json({ error: 'Acesso negado' });
+            }
+
+            const docRef = isGlobal
+                ? admin.firestore().collection('exerciciosSistema').doc(item.id)
+                : admin.firestore().collection('users').doc(personalId).collection('exercicios').doc(item.id);
+
+            const updateData = {};
+            if (categoria !== undefined) updateData.categoria = categoria;
+            if (grupoMuscularPrincipal !== undefined) updateData.grupoMuscularPrincipal = grupoMuscularPrincipal;
+
+            batch.update(docRef, updateData);
+            hasAnyUpdate = true;
+        }
+
+        if (!hasAnyUpdate) {
+            return res.status(400).json({ error: 'Nenhum exercício válido para atualizar' });
+        }
+
+        await batch.commit();
+        res.json({ message: 'Exercícios atualizados' });
+    } catch (err) {
+        console.error('Erro na atualização em massa de exercícios:', err);
+        res.status(500).json({ error: 'Erro ao atualizar exercícios' });
+    }
+});
+
 // Remover exercício
 router.delete('/exercicios/:id', verifyToken, async (req, res) => {
     const personalId = req.user.uid;
