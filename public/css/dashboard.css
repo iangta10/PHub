@@ -539,6 +539,109 @@ body {
     min-width: 280px;
 }
 
+.evaluation-select-modal__content {
+    width: min(520px, 90vw);
+    max-height: 80vh;
+    gap: 1.5rem;
+}
+
+.evaluation-select-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.evaluation-select-modal__title {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.evaluation-select-modal__close {
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 1.75rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+}
+
+.evaluation-select-modal__body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.evaluation-select-modal__search input {
+    width: 100%;
+    background-color: #111;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 0.6rem 0.75rem;
+    color: #fff;
+}
+
+.evaluation-select-modal__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow-y: auto;
+    max-height: 50vh;
+    padding-right: 0.25rem;
+}
+
+.evaluation-select-modal__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background-color: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+}
+
+.evaluation-select-modal__info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.evaluation-select-modal__name {
+    font-weight: 600;
+}
+
+.evaluation-select-modal__action {
+    background-color: #f58725;
+    color: #000;
+    border: none;
+    border-radius: 999px;
+    padding: 0.45rem 1.2rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: filter 0.2s ease;
+}
+
+.evaluation-select-modal__action:hover,
+.evaluation-select-modal__action:focus-visible {
+    filter: brightness(1.1);
+    outline: none;
+}
+
+.evaluation-select-modal__empty {
+    text-align: center;
+    color: #b3b3b3;
+    padding: 1rem 0;
+}
+
+.evaluation-select-modal mark {
+    background-color: rgba(245, 135, 37, 0.35);
+    color: inherit;
+    padding: 0 0.1em;
+    border-radius: 2px;
+}
+
 .modal-actions {
     display: flex;
     flex-wrap: wrap;
