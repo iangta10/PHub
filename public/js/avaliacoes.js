@@ -451,6 +451,107 @@ function createHistoryPanel() {
     return panel;
 }
 
+function openStudentSelectionModal(students, onSelect) {
+    document.querySelectorAll('.evaluation-select-modal').forEach(existing => existing.remove());
+
+    const list = Array.isArray(students)
+        ? [...students].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+        : [];
+
+    const modal = document.createElement('div');
+    modal.className = 'modal evaluation-select-modal';
+    modal.innerHTML = `
+        <div class="modal-content evaluation-select-modal__content" role="dialog" aria-modal="true">
+            <header class="evaluation-select-modal__header">
+                <h3 class="evaluation-select-modal__title">Selecionar aluno</h3>
+                <button type="button" class="evaluation-select-modal__close" aria-label="Fechar seleção">&times;</button>
+            </header>
+            <div class="evaluation-select-modal__body">
+                <div class="evaluation-select-modal__search">
+                    <input type="search" placeholder="Buscar por nome" aria-label="Buscar aluno" />
+                </div>
+                <div class="evaluation-select-modal__list" data-role="students"></div>
+            </div>
+        </div>
+    `;
+
+    const listContainer = modal.querySelector('[data-role="students"]');
+    const searchInput = modal.querySelector('input[type="search"]');
+    const closeButton = modal.querySelector('.evaluation-select-modal__close');
+
+    let currentTerm = '';
+
+    const close = () => {
+        document.removeEventListener('keydown', handleKeydown);
+        modal.remove();
+    };
+
+    const handleKeydown = event => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            close();
+        }
+    };
+
+    const renderList = () => {
+        const searchValue = currentTerm.trim();
+        const normalizedTerm = searchValue.toLowerCase();
+        const filtered = normalizedTerm
+            ? list.filter(student => student.name.toLowerCase().includes(normalizedTerm))
+            : list;
+
+        if (!filtered.length) {
+            listContainer.innerHTML = '<p class="evaluation-select-modal__empty">Nenhum aluno encontrado.</p>';
+            return;
+        }
+
+        listContainer.innerHTML = filtered.map(student => `
+            <div class="evaluation-select-modal__item" data-id="${student.id}">
+                <div class="evaluation-select-modal__info">
+                    <span class="evaluation-select-modal__name">${highlightTerm(student.name, searchValue)}</span>
+                </div>
+                <button type="button" class="evaluation-select-modal__action" data-id="${student.id}">Avaliar</button>
+            </div>
+        `).join('');
+
+        listContainer.querySelectorAll('button[data-id]').forEach(button => {
+            button.addEventListener('click', () => {
+                const id = button.getAttribute('data-id');
+                if (id && typeof onSelect === 'function') {
+                    close();
+                    onSelect(id);
+                }
+            });
+        });
+    };
+
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            currentTerm = searchInput.value;
+            renderList();
+        });
+    }
+
+    if (closeButton) {
+        closeButton.addEventListener('click', close);
+    }
+
+    modal.addEventListener('click', event => {
+        if (event.target === modal) {
+            close();
+        }
+    });
+
+    document.addEventListener('keydown', handleKeydown);
+
+    renderList();
+    document.body.appendChild(modal);
+
+    if (searchInput) {
+        setTimeout(() => searchInput.focus(), 0);
+    }
+}
+
 function openNewEvaluation(studentId) {
     if (!studentId) return;
     window.location.href = `nova_avaliacao.html?id=${encodeURIComponent(studentId)}`;
@@ -679,9 +780,7 @@ export async function loadAvaliacoesSection() {
 
     if (createButton) {
         createButton.addEventListener('click', () => {
-            if (!state.students.length) return;
-            const first = state.students.find(student => student.flags.noEvaluation) || state.students[0];
-            openNewEvaluation(first.id);
+            openStudentSelectionModal(state.students, id => openNewEvaluation(id));
         });
     }
 
