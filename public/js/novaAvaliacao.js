@@ -8,13 +8,26 @@ async function carregarCabecalho(id) {
         if (res.ok) {
             const aluno = await res.json();
             const nomeEl = document.getElementById('nomeAluno');
-            const idadeEl = document.getElementById('idadeAluno');
-            const sexoEl = document.getElementById('sexoAluno');
+            const metaEl = document.getElementById('metaAluno');
             const fotoEl = document.getElementById('fotoAluno');
             if (nomeEl) nomeEl.textContent = aluno.nome || '';
-            if (idadeEl && aluno.idade) idadeEl.textContent = `${aluno.idade} anos`;
-            if (sexoEl && aluno.sexo) sexoEl.textContent = aluno.sexo;
-            if (fotoEl && aluno.fotoUrl) fotoEl.src = aluno.fotoUrl;
+            if (metaEl) {
+                const metaParts = [];
+                if (aluno.idade) metaParts.push(`${aluno.idade} anos`);
+                if (aluno.sexo) metaParts.push(aluno.sexo);
+                metaEl.textContent = metaParts.join(' • ');
+            }
+            if (fotoEl) {
+                const genero = (aluno.sexo || '').toString().toLowerCase();
+                const feminino = genero.startsWith('f');
+                const defaultFoto = feminino ? './img/avatar-female.svg' : './img/avatar-male.svg';
+                const fotoSrc = aluno.fotoUrl || defaultFoto;
+                fotoEl.src = fotoSrc;
+                fotoEl.alt = aluno.nome ? `Foto de ${aluno.nome}` : 'Foto do aluno';
+                fotoEl.addEventListener('error', () => {
+                    fotoEl.src = defaultFoto;
+                }, { once: true });
+            }
         }
     } catch (err) {
         console.error('Erro ao carregar aluno', err);
