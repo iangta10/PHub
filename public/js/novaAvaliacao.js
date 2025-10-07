@@ -1,6 +1,13 @@
 import { getAlunoId, renderOpcoes } from './avaliacao.js';
 import { fetchWithFreshToken } from './auth.js';
 
+function updateMainOffset() {
+    const header = document.querySelector('.page-header');
+    if (!header) return;
+    const offset = header.getBoundingClientRect().height + 20;
+    document.documentElement.style.setProperty('--page-header-offset', `${offset}px`);
+}
+
 async function carregarCabecalho(id) {
     if (!id) return;
     try {
@@ -28,6 +35,7 @@ async function carregarCabecalho(id) {
                     fotoEl.src = defaultFoto;
                 }, { once: true });
             }
+            updateMainOffset();
         }
     } catch (err) {
         console.error('Erro ao carregar aluno', err);
@@ -38,6 +46,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const id = getAlunoId();
     carregarCabecalho(id);
     renderOpcoes(id, 'avaliacaoOpcoes');
+
+    updateMainOffset();
+    window.addEventListener('resize', updateMainOffset);
+
+    const header = document.querySelector('.page-header');
+    if (header && 'ResizeObserver' in window) {
+        const observer = new ResizeObserver(() => updateMainOffset());
+        observer.observe(header);
+    }
 
     // cria/recupera id da avaliacao em andamento
     let avalId = localStorage.getItem(`currentAvalId_${id}`);
