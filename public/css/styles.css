@@ -181,7 +181,9 @@ select:focus {
     padding: 10px 20px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
     box-shadow: 0 2px 6px rgba(0,0,0,0.5);
     z-index: 100;
 }
@@ -189,6 +191,23 @@ select:focus {
 .page-header h2 {
     margin: 0;
     font-size: 20px;
+}
+
+.header-aluno {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+}
+
+.header-aluno .dados-aluno h3 {
+    margin: 0 0 4px;
+}
+
+.dados-aluno-meta {
+    margin: 0;
+    font-size: 14px;
+    color: #cfcfcf;
 }
 
 .back-btn {
@@ -207,8 +226,9 @@ select:focus {
 
 .aluno-info {
     display: flex;
-    align-items: center;
-    gap: 20px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
     margin-bottom: 20px;
     background-color: #1e1e1e;
     padding: 20px;
@@ -222,12 +242,26 @@ select:focus {
     border-radius: 50%;
 }
 
-.dados-aluno h3 {
-    margin: 0 0 5px;
+.aluno-info label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
 }
 
-.dados-aluno input[type="date"] {
-    width: auto;
+.aluno-info input[type="date"] {
+    width: 100%;
+}
+
+@media (max-width: 600px) {
+    .header-aluno {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .header-aluno .dados-aluno h3 {
+        font-size: 16px;
+    }
 }
 
 .avaliacao-actions {

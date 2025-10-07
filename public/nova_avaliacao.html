@@ -16,19 +16,25 @@
 <body>
     <header class="page-header">
         <h2>Nova Avaliação</h2>
+        <div class="header-aluno">
+            <img
+                id="fotoAluno"
+                class="foto-aluno"
+                src="./img/avatar-male.svg"
+                alt="Foto do aluno"
+            />
+            <div class="dados-aluno">
+                <h3 id="nomeAluno"></h3>
+                <p id="metaAluno" class="dados-aluno-meta"></p>
+            </div>
+        </div>
     </header>
     <main class="avaliacao-main">
         <section id="alunoInfo" class="aluno-info">
-            <img id="fotoAluno" class="foto-aluno" src="" alt="Foto do aluno" />
-            <div class="dados-aluno">
-                <h3 id="nomeAluno"></h3>
-                <p id="idadeAluno"></p>
-                <p id="sexoAluno"></p>
-                <label>
-                    Data da próxima avaliação
-                    <input type="date" id="proximaAvaliacao" />
-                </label>
-            </div>
+            <label>
+                Data da próxima avaliação
+                <input type="date" id="proximaAvaliacao" />
+            </label>
         </section>
         <section id="avaliacaoOpcoes" class="opcoes-avaliacao"></section>
         <div class="avaliacao-actions">
