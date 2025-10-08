@@ -1,6 +1,19 @@
 import { getAlunoId, renderOpcoes } from './avaliacao.js';
 import { fetchWithFreshToken } from './auth.js';
 
+function calcularIdade(dataNascimento) {
+    if (!dataNascimento) return '';
+    const nasc = new Date(dataNascimento);
+    if (Number.isNaN(nasc.getTime())) return '';
+    const hoje = new Date();
+    let idade = hoje.getFullYear() - nasc.getFullYear();
+    const mes = hoje.getMonth() - nasc.getMonth();
+    if (mes < 0 || (mes === 0 && hoje.getDate() < nasc.getDate())) {
+        idade--;
+    }
+    return idade >= 0 ? idade : '';
+}
+
 async function carregarCabecalho(id) {
     if (!id) return;
     try {
@@ -13,13 +26,15 @@ async function carregarCabecalho(id) {
             if (nomeEl) nomeEl.textContent = aluno.nome || '';
             if (metaEl) {
                 const metaParts = [];
-                if (aluno.idade) metaParts.push(`${aluno.idade} anos`);
-                if (aluno.sexo) metaParts.push(aluno.sexo);
+                const idade = aluno.idade || calcularIdade(aluno.dataNascimento);
+                if (idade) metaParts.push(`${idade} anos`);
+                const generoLabel = aluno.genero || aluno.sexo || '';
+                if (generoLabel) metaParts.push(generoLabel);
                 metaEl.textContent = metaParts.join(' • ');
             }
             if (fotoEl) {
-                const genero = (aluno.sexo || '').toString().toLowerCase();
-                const feminino = genero.startsWith('f');
+                const generoReferencia = (aluno.genero || aluno.sexo || '').toString().toLowerCase();
+                const feminino = generoReferencia.startsWith('f');
                 const defaultFoto = feminino ? './img/avatar-female.svg' : './img/avatar-male.svg';
                 const fotoSrc = aluno.fotoUrl || defaultFoto;
                 fotoEl.src = fotoSrc;

@@ -72,6 +72,10 @@ body {
     align-items: center;
     font-size: 18px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
 }
 
 .header-right {
@@ -718,6 +722,48 @@ body {
 }
 
 /* === Avaliação / Anamnese === */
+.avaliacao-header {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.avaliacao-header h2 {
+    margin: 0;
+}
+
+.avaliacao-header .aluno-info {
+    margin: 0;
+    width: 100%;
+    background-color: #252525;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 16px;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.avaliacao-header .aluno-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.avaliacao-header .aluno-info-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #cfcfcf;
+    letter-spacing: 0.05em;
+}
+
+.avaliacao-header .aluno-info-value {
+    font-size: 1rem;
+    color: #fff;
+    min-height: 1.2em;
+}
+
 .avaliacao-container {
     background-color: #1e1e1e;
     padding: 20px;

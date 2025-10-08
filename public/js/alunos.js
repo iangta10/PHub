@@ -265,7 +265,8 @@ async function showAlunoDetails(id) {
         if (!res.ok) throw new Error('Erro ao buscar aluno');
         const aluno = await res.json();
 
-        const idade = calcularIdade(aluno.dataNascimento);
+        const idade = aluno.idade || calcularIdade(aluno.dataNascimento);
+        const genero = aluno.genero || aluno.sexo || '';
         const planoDescricao = aluno.plano ? `${aluno.plano.nome} - ${aluno.plano.duracao} (${aluno.plano.preco})` : '';
         const inicioPlano = aluno.inicioPlano ? new Date(aluno.inicioPlano).toLocaleDateString() : '';
         const vencimentoPlano = aluno.vencimentoPlano ? new Date(aluno.vencimentoPlano).toLocaleDateString() : '';
@@ -282,7 +283,7 @@ async function showAlunoDetails(id) {
                         <h2>${aluno.nome || ''}</h2>
                         <div class="aluno-cards">
                             ${idade ? `<span class="info-card">${idade} anos</span>` : ''}
-                            ${aluno.sexo ? `<span class="info-card">${aluno.sexo}</span>` : ''}
+                            ${genero ? `<span class="info-card">${genero}</span>` : ''}
                         </div>
                         <p>${aluno.telefone || ''}</p>
                         <p>${aluno.email || ''}</p>
@@ -439,8 +440,12 @@ function showEditAlunoForm(aluno) {
                 <input id="editAlunoDataNascimento" type="date" name="dataNascimento" value="${aluno.dataNascimento || ''}" />
             </div>
             <div class="form-field">
-                <label for="editAlunoSexo">Sexo</label>
-                <input id="editAlunoSexo" type="text" name="sexo" value="${aluno.sexo || ''}" />
+                <label for="editAlunoIdade">Idade</label>
+                <input id="editAlunoIdade" type="number" min="0" name="idade" value="${aluno.idade || ''}" />
+            </div>
+            <div class="form-field">
+                <label for="editAlunoGenero">Gênero</label>
+                <input id="editAlunoGenero" type="text" name="genero" value="${aluno.genero || aluno.sexo || ''}" />
             </div>
             <div class="form-field">
                 <label for="editAlunoFotoUrl">URL da foto</label>
@@ -532,12 +537,17 @@ function showEditAlunoForm(aluno) {
 
     form.addEventListener('submit', async e => {
         e.preventDefault();
+        const genero = form.genero.value.trim();
+        const idadeValor = form.idade.value.trim();
+        const idade = idadeValor ? Number(idadeValor) : null;
         const data = {
             nome: form.nome.value,
             email: form.email.value,
             telefone: form.telefone.value,
             dataNascimento: form.dataNascimento.value,
-            sexo: form.sexo.value,
+            idade: idade ?? null,
+            genero,
+            sexo: genero,
             fotoUrl: form.fotoUrl.value,
             objetivo: form.objetivo.value,
             observacoes: form.observacoes.value,
@@ -582,6 +592,21 @@ export function showNovoAlunoModal(callback) {
                     <input id="novoAlunoEmail" type="email" name="email" placeholder="Email" />
                 </div>
                 <div class="form-field">
+                    <label for="novoAlunoIdade">Idade</label>
+                    <input id="novoAlunoIdade" type="number" min="0" name="idade" placeholder="Idade" />
+                </div>
+                <div class="form-field">
+                    <label for="novoAlunoGenero">Gênero</label>
+                    <select id="novoAlunoGenero" name="genero">
+                        <option value="">Selecione</option>
+                        <option value="feminino">Feminino</option>
+                        <option value="masculino">Masculino</option>
+                        <option value="nao binario">Não binário</option>
+                        <option value="prefiro nao dizer">Prefiro não dizer</option>
+                        <option value="outro">Outro</option>
+                    </select>
+                </div>
+                <div class="form-field">
                     <label for="novoAlunoObservacoes">Observações</label>
                     <textarea id="novoAlunoObservacoes" name="observacoes" placeholder="Observações"></textarea>
                 </div>
@@ -593,15 +618,6 @@ export function showNovoAlunoModal(callback) {
                     <div class="form-field">
                         <label for="novoAlunoDataNascimento">Data de nascimento</label>
                         <input id="novoAlunoDataNascimento" type="date" name="dataNascimento" />
-                    </div>
-                    <div class="form-field">
-                        <label for="novoAlunoSexo">Sexo</label>
-                        <select id="novoAlunoSexo" name="sexo">
-                            <option value="">Selecione</option>
-                            <option value="masculino">Masculino</option>
-                            <option value="feminino">Feminino</option>
-                            <option value="prefiro nao dizer">Prefiro não dizer</option>
-                        </select>
                     </div>
                     <div class="form-field">
                         <label for="novoAlunoFotoUrl">URL da foto</label>
@@ -866,14 +882,23 @@ export function showNovoAlunoModal(callback) {
             body.telefone = telefone;
         }
 
+        const idadeValor = form.idade.value.trim();
+        if (idadeValor) {
+            const idadeNumero = Number(idadeValor);
+            if (!Number.isNaN(idadeNumero)) {
+                body.idade = idadeNumero;
+            }
+        }
+
         const dataNascimento = form.dataNascimento.value;
         if (dataNascimento) {
             body.dataNascimento = dataNascimento;
         }
 
-        const sexo = form.sexo.value.trim();
-        if (sexo) {
-            body.sexo = sexo;
+        const genero = form.genero.value.trim();
+        if (genero) {
+            body.genero = genero;
+            body.sexo = genero;
         }
 
         const fotoUrl = form.fotoUrl.value.trim();
