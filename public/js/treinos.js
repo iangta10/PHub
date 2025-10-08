@@ -10,6 +10,19 @@ let CAT_OPTIONS = '';
 let GRUPO_OPTIONS = '';
 let activeDiaIndex = 0;
 
+function calcularIdade(dataNascimento) {
+    if (!dataNascimento) return '';
+    const nasc = new Date(dataNascimento);
+    if (Number.isNaN(nasc.getTime())) return '';
+    const hoje = new Date();
+    let idade = hoje.getFullYear() - nasc.getFullYear();
+    const mes = hoje.getMonth() - nasc.getMonth();
+    if (mes < 0 || (mes === 0 && hoje.getDate() < nasc.getDate())) {
+        idade--;
+    }
+    return idade >= 0 ? idade : '';
+}
+
 function escapeHtml(value = '') {
     return String(value)
         .replace(/&/g, '&amp;')
@@ -359,8 +372,9 @@ async function updateAlunoHeader(alunoId) {
         if (!res.ok) throw new Error('Erro');
         const aluno = await res.json();
         const foto = aluno.fotoUrl || './img/profile-placeholder.png';
-        const idade = aluno.idade ? `${aluno.idade} anos` : '';
-        const sexo = aluno.sexo || aluno.genero || '';
+        const idadeBase = aluno.idade || calcularIdade(aluno.dataNascimento);
+        const idade = idadeBase ? `${idadeBase} anos` : '';
+        const sexo = aluno.genero || aluno.sexo || '';
         header.innerHTML = `
             <img src="${foto}" alt="Foto do aluno">
             <div>

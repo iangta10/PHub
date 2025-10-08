@@ -14,7 +14,23 @@
 </head>
 <body>
     <div class="avaliacao-container">
-        <h2>Anamnese</h2>
+        <header class="avaliacao-header">
+            <h2>Anamnese</h2>
+            <section class="aluno-info" aria-label="Informações do aluno">
+                <div class="aluno-info-item">
+                    <span class="aluno-info-label">Nome</span>
+                    <span class="aluno-info-value" data-aluno-nome></span>
+                </div>
+                <div class="aluno-info-item">
+                    <span class="aluno-info-label">Idade</span>
+                    <span class="aluno-info-value" data-aluno-idade></span>
+                </div>
+                <div class="aluno-info-item">
+                    <span class="aluno-info-label">Gênero</span>
+                    <span class="aluno-info-value" data-aluno-genero></span>
+                </div>
+            </section>
+        </header>
         <form id="anamneseForm" class="avaliacao-grid">
             <div class="form-section">
                 <h3>Objetivos e treino</h3>
@@ -127,7 +143,33 @@
         const id = params.get('id');
         const form = document.getElementById('anamneseForm');
         const msg = document.getElementById('mensagemAnamnese');
+        const alunoInfoEls = {
+            nome: document.querySelector('[data-aluno-nome]'),
+            idade: document.querySelector('[data-aluno-idade]'),
+            genero: document.querySelector('[data-aluno-genero]')
+        };
         let alunoEmail = '';
+
+        function calcularIdade(dataNascimento) {
+            if (!dataNascimento) return '';
+            const nasc = new Date(dataNascimento);
+            if (Number.isNaN(nasc.getTime())) return '';
+            const hoje = new Date();
+            let idade = hoje.getFullYear() - nasc.getFullYear();
+            const mes = hoje.getMonth() - nasc.getMonth();
+            if (mes < 0 || (mes === 0 && hoje.getDate() < nasc.getDate())) {
+                idade--;
+            }
+            return idade >= 0 ? idade : '';
+        }
+
+        function atualizarAlunoInfo(aluno) {
+            const genero = aluno ? (aluno.genero || aluno.sexo || '') : '';
+            const idadeValor = aluno ? (aluno.idade || calcularIdade(aluno.dataNascimento)) : '';
+            if (alunoInfoEls.nome) alunoInfoEls.nome.textContent = aluno?.nome || '';
+            if (alunoInfoEls.idade) alunoInfoEls.idade.textContent = idadeValor ? `${idadeValor} anos` : '';
+            if (alunoInfoEls.genero) alunoInfoEls.genero.textContent = genero || '';
+        }
 
         document.getElementById('voltar').addEventListener('click', () => {
             window.location.href = `nova_avaliacao.html?id=${id}`;
@@ -180,12 +222,22 @@
         });
 
         async function carregar() {
+            atualizarAlunoInfo(null);
             if (!id) return;
             try {
                 const alunoRes = await fetchWithFreshToken(`/api/users/alunos/${id}`);
                 if (alunoRes.ok) {
                     const aluno = await alunoRes.json();
                     alunoEmail = aluno.email || '';
+                    atualizarAlunoInfo(aluno);
+                    if (form.nome) form.nome.value = aluno.nome || '';
+                    if (form.email) form.email.value = aluno.email || '';
+                    const genero = aluno.genero || aluno.sexo || '';
+                    if (form.genero) form.genero.value = genero;
+                    const idade = aluno.idade || calcularIdade(aluno.dataNascimento);
+                    if (form.idade) form.idade.value = idade || '';
+                } else {
+                    atualizarAlunoInfo(null);
                 }
                 const res = await fetchWithFreshToken(`/api/users/alunos/${id}/anamnese`);
                 if (res.ok) {

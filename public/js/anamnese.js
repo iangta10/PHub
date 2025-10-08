@@ -19,7 +19,23 @@ function render(container, alunos, selectedId) {
     const options = alunos.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
     container.innerHTML = `
         <div class="avaliacao-container">
-            <h2>Anamnese</h2>
+            <header class="avaliacao-header">
+                <h2>Anamnese</h2>
+                <section class="aluno-info" aria-label="Informações do aluno">
+                    <div class="aluno-info-item">
+                        <span class="aluno-info-label">Nome</span>
+                        <span class="aluno-info-value" data-aluno-nome></span>
+                    </div>
+                    <div class="aluno-info-item">
+                        <span class="aluno-info-label">Idade</span>
+                        <span class="aluno-info-value" data-aluno-idade></span>
+                    </div>
+                    <div class="aluno-info-item">
+                        <span class="aluno-info-label">Gênero</span>
+                        <span class="aluno-info-value" data-aluno-genero></span>
+                    </div>
+                </section>
+            </header>
             <div class="avaliacao-controls">
                 <input type="text" id="searchAluno" placeholder="Buscar por nome..." />
                 <select id="alunoSelect">
@@ -64,6 +80,11 @@ function render(container, alunos, selectedId) {
     const searchInput = document.getElementById('searchAluno');
     const alunoSelect = document.getElementById('alunoSelect');
     const form = document.getElementById('anamneseForm');
+    const alunoInfoEls = {
+        nome: container.querySelector('[data-aluno-nome]'),
+        idade: container.querySelector('[data-aluno-idade]'),
+        genero: container.querySelector('[data-aluno-genero]')
+    };
 
     searchInput.addEventListener('input', () => {
         const term = searchInput.value.toLowerCase();
@@ -72,7 +93,7 @@ function render(container, alunos, selectedId) {
                   .map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
     });
 
-    alunoSelect.addEventListener('change', () => loadDadosAluno(alunoSelect.value, form));
+    alunoSelect.addEventListener('change', () => loadDadosAluno(alunoSelect.value, form, alunoInfoEls));
     form.addEventListener('submit', e => salvarAnamnese(e, alunoSelect.value));
     document.getElementById('proximoAnamnese').addEventListener('click', () => {
         if (alunoSelect.value) loadAvaliacaoFisicaSection(alunoSelect.value);
@@ -80,22 +101,63 @@ function render(container, alunos, selectedId) {
 
     if (selectedId) {
         alunoSelect.value = selectedId;
-        loadDadosAluno(selectedId, form);
+        loadDadosAluno(selectedId, form, alunoInfoEls);
     }
 }
 
-async function loadDadosAluno(alunoId, form) {
+function calcularIdade(dataNascimento) {
+    if (!dataNascimento) return '';
+    const nasc = new Date(dataNascimento);
+    if (Number.isNaN(nasc.getTime())) return '';
+    const hoje = new Date();
+    let idade = hoje.getFullYear() - nasc.getFullYear();
+    const mes = hoje.getMonth() - nasc.getMonth();
+    if (mes < 0 || (mes === 0 && hoje.getDate() < nasc.getDate())) {
+        idade--;
+    }
+    return idade >= 0 ? idade : '';
+}
+
+function atualizarAlunoInfo(infoEls, aluno) {
+    if (!infoEls) return;
+    const nomeEl = infoEls.nome;
+    const idadeEl = infoEls.idade;
+    const generoEl = infoEls.genero;
+    const genero = aluno ? (aluno.genero || aluno.sexo || '') : '';
+    const idadeValor = aluno ? (aluno.idade || calcularIdade(aluno.dataNascimento)) : '';
+    if (nomeEl) nomeEl.textContent = aluno?.nome || '';
+    if (idadeEl) idadeEl.textContent = idadeValor ? `${idadeValor} anos` : '';
+    if (generoEl) generoEl.textContent = genero || '';
+}
+
+function limparAlunoInfo(infoEls) {
+    if (!infoEls) return;
+    Object.values(infoEls).forEach(el => {
+        if (el) el.textContent = '';
+    });
+}
+
+async function loadDadosAluno(alunoId, form, infoEls) {
     form.reset();
+    limparAlunoInfo(infoEls);
     if (!alunoId) {
         form.classList.add('hidden');
         return;
     }
     try {
         const alunoRes = await fetchWithFreshToken(`/api/users/alunos/${alunoId}`);
+        let aluno = null;
         if (alunoRes.ok) {
-            const aluno = await alunoRes.json();
+            aluno = await alunoRes.json();
+            atualizarAlunoInfo(infoEls, aluno);
             if (form.nome) form.nome.value = aluno.nome || '';
             if (form.email) form.email.value = aluno.email || '';
+            const genero = aluno.genero || aluno.sexo || '';
+            if (form.genero) form.genero.value = genero;
+            const idade = aluno.idade || calcularIdade(aluno.dataNascimento);
+            if (form.idade) form.idade.value = idade || '';
+        } else {
+            atualizarAlunoInfo(infoEls, null);
         }
         const res = await fetchWithFreshToken(`/api/users/alunos/${alunoId}/anamnese`);
         if (res.ok) {

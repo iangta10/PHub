@@ -17,6 +17,8 @@ router.post('/alunos', async (req, res) => {
         fotoUrl,
         telefone,
         dataNascimento,
+        idade,
+        genero,
         sexo,
         objetivo,
         metas,
@@ -41,7 +43,13 @@ router.post('/alunos', async (req, res) => {
                 fotoUrl: fotoUrl || null,
                 telefone: telefone || null,
                 dataNascimento: dataNascimento || null,
-                sexo: sexo || null,
+                idade: (() => {
+                    if (idade === undefined || idade === null || idade === '') return null;
+                    const idadeNumber = typeof idade === 'number' ? idade : Number(idade);
+                    return Number.isNaN(idadeNumber) ? null : idadeNumber;
+                })(),
+                genero: genero || sexo || null,
+                sexo: sexo || genero || null,
                 objetivo: objetivo || null,
                 metas: metas || null,
                 prazoMeta: prazoMeta || null,
@@ -124,6 +132,8 @@ router.put('/alunos/:id', async (req, res) => {
         fotoUrl,
         telefone,
         dataNascimento,
+        idade,
+        genero,
         sexo,
         objetivo,
         metas,
@@ -149,7 +159,21 @@ router.put('/alunos/:id', async (req, res) => {
         if (fotoUrl !== undefined) updateData.fotoUrl = fotoUrl;
         if (telefone !== undefined) updateData.telefone = telefone;
         if (dataNascimento !== undefined) updateData.dataNascimento = dataNascimento;
-        if (sexo !== undefined) updateData.sexo = sexo;
+        if (idade !== undefined) {
+            if (idade === null || idade === '') {
+                updateData.idade = null;
+            } else {
+                const idadeNumber = typeof idade === 'number' ? idade : Number(idade);
+                updateData.idade = Number.isNaN(idadeNumber) ? null : idadeNumber;
+            }
+        }
+        if (genero !== undefined) updateData.genero = genero;
+        if (sexo !== undefined) {
+            updateData.sexo = sexo;
+            if (genero === undefined) {
+                updateData.genero = sexo;
+            }
+        }
         if (objetivo !== undefined) updateData.objetivo = objetivo;
         if (metas !== undefined) updateData.metas = metas;
         if (prazoMeta !== undefined) updateData.prazoMeta = prazoMeta;
