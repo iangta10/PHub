@@ -16,21 +16,62 @@
     <div class="avaliacao-container">
         <h2>Perimetria</h2>
         <form id="perimetriaForm" class="avaliacao-grid">
-            <input type="number" step="0.1" name="pescoco" placeholder="Pescoço (cm)" />
-            <input type="number" step="0.1" name="peitoral" placeholder="Peitoral (tórax) (cm)" />
-            <input type="number" step="0.1" name="cintura" placeholder="Cintura (cm)" />
-            <input type="number" step="0.1" name="quadril" placeholder="Quadril (glúteo) (cm)" />
-            <input type="number" step="0.1" name="bracoRelaxadoDireito" placeholder="Braço Relaxado Direito (cm)" />
-            <input type="number" step="0.1" name="bracoRelaxadoEsquerdo" placeholder="Braço Relaxado Esquerdo (cm)" />
-            <input type="number" step="0.1" name="bracoContraidoDireito" placeholder="Braço Contraído Direito (cm)" />
-            <input type="number" step="0.1" name="bracoContraidoEsquerdo" placeholder="Braço Contraído Esquerdo (cm)" />
-            <input type="number" step="0.1" name="antebracoDireito" placeholder="Antebraço Direito (cm)" />
-            <input type="number" step="0.1" name="antebracoEsquerdo" placeholder="Antebraço Esquerdo (cm)" />
-            <input type="number" step="0.1" name="coxaDireita" placeholder="Coxa Direita (cm)" />
-            <input type="number" step="0.1" name="coxaEsquerda" placeholder="Coxa Esquerda (cm)" />
-            <input type="number" step="0.1" name="panturrilhaDireita" placeholder="Panturrilha Direita (cm)" />
-            <input type="number" step="0.1" name="panturrilhaEsquerda" placeholder="Panturrilha Esquerda (cm)" />
-            <textarea name="observacoes" placeholder="Observações"></textarea>
+            <div class="form-field">
+                <label for="perimetria-peitoral">Peitoral (tórax)</label>
+                <input id="perimetria-peitoral" type="number" step="0.1" name="peitoral" placeholder="Peitoral (tórax) (cm)" />
+            </div>
+            <div class="form-field">
+                <label for="perimetria-cintura">Cintura</label>
+                <input id="perimetria-cintura" type="number" step="0.1" name="cintura" placeholder="Cintura (cm)" />
+            </div>
+            <div class="form-field">
+                <label for="perimetria-quadril">Quadril (glúteo)</label>
+                <input id="perimetria-quadril" type="number" step="0.1" name="quadril" placeholder="Quadril (glúteo) (cm)" />
+            </div>
+            <div class="form-field">
+                <label for="perimetria-braco-relaxado-direito">Braço Relaxado Direito</label>
+                <input id="perimetria-braco-relaxado-direito" type="number" step="0.1" name="bracoRelaxadoDireito" placeholder="Braço Relaxado Direito (cm)" />
+            </div>
+            <div class="form-field">
+                <label for="perimetria-braco-relaxado-esquerdo">Braço Relaxado Esquerdo</label>
+                <input id="perimetria-braco-relaxado-esquerdo" type="number" step="0.1" name="bracoRelaxadoEsquerdo" placeholder="Braço Relaxado Esquerdo (cm)" />
+            </div>
+            <div class="form-field">
+                <label for="perimetria-braco-contraido-direito">Braço Contraído Direito</label>
+                <input id="perimetria-braco-contraido-direito" type="number" step="0.1" name="bracoContraidoDireito" placeholder="Braço Contraído Direito (cm)" />
+            </div>
+            <div class="form-field">
+                <label for="perimetria-braco-contraido-esquerdo">Braço Contraído Esquerdo</label>
+                <input id="perimetria-braco-contraido-esquerdo" type="number" step="0.1" name="bracoContraidoEsquerdo" placeholder="Braço Contraído Esquerdo (cm)" />
+            </div>
+            <div class="form-field">
+                <label for="perimetria-antebraco-direito">Antebraço Direito</label>
+                <input id="perimetria-antebraco-direito" type="number" step="0.1" name="antebracoDireito" placeholder="Antebraço Direito (cm)" />
+            </div>
+            <div class="form-field">
+                <label for="perimetria-antebraco-esquerdo">Antebraço Esquerdo</label>
+                <input id="perimetria-antebraco-esquerdo" type="number" step="0.1" name="antebracoEsquerdo" placeholder="Antebraço Esquerdo (cm)" />
+            </div>
+            <div class="form-field">
+                <label for="perimetria-coxa-direita">Coxa Direita</label>
+                <input id="perimetria-coxa-direita" type="number" step="0.1" name="coxaDireita" placeholder="Coxa Direita (cm)" />
+            </div>
+            <div class="form-field">
+                <label for="perimetria-coxa-esquerda">Coxa Esquerda</label>
+                <input id="perimetria-coxa-esquerda" type="number" step="0.1" name="coxaEsquerda" placeholder="Coxa Esquerda (cm)" />
+            </div>
+            <div class="form-field">
+                <label for="perimetria-panturrilha-direita">Panturrilha Direita</label>
+                <input id="perimetria-panturrilha-direita" type="number" step="0.1" name="panturrilhaDireita" placeholder="Panturrilha Direita (cm)" />
+            </div>
+            <div class="form-field">
+                <label for="perimetria-panturrilha-esquerda">Panturrilha Esquerda</label>
+                <input id="perimetria-panturrilha-esquerda" type="number" step="0.1" name="panturrilhaEsquerda" placeholder="Panturrilha Esquerda (cm)" />
+            </div>
+            <div class="form-field full-width">
+                <label for="perimetria-observacoes">Observações</label>
+                <textarea id="perimetria-observacoes" name="observacoes" placeholder="Observações"></textarea>
+            </div>
             <div class="form-actions">
                 <button type="button" id="voltar">Voltar</button>
                 <button type="submit">Salvar</button>

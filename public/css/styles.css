@@ -225,14 +225,32 @@ select:focus {
 }
 
 .aluno-info {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
     margin-bottom: 20px;
     background-color: #1e1e1e;
     padding: 20px;
     border-radius: 6px;
+}
+
+.aluno-info .aluno-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.aluno-info .aluno-info-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #cfcfcf;
+}
+
+.aluno-info .aluno-info-value {
+    font-size: 1rem;
+    color: #ffffff;
+    word-break: break-word;
 }
 
 .foto-aluno {
@@ -240,13 +258,6 @@ select:focus {
     height: 80px;
     object-fit: cover;
     border-radius: 50%;
-}
-
-.aluno-info label {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    width: 100%;
 }
 
 .aluno-info input[type="date"] {
