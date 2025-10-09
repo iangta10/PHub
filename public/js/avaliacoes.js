@@ -1,4 +1,5 @@
 import { listEvaluationStudents, SIXTY_DAYS_MS, SEVEN_DAYS_MS } from './dataProviders/evaluationsProvider.mjs';
+import { deleteEvaluation, listEvaluations } from './evaluationsApi.js';
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const SEARCH_DEBOUNCE = 300;
@@ -21,27 +22,6 @@ const FILTER_LABELS = {
     sem: 'Sem avaliação',
     aVencer: 'A vencer'
 };
-
-function readLocalEvaluations(studentId) {
-    if (typeof window === 'undefined' || !studentId) return [];
-    try {
-        const raw = localStorage.getItem(`avaliacoes_${studentId}`);
-        if (!raw) return [];
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
-    } catch (err) {
-        console.error('Não foi possível ler avaliações locais:', err);
-        return [];
-    }
-}
-
-function normalizeLocalEvaluation(entry) {
-    return {
-        date: toDate(entry?.data || entry?.date || entry?.createdAt),
-        nextDate: toDate(entry?.proxima || entry?.proximaAvaliacao || entry?.nextEvaluationAt),
-        status: (entry?.status || entry?.situacao || '').toString().toLowerCase()
-    };
-}
 
 function toDate(value) {
     if (!value && value !== 0) return null;
@@ -88,32 +68,9 @@ function highlightTerm(text, term) {
 
 function computeStatus(student) {
     const now = Date.now();
-    let last = toDate(student.lastEvaluationAt);
-    let next = toDate(student.nextEvaluationAt);
-    let hasDraft = Boolean(student.hasDraftEvaluation);
-
-    const localEntries = readLocalEvaluations(student.id).map(normalizeLocalEvaluation);
-    if (localEntries.length) {
-        const withDate = localEntries.filter(entry => entry.date instanceof Date);
-        if (withDate.length) {
-            withDate.sort((a, b) => b.date.getTime() - a.date.getTime());
-            const latestLocal = withDate[0];
-            const isMoreRecent = !last || latestLocal.date.getTime() >= last.getTime();
-            if (isMoreRecent) {
-                last = latestLocal.date;
-                next = latestLocal.nextDate || null;
-            } else if (!next && latestLocal.nextDate) {
-                next = latestLocal.nextDate;
-            }
-        } else if (!next) {
-            const fallbackNext = localEntries.find(entry => entry.nextDate instanceof Date);
-            if (fallbackNext) {
-                next = fallbackNext.nextDate;
-            }
-        }
-
-        hasDraft = hasDraft || localEntries.some(entry => entry.status === 'draft' || entry.status === 'rascunho');
-    }
+    const last = toDate(student.lastEvaluationAt);
+    const next = toDate(student.nextEvaluationAt);
+    const hasDraft = Boolean(student.hasDraftEvaluation);
 
     const overdueByLast = last ? (now - last.getTime()) > SIXTY_DAYS_MS : false;
     const overdueByNext = next ? next.getTime() < now : false;
@@ -384,26 +341,24 @@ function renderHistory(panel, student, entries, handlers) {
     }
 
     content.innerHTML = entries.map(entry => {
-        const date = toDate(entry.data) || toDate(entry.date) || toDate(entry.createdAt);
-        const next = toDate(entry.proxima) || toDate(entry.proximaAvaliacao) || toDate(entry.nextEvaluationAt);
-        const origin = entry.origin || 'remote';
+        const date = toDate(entry.completedAt) || toDate(entry.createdAt) || toDate(entry.data) || toDate(entry.date);
+        const next = toDate(entry.nextEvaluationAt);
         const id = entry.id || entry.avaliacaoId || entry.key || '';
-        const canEdit = origin === 'local' && id;
-        const canDelete = origin === 'local' && id;
-        const canView = Boolean(id);
+        const status = (entry.status || '').toString().toLowerCase();
+        const statusLabel = status === 'completed' ? 'Concluída' : status === 'draft' ? 'Em edição' : (status || '—');
         const dateLabel = date ? `${formatDate(date)} <span>${formatRelative(date)}</span>` : 'Sem data';
         const nextLabel = next ? `${formatDate(next)} <span>${formatRelative(next)}</span>` : '—';
         return `
-            <article class="history-card" data-origin="${origin}" data-id="${id}">
+            <article class="history-card" data-id="${escapeHtml(id)}">
                 <header>
                     <h4>${dateLabel}</h4>
-                    <span class="history-source">${origin === 'local' ? 'Rascunho local' : 'Registro sincronizado'}</span>
+                    <span class="history-source">${escapeHtml(statusLabel)}</span>
                 </header>
                 <p><strong>Próxima avaliação:</strong> ${nextLabel}</p>
                 <div class="history-actions">
-                    <button type="button" data-history-action="view" data-id="${id}" ${!canView ? 'disabled' : ''}>Visualizar</button>
-                    <button type="button" data-history-action="edit" data-id="${id}" ${!canEdit ? 'disabled' : ''}>Editar</button>
-                    <button type="button" data-history-action="delete" data-id="${id}" ${!canDelete ? 'disabled' : ''}>Excluir</button>
+                    <button type="button" data-history-action="view" data-id="${escapeHtml(id)}">Visualizar</button>
+                    <button type="button" data-history-action="edit" data-id="${escapeHtml(id)}">Editar</button>
+                    <button type="button" data-history-action="delete" data-id="${escapeHtml(id)}">Excluir</button>
                 </div>
             </article>
         `;
@@ -418,24 +373,6 @@ function renderHistory(panel, student, entries, handlers) {
     });
 }
 
-function collectHistory(student) {
-    const localKey = `avaliacoes_${student.id}`;
-    let local = [];
-    try {
-        local = JSON.parse(localStorage.getItem(localKey) || '[]');
-    } catch (err) {
-        console.error('Não foi possível ler avaliações locais:', err);
-    }
-    const parsedLocal = Array.isArray(local)
-        ? local.map((item, index) => ({
-            ...item,
-            origin: 'local',
-            id: String(item?.id || item?.key || item?.avaliacaoId || item?.data || `local-${index}`)
-        }))
-        : [];
-    return parsedLocal;
-}
-
 async function loadHistory(student, panel, handlers) {
     if (!panel) return;
     panel.classList.add('is-open');
@@ -444,31 +381,26 @@ async function loadHistory(student, panel, handlers) {
         content.innerHTML = '<p class="history-loading">Carregando avaliações...</p>';
     }
 
-    let remote = [];
+    let registros = [];
     try {
-        const module = await import('./auth.js');
-        const res = await module.fetchWithFreshToken(`/api/users/alunos/${student.id}/avaliacoes`);
-        if (res.ok) {
-            const data = await res.json();
-            if (Array.isArray(data)) {
-                remote = data.map(item => ({ ...item, origin: 'remote' }));
-            }
+        const data = await listEvaluations(student.id);
+        if (Array.isArray(data)) {
+            registros = data;
         }
     } catch (err) {
-        console.error('Erro ao carregar avaliações remotas:', err);
+        console.error('Erro ao carregar avaliações:', err);
     }
 
-    const combined = [...remote, ...collectHistory(student)];
-    combined.sort((a, b) => {
-        const aDate = toDate(a.data) || toDate(a.date) || toDate(a.createdAt);
-        const bDate = toDate(b.data) || toDate(b.date) || toDate(b.createdAt);
+    registros.sort((a, b) => {
+        const aDate = toDate(a.completedAt) || toDate(a.createdAt);
+        const bDate = toDate(b.completedAt) || toDate(b.createdAt);
         if (!aDate && !bDate) return 0;
         if (!aDate) return 1;
         if (!bDate) return -1;
         return bDate.getTime() - aDate.getTime();
     });
 
-    renderHistory(panel, student, combined, handlers);
+    renderHistory(panel, student, registros, handlers);
 }
 
 function attachRecommendedActions(container, handlers) {
@@ -596,12 +528,15 @@ function openStudentSelectionModal(students, onSelect) {
     }
 }
 
-function openNewEvaluation(studentId) {
+function openNewEvaluation(studentId, evaluationId = null) {
     if (!studentId) return;
-    window.location.href = `nova_avaliacao.html?id=${encodeURIComponent(studentId)}`;
+    const params = new URLSearchParams();
+    params.set('id', studentId);
+    if (evaluationId) params.set('avaliacao', evaluationId);
+    window.location.href = `nova_avaliacao.html?${params.toString()}`;
 }
 
-function handleHistoryAction(action, student, entryId, card) {
+async function handleHistoryAction(action, student, entryId, card) {
     if (!entryId) {
         alert('Registro sem identificador disponível.');
         return;
@@ -611,18 +546,19 @@ function handleHistoryAction(action, student, entryId, card) {
         return;
     }
     if (action === 'edit') {
-        const storageKey = `currentAvalId_${student.id}`;
-        localStorage.setItem(storageKey, entryId);
-        openNewEvaluation(student.id);
+        openNewEvaluation(student.id, entryId);
         return;
     }
     if (action === 'delete') {
-        if (!confirm('Deseja excluir esta avaliação local?')) return;
-        const storageKey = `avaliacoes_${student.id}`;
-        const list = collectHistory(student).filter(item => String(item.id) !== String(entryId));
-        localStorage.setItem(storageKey, JSON.stringify(list));
-        if (card) {
-            card.remove();
+        if (!confirm('Deseja excluir esta avaliação?')) return;
+        try {
+            await deleteEvaluation(student.id, entryId);
+            if (card) {
+                card.remove();
+            }
+        } catch (err) {
+            console.error('Erro ao excluir avaliação:', err);
+            alert('Não foi possível excluir a avaliação.');
         }
     }
 }

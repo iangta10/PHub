@@ -20,6 +20,11 @@ export function getAlunoId() {
     return params.get('id');
 }
 
+export function getAvaliacaoId() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('avaliacao');
+}
+
 export async function fetchAlunoInfo(id) {
     if (!id) return null;
     if (!alunoCache.has(id)) {
@@ -82,34 +87,41 @@ export async function loadAlunoInfo(id, targetId = 'alunoInfo') {
     }
 }
 
-export function renderOpcoes(id, containerId = 'avaliacaoOpcoes') {
+export function renderOpcoes(id, containerId = 'avaliacaoOpcoes', avaliacaoId = null) {
     const opcoes = [
-        { titulo: 'Anamnese', icone: 'fa-notes-medical', link: `anamnese_form.html?id=${id}` },
-        { titulo: 'Composição Corporal', icone: 'fa-weight', link: `composicao.html?id=${id}` },
-        { titulo: 'Perimetria', icone: 'fa-ruler-horizontal', link: `perimetria.html?id=${id}` },
-        { titulo: 'Postural', icone: 'fa-user-alt', link: `postural.html?id=${id}` },
-        { titulo: 'Flexibilidade', icone: 'fa-arrows-alt-v', link: `flexibilidade.html?id=${id}` },
-        { titulo: 'Força', icone: 'fa-dumbbell', link: `forca.html?id=${id}` }
+        { titulo: 'Anamnese', icone: 'fa-notes-medical', link: 'anamnese_form.html' },
+        { titulo: 'Composição Corporal', icone: 'fa-weight', link: 'composicao.html' },
+        { titulo: 'Perimetria', icone: 'fa-ruler-horizontal', link: 'perimetria.html' },
+        { titulo: 'Postural', icone: 'fa-user-alt', link: 'postural.html' },
+        { titulo: 'Flexibilidade', icone: 'fa-arrows-alt-v', link: 'flexibilidade.html' },
+        { titulo: 'Força', icone: 'fa-dumbbell', link: 'forca.html' }
     ];
 
     const container = document.getElementById(containerId);
     if (container) {
-        container.innerHTML = opcoes.map(o => `
-            <a class="box-opcao" href="${o.link}">
+        container.innerHTML = opcoes.map(o => {
+            const searchParams = new URLSearchParams();
+            if (id) searchParams.set('id', id);
+            if (avaliacaoId) searchParams.set('avaliacao', avaliacaoId);
+            const href = `${o.link}?${searchParams.toString()}`;
+            return `
+            <a class="box-opcao" href="${href}">
                 <i class="fas ${o.icone}"></i>
                 <span>${o.titulo}</span>
             </a>
-        `).join('');
+        `;
+        }).join('');
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     const id = getAlunoId();
+    const avaliacaoId = getAvaliacaoId();
     const opcoes = document.getElementById('avaliacaoOpcoes');
     if (opcoes) {
         if (opcoes.dataset.autoloadInfo !== 'false') {
             loadAlunoInfo(id);
         }
-        renderOpcoes(id);
+        renderOpcoes(id, 'avaliacaoOpcoes', avaliacaoId);
     }
 });

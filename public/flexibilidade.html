@@ -52,31 +52,59 @@
         <div id="msgFlex"></div>
     </div>
     <script type="module">
-        const params = new URLSearchParams(window.location.search);
-        const id = params.get('id');
-        document.getElementById('voltar').addEventListener('click', () => {
-            window.location.href = `nova_avaliacao.html?id=${id}`;
-        });
+        import { getAlunoId, getAvaliacaoId } from './js/avaliacao.js';
+        import { getEvaluation, saveEvaluationSection } from './js/evaluationsApi.js';
+
+        const id = getAlunoId();
+        const avaliacaoId = getAvaliacaoId();
         const form = document.getElementById('flexForm');
 
-        const avalId = localStorage.getItem(`currentAvalId_${id}`);
-        if (avalId) {
-            const local = localStorage.getItem(`avaliacao_${id}_${avalId}_flexibilidade`);
-            if (local) {
-                const obj = JSON.parse(local);
-                Object.keys(obj).forEach(k => { const el = form.querySelector(`[name="${k}"]`); if (el) el.value = obj[k]; });
+        async function carregarDados() {
+            if (!id || !avaliacaoId) return;
+            try {
+                const avaliacao = await getEvaluation(id, avaliacaoId);
+                const dados = avaliacao?.sections?.flexibilidade;
+                if (dados && typeof dados === 'object') {
+                    Object.keys(dados).forEach(k => {
+                        const el = form.querySelector(`[name="${k}"]`);
+                        if (el) el.value = dados[k];
+                    });
+                }
+            } catch (err) {
+                console.error('Erro ao carregar flexibilidade:', err);
             }
         }
 
+        document.getElementById('voltar').addEventListener('click', () => {
+            const params = new URLSearchParams();
+            if (id) params.set('id', id);
+            if (avaliacaoId) params.set('avaliacao', avaliacaoId);
+            window.location.href = `nova_avaliacao.html?${params.toString()}`;
+        });
+
         form.addEventListener('submit', e => {
             e.preventDefault();
-            const avalId = localStorage.getItem(`currentAvalId_${id}`);
+            if (!id || !avaliacaoId) {
+                alert('Avaliação não encontrada.');
+                return;
+            }
             const dados = {};
             Array.from(e.target.elements).forEach(el => { if (el.name) dados[el.name] = el.value; });
-            if (avalId) localStorage.setItem(`avaliacao_${id}_${avalId}_flexibilidade`, JSON.stringify(dados));
-            document.getElementById('msgFlex').textContent = 'Dados salvos';
-            window.location.href = `nova_avaliacao.html?id=${id}`;
+            saveEvaluationSection(id, avaliacaoId, 'flexibilidade', dados)
+                .then(() => {
+                    document.getElementById('msgFlex').textContent = 'Dados salvos';
+                    const params = new URLSearchParams();
+                    params.set('id', id);
+                    params.set('avaliacao', avaliacaoId);
+                    window.location.href = `nova_avaliacao.html?${params.toString()}`;
+                })
+                .catch(err => {
+                    console.error('Erro ao salvar flexibilidade:', err);
+                    alert('Não foi possível salvar a flexibilidade.');
+                });
         });
+
+        carregarDados();
     </script>
 </body>
 </html>
