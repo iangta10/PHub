@@ -22,6 +22,27 @@ const FILTER_LABELS = {
     aVencer: 'A vencer'
 };
 
+function readLocalEvaluations(studentId) {
+    if (typeof window === 'undefined' || !studentId) return [];
+    try {
+        const raw = localStorage.getItem(`avaliacoes_${studentId}`);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (err) {
+        console.error('Não foi possível ler avaliações locais:', err);
+        return [];
+    }
+}
+
+function normalizeLocalEvaluation(entry) {
+    return {
+        date: toDate(entry?.data || entry?.date || entry?.createdAt),
+        nextDate: toDate(entry?.proxima || entry?.proximaAvaliacao || entry?.nextEvaluationAt),
+        status: (entry?.status || entry?.situacao || '').toString().toLowerCase()
+    };
+}
+
 function toDate(value) {
     if (!value && value !== 0) return null;
     const date = value instanceof Date ? value : new Date(value);
@@ -67,9 +88,32 @@ function highlightTerm(text, term) {
 
 function computeStatus(student) {
     const now = Date.now();
-    const last = toDate(student.lastEvaluationAt);
-    const next = toDate(student.nextEvaluationAt);
-    const hasDraft = Boolean(student.hasDraftEvaluation);
+    let last = toDate(student.lastEvaluationAt);
+    let next = toDate(student.nextEvaluationAt);
+    let hasDraft = Boolean(student.hasDraftEvaluation);
+
+    const localEntries = readLocalEvaluations(student.id).map(normalizeLocalEvaluation);
+    if (localEntries.length) {
+        const withDate = localEntries.filter(entry => entry.date instanceof Date);
+        if (withDate.length) {
+            withDate.sort((a, b) => b.date.getTime() - a.date.getTime());
+            const latestLocal = withDate[0];
+            const isMoreRecent = !last || latestLocal.date.getTime() >= last.getTime();
+            if (isMoreRecent) {
+                last = latestLocal.date;
+                next = latestLocal.nextDate || null;
+            } else if (!next && latestLocal.nextDate) {
+                next = latestLocal.nextDate;
+            }
+        } else if (!next) {
+            const fallbackNext = localEntries.find(entry => entry.nextDate instanceof Date);
+            if (fallbackNext) {
+                next = fallbackNext.nextDate;
+            }
+        }
+
+        hasDraft = hasDraft || localEntries.some(entry => entry.status === 'draft' || entry.status === 'rascunho');
+    }
 
     const overdueByLast = last ? (now - last.getTime()) > SIXTY_DAYS_MS : false;
     const overdueByNext = next ? next.getTime() < now : false;

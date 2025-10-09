@@ -1,5 +1,4 @@
-import { getAlunoId, renderOpcoes } from './avaliacao.js';
-import { fetchWithFreshToken } from './auth.js';
+import { fetchAlunoInfo, getAlunoId, renderOpcoes } from './avaliacao.js';
 
 function calcularIdade(dataNascimento) {
     if (!dataNascimento) return '';
@@ -17,32 +16,35 @@ function calcularIdade(dataNascimento) {
 async function carregarCabecalho(id) {
     if (!id) return;
     try {
-        const res = await fetchWithFreshToken(`/api/users/alunos/${id}`);
-        if (res.ok) {
-            const aluno = await res.json();
-            const nomeEl = document.getElementById('nomeAluno');
-            const metaEl = document.getElementById('metaAluno');
-            const fotoEl = document.getElementById('fotoAluno');
-            if (nomeEl) nomeEl.textContent = aluno.nome || '';
-            if (metaEl) {
-                const metaParts = [];
-                const idade = aluno.idade || calcularIdade(aluno.dataNascimento);
-                if (idade) metaParts.push(`${idade} anos`);
-                const generoLabel = aluno.genero || aluno.sexo || '';
-                if (generoLabel) metaParts.push(generoLabel);
-                metaEl.textContent = metaParts.join(' • ');
-            }
-            if (fotoEl) {
-                const generoReferencia = (aluno.genero || aluno.sexo || '').toString().toLowerCase();
-                const feminino = generoReferencia.startsWith('f');
-                const defaultFoto = feminino ? './img/avatar-female.svg' : './img/avatar-male.svg';
-                const fotoSrc = aluno.fotoUrl || defaultFoto;
-                fotoEl.src = fotoSrc;
-                fotoEl.alt = aluno.nome ? `Foto de ${aluno.nome}` : 'Foto do aluno';
-                fotoEl.addEventListener('error', () => {
-                    fotoEl.src = defaultFoto;
-                }, { once: true });
-            }
+        const aluno = await fetchAlunoInfo(id);
+        if (!aluno) return;
+        const nomeEl = document.getElementById('nomeAluno');
+        const metaEl = document.getElementById('metaAluno');
+        const fotoEl = document.getElementById('fotoAluno');
+        const emailEl = document.querySelector('[data-aluno-email]');
+
+        if (nomeEl) nomeEl.textContent = aluno.nome || '';
+        if (metaEl) {
+            const metaParts = [];
+            const idade = aluno.idade || calcularIdade(aluno.dataNascimento);
+            if (idade) metaParts.push(`${idade} anos`);
+            const generoLabel = aluno.genero || aluno.sexo || '';
+            if (generoLabel) metaParts.push(generoLabel);
+            metaEl.textContent = metaParts.join(' • ');
+        }
+        if (emailEl) {
+            emailEl.textContent = aluno.email || aluno.emailAddress || '—';
+        }
+        if (fotoEl) {
+            const generoReferencia = (aluno.genero || aluno.sexo || '').toString().toLowerCase();
+            const feminino = generoReferencia.startsWith('f');
+            const defaultFoto = feminino ? './img/avatar-female.svg' : './img/avatar-male.svg';
+            const fotoSrc = aluno.fotoUrl || defaultFoto;
+            fotoEl.src = fotoSrc;
+            fotoEl.alt = aluno.nome ? `Foto de ${aluno.nome}` : 'Foto do aluno';
+            fotoEl.addEventListener('error', () => {
+                fotoEl.src = defaultFoto;
+            }, { once: true });
         }
     } catch (err) {
         console.error('Erro ao carregar aluno', err);

@@ -30,13 +30,17 @@
         </div>
     </header>
     <main class="avaliacao-main">
-        <section id="alunoInfo" class="aluno-info">
-            <label>
-                Data da próxima avaliação
+        <section id="alunoInfo" class="aluno-info" data-preserve="true">
+            <div class="aluno-info-item">
+                <label class="aluno-info-label" for="proximaAvaliacao">Data da próxima avaliação</label>
                 <input type="date" id="proximaAvaliacao" />
-            </label>
+            </div>
+            <div class="aluno-info-item">
+                <span class="aluno-info-label">E-mail</span>
+                <span class="aluno-info-value" data-aluno-email>—</span>
+            </div>
         </section>
-        <section id="avaliacaoOpcoes" class="opcoes-avaliacao"></section>
+        <section id="avaliacaoOpcoes" class="opcoes-avaliacao" data-autoload-info="false"></section>
         <div class="avaliacao-actions">
             <button id="cancelarAvaliacao">Cancelar Avaliação</button>
             <button id="finalizarAvaliacao">Finalizar Avaliação</button>
