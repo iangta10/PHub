@@ -201,13 +201,25 @@ router.put('/alunos/:alunoId/avaliacoes/:avaliacaoId/sections/:sectionId', async
             .collection('avaliacoes')
             .doc(avaliacaoId);
 
+        const snapshot = await docRef.get();
+        if (!snapshot.exists) {
+            return res.status(404).json({ error: 'Avaliação não encontrada' });
+        }
+
+        const existingData = snapshot.data() || {};
+        const existingSections = existingData.sections && typeof existingData.sections === 'object' && !Array.isArray(existingData.sections)
+            ? existingData.sections
+            : {};
+
+        const sections = { ...existingSections, [sectionId]: data };
+
         await docRef.set({
             updatedAt: now,
-            [`sections.${sectionId}`]: data
+            sections
         }, { merge: true });
 
-        const doc = await docRef.get();
-        res.json({ id: doc.id, ...doc.data() });
+        const updated = await docRef.get();
+        res.json({ id: updated.id, ...updated.data() });
     } catch (err) {
         console.error('Erro ao salvar seção da avaliação:', err);
         res.status(500).json({ error: 'Erro ao salvar seção da avaliação' });
