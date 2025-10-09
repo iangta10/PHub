@@ -71,10 +71,11 @@
         <div id="msgDobras"></div>
     </div>
     <script type="module">
-        import { fetchWithFreshToken } from './js/auth.js';
+        import { fetchAlunoInfo, getAlunoId, getAvaliacaoId } from './js/avaliacao.js';
+        import { getEvaluation, saveEvaluationSection } from './js/evaluationsApi.js';
 
-        const params = new URLSearchParams(window.location.search);
-        const id = params.get('id');
+        const id = getAlunoId();
+        const avaliacaoId = getAvaliacaoId();
 
         const protocoloSelect = document.getElementById('protocoloSelect');
         const dobrasFields = document.querySelectorAll('.dobras-field input');
@@ -104,15 +105,13 @@
         async function carregarAluno() {
             if (!id) return;
             try {
-                const res = await fetchWithFreshToken(`/api/users/alunos/${id}`);
-                if (res.ok) {
-                    const aluno = await res.json();
-                    alunoIdade = aluno.idade;
-                    if (alunoIdade === undefined || alunoIdade === null || alunoIdade === '') {
-                        alunoIdade = calcularIdade(aluno.dataNascimento);
-                    }
-                    alunoGenero = aluno.genero || aluno.sexo || '';
+                const aluno = await fetchAlunoInfo(id);
+                if (!aluno) return;
+                alunoIdade = aluno.idade;
+                if (alunoIdade === undefined || alunoIdade === null || alunoIdade === '') {
+                    alunoIdade = calcularIdade(aluno.dataNascimento);
                 }
+                alunoGenero = aluno.genero || aluno.sexo || '';
             } catch (err) {
                 console.error('Erro ao carregar dados do aluno', err);
             } finally {
@@ -179,31 +178,52 @@
             el.addEventListener('input', calcularPercentualGc);
         });
 
-        const avalId = localStorage.getItem(`currentAvalId_${id}`);
-        if (avalId) {
-            const local = localStorage.getItem(`avaliacao_${id}_${avalId}_composicao`);
-            if (local) {
-                const obj = JSON.parse(local);
-                Object.keys(obj).forEach(k => {
-                    const el = document.querySelector(`[name="${k}"]`);
-                    if (el) el.value = obj[k];
-                });
-                atualizarDobras();
-                calcularPercentualGc();
+        async function preencherDadosAvaliacao() {
+            if (!id || !avaliacaoId) return;
+            try {
+                const avaliacao = await getEvaluation(id, avaliacaoId);
+                const dados = avaliacao?.sections?.composicao;
+                if (dados && typeof dados === 'object') {
+                    Object.keys(dados).forEach(k => {
+                        const el = document.querySelector(`[name="${k}"]`);
+                        if (el) el.value = dados[k];
+                    });
+                    atualizarDobras();
+                    calcularPercentualGc();
+                }
+            } catch (err) {
+                console.error('Erro ao carregar composição corporal da avaliação:', err);
             }
         }
 
         document.getElementById('voltar').addEventListener('click', () => {
-            window.location.href = `nova_avaliacao.html?id=${id}`;
+            const params = new URLSearchParams();
+            if (id) params.set('id', id);
+            if (avaliacaoId) params.set('avaliacao', avaliacaoId);
+            window.location.href = `nova_avaliacao.html?${params.toString()}`;
         });
         document.getElementById('compForm').addEventListener('submit', e => {
             e.preventDefault();
-            const avalId = localStorage.getItem(`currentAvalId_${id}`);
+            if (!id || !avaliacaoId) {
+                alert('Avaliação não encontrada.');
+                return;
+            }
             const dados = {};
             Array.from(e.target.elements).forEach(el => { if (el.name) dados[el.name] = el.value; });
-            if (avalId) localStorage.setItem(`avaliacao_${id}_${avalId}_composicao`, JSON.stringify(dados));
-            window.location.href = `nova_avaliacao.html?id=${id}`;
+            saveEvaluationSection(id, avaliacaoId, 'composicao', dados)
+                .then(() => {
+                    const params = new URLSearchParams();
+                    params.set('id', id);
+                    params.set('avaliacao', avaliacaoId);
+                    window.location.href = `nova_avaliacao.html?${params.toString()}`;
+                })
+                .catch(err => {
+                    console.error('Erro ao salvar composição corporal:', err);
+                    alert('Não foi possível salvar a composição corporal.');
+                });
         });
+
+        preencherDadosAvaliacao();
     </script>
 </body>
 </html>

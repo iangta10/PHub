@@ -1,6 +1,7 @@
 import { fetchWithFreshToken, fetchUserInfo, getCurrentUser } from "./auth.js";
 import { StudentsTable } from "./components/studentsTable.js";
 import { listStudents, bulkAction, clearStudentsCache } from "./dataProviders/studentsProvider.mjs";
+import { listEvaluations } from "./evaluationsApi.js";
 
 const PLAN_OPTIONS = [
     { id: 'treino-mensal', nome: 'Treino', duracao: 'Mensal', preco: 'R$80', meses: 1, modalidade: 'online', dieta: false },
@@ -225,26 +226,41 @@ function calcularIdade(data) {
     return idade;
 }
 
-function getAvaliacoesResumo(alunoId) {
-    const lista = JSON.parse(localStorage.getItem(`avaliacoes_${alunoId}`) || '[]');
-    return lista.map(a => {
-        const comp = JSON.parse(localStorage.getItem(`avaliacao_${alunoId}_${a.id}_composicao`) || '{}');
-        const peso = comp.peso || '';
-        const altura = comp.altura || '';
-        const imc = peso && altura ? (Number(peso) / ((Number(altura) / 100) ** 2)).toFixed(2) : '';
-        return {
-            data: a.data,
-            peso,
-            altura,
-            imc,
-            gordura: comp.gordura || comp.percentualGordura || '',
-            fc: comp.fcRepouso || comp.fc || ''
-        };
-    }).sort((a,b)=>new Date(b.data)-new Date(a.data));
+async function getAvaliacoesResumo(alunoId) {
+    if (!alunoId) return [];
+    try {
+        const avaliacoes = await listEvaluations(alunoId);
+        return (avaliacoes || []).map(a => {
+            const comp = a.sections?.composicao || {};
+            const peso = comp.peso || '';
+            const altura = comp.altura || '';
+            const imc = peso && altura ? (Number(peso) / ((Number(altura) / 100) ** 2)).toFixed(2) : '';
+            return {
+                data: a.completedAt || a.createdAt || a.data || null,
+                peso,
+                altura,
+                imc,
+                gordura: comp.gordura || comp.percentualGordura || comp.percentualGc || '',
+                fc: comp.fcRepouso || comp.fc || ''
+            };
+        }).sort((a, b) => {
+            const dataA = a.data ? new Date(a.data) : null;
+            const dataB = b.data ? new Date(b.data) : null;
+            if (!dataA && !dataB) return 0;
+            if (!dataA) return 1;
+            if (!dataB) return -1;
+            return dataB - dataA;
+        });
+    } catch (err) {
+        console.error('Erro ao carregar avaliações do aluno:', err);
+        return [];
+    }
 }
 
 function renderAvalRow(a) {
-    return `<tr><td>${new Date(a.data).toLocaleDateString()}</td><td>${a.peso || '-'}</td><td>${a.altura || '-'}</td><td>${a.imc || '-'}</td><td>${a.gordura || '-'}</td><td>${a.fc || '-'}</td></tr>`;
+    const data = a?.data ? new Date(a.data) : null;
+    const dataLabel = data && !Number.isNaN(data.getTime()) ? data.toLocaleDateString('pt-BR') : '-';
+    return `<tr><td>${dataLabel}</td><td>${a.peso || '-'}</td><td>${a.altura || '-'}</td><td>${a.imc || '-'}</td><td>${a.gordura || '-'}</td><td>${a.fc || '-'}</td></tr>`;
 }
 
 async function fetchHistoricoTreinos(alunoId) {
@@ -270,7 +286,7 @@ async function showAlunoDetails(id) {
         const planoDescricao = aluno.plano ? `${aluno.plano.nome} - ${aluno.plano.duracao} (${aluno.plano.preco})` : '';
         const inicioPlano = aluno.inicioPlano ? new Date(aluno.inicioPlano).toLocaleDateString() : '';
         const vencimentoPlano = aluno.vencimentoPlano ? new Date(aluno.vencimentoPlano).toLocaleDateString() : '';
-        const avaliacoes = getAvaliacoesResumo(id);
+        const avaliacoes = await getAvaliacoesResumo(id);
         const treinos = await fetchHistoricoTreinos(id);
         const modalRows = avaliacoes.map(a => renderAvalRow(a)).join('') || '<tr><td colspan="6">Nenhuma avaliação</td></tr>';
         const tableRows = avaliacoes.slice(0, 3).map(a => renderAvalRow(a)).join('') || '<tr><td colspan="6">Nenhuma avaliação</td></tr>';

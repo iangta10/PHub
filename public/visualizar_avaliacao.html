@@ -22,48 +22,101 @@
         </div>
     </div>
     <script type="module">
-        document.addEventListener('DOMContentLoaded', () => {
+        import { deleteEvaluation, getEvaluation } from './js/evaluationsApi.js';
+
+        function formatDate(value) {
+            if (!value) return '-';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return '-';
+            return date.toLocaleDateString('pt-BR');
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, match => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            })[match]);
+        }
+
+        function renderSection(title, data) {
+            if (!data || typeof data !== 'object') return '';
+            const fields = Object.entries(data).map(([key, value]) => `
+                <div><strong>${escapeHtml(key)}:</strong> ${escapeHtml(value)}</div>
+            `).join('');
+            if (!fields) return '';
+            return `
+                <div class="avaliacao-part">
+                    <h3>${escapeHtml(title)}</h3>
+                    <div class="avaliacao-grid">${fields}</div>
+                </div>
+            `;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
             const params = new URLSearchParams(window.location.search);
             const alunoId = params.get('alunoId');
-            const avalId = params.get('avaliacaoId');
+            const avaliacaoId = params.get('avaliacaoId');
             const container = document.getElementById('dadosAvaliacao');
-            if (!alunoId || !avalId) {
+            if (!alunoId || !avaliacaoId) {
                 container.textContent = 'Avaliação não encontrada';
                 return;
             }
-            const lista = JSON.parse(localStorage.getItem(`avaliacoes_${alunoId}`) || '[]');
-            const avaliacao = lista.find(a => String(a.id) === avalId);
-            if (!avaliacao) {
-                container.textContent = 'Avaliação não encontrada';
-                return;
-            }
-            const partes = ['anamnese','composicao','perimetria','flexibilidade','postural'];
-            const dadosPartes = partes.map(p => {
-                const dados = localStorage.getItem(`avaliacao_${alunoId}_${avalId}_${p}`);
-                if (dados) {
-                    const obj = JSON.parse(dados);
-                    const campos = Object.entries(obj).map(([k,v]) => `<div><strong>${k}:</strong> ${v}</div>`).join('');
-                    return `<div class="avaliacao-part"><h3>${p}</h3><div class="avaliacao-grid">${campos}</div></div>`;
+
+            try {
+                const avaliacao = await getEvaluation(alunoId, avaliacaoId);
+                if (!avaliacao) {
+                    container.textContent = 'Avaliação não encontrada';
+                    return;
                 }
-                return '';
-            }).join('');
-            container.innerHTML = `<div class="avaliacao-grid"><div><strong>Data:</strong> ${new Date(avaliacao.data).toLocaleDateString()}</div>` +
-                `<div><strong>Próxima Avaliação:</strong> ${avaliacao.proxima || '-'}</div></div>` + dadosPartes;
+
+                const sections = avaliacao.sections || {};
+                const sectionOrder = [
+                    ['anamnese', 'Anamnese'],
+                    ['composicao', 'Composição Corporal'],
+                    ['perimetria', 'Perimetria'],
+                    ['flexibilidade', 'Flexibilidade'],
+                    ['postural', 'Postural']
+                ];
+
+                const sectionsHtml = sectionOrder
+                    .map(([key, label]) => renderSection(label, sections[key]))
+                    .join('');
+
+                container.innerHTML = `
+                    <div class="avaliacao-grid">
+                        <div><strong>Data:</strong> ${formatDate(avaliacao.completedAt || avaliacao.createdAt)}</div>
+                        <div><strong>Próxima Avaliação:</strong> ${formatDate(avaliacao.nextEvaluationAt)}</div>
+                        <div><strong>Status:</strong> ${escapeHtml(avaliacao.status || '—')}</div>
+                    </div>
+                    ${sectionsHtml || '<p>Sem dados adicionais para esta avaliação.</p>'}
+                `;
+
+                document.getElementById('editar').addEventListener('click', () => {
+                    const editParams = new URLSearchParams();
+                    editParams.set('id', alunoId);
+                    editParams.set('avaliacao', avaliacaoId);
+                    window.location.href = `nova_avaliacao.html?${editParams.toString()}`;
+                });
+
+                document.getElementById('excluir').addEventListener('click', async () => {
+                    if (!confirm('Deseja excluir esta avaliação?')) return;
+                    try {
+                        await deleteEvaluation(alunoId, avaliacaoId);
+                        window.location.href = 'dashboard.html?section=avaliacoes';
+                    } catch (err) {
+                        console.error('Erro ao excluir avaliação:', err);
+                        alert('Não foi possível excluir a avaliação.');
+                    }
+                });
+            } catch (err) {
+                console.error('Erro ao carregar avaliação:', err);
+                container.textContent = 'Não foi possível carregar a avaliação';
+            }
 
             document.getElementById('voltar').addEventListener('click', () => window.history.back());
-            document.getElementById('editar').addEventListener('click', () => {
-                localStorage.setItem(`currentAvalId_${alunoId}`, avalId);
-                window.location.href = `nova_avaliacao.html?id=${alunoId}`;
-            });
-            document.getElementById('excluir').addEventListener('click', () => {
-                if (confirm('Deseja excluir esta avaliação?')) {
-                    const chave = `avaliacoes_${alunoId}`;
-                    const lista = JSON.parse(localStorage.getItem(chave) || '[]').filter(a => String(a.id) !== avalId);
-                    localStorage.setItem(chave, JSON.stringify(lista));
-                    partes.forEach(p => localStorage.removeItem(`avaliacao_${alunoId}_${avalId}_${p}`));
-                    window.location.href = 'dashboard.html?section=avaliacoes';
-                }
-            });
         });
     </script>
 </body>

@@ -20,10 +20,15 @@
         </div>
     </div>
     <script type="module">
-        const params = new URLSearchParams(window.location.search);
-        const id = params.get('id');
+        import { getAlunoId, getAvaliacaoId } from './js/avaliacao.js';
+
+        const id = getAlunoId();
+        const avaliacaoId = getAvaliacaoId();
         document.getElementById('voltar').addEventListener('click', () => {
-            window.location.href = `nova_avaliacao.html?id=${id}`;
+            const params = new URLSearchParams();
+            if (id) params.set('id', id);
+            if (avaliacaoId) params.set('avaliacao', avaliacaoId);
+            window.location.href = `nova_avaliacao.html?${params.toString()}`;
         });
     </script>
 </body>

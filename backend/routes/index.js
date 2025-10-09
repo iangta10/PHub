@@ -8,6 +8,7 @@ router.use('/users', require('./users/check-aluno'));
 router.use('/users', require('./users/profile'));
 router.use('/users', require('./users/treinos'));
 router.use('/users', require('./users/exercicios'));
+router.use('/users', require('./users/avaliacoes'));
 router.use('/users', require('./users/metodos'));
 router.use('/users', require('./users/admin-invite'));
 router.use('/users', require('./users/anamnese'));
