@@ -16,20 +16,53 @@
     <div class="avaliacao-container">
         <h2>Dobras Cutâneas</h2>
         <form id="compForm" class="avaliacao-grid">
-            <input type="number" step="0.1" name="peso" placeholder="Peso (kg)" />
-            <input type="number" step="0.1" name="altura" placeholder="Altura (cm)" />
-            <select id="protocoloSelect" name="protocolo">
-                <option value="" disabled selected>Selecione o protocolo</option>
-                <option value="jp7">Jackson &amp; Pollock 7 dobras para Homens e mulheres (18–50 anos)</option>
-            </select>
-            <input type="number" step="0.1" name="peitoral" placeholder="Peitoral (mm)" class="dobras-field jp7 hidden" />
-            <input type="number" step="0.1" name="axilaMedia" placeholder="Axila Média (mm)" class="dobras-field jp7 hidden" />
-            <input type="number" step="0.1" name="triceps" placeholder="Tríceps (mm)" class="dobras-field jp7 hidden" />
-            <input type="number" step="0.1" name="subescapular" placeholder="Subescapular (mm)" class="dobras-field jp7 hidden" />
-            <input type="number" step="0.1" name="suprailiaca" placeholder="Supra-ilíaca (mm)" class="dobras-field jp7 hidden" />
-            <input type="number" step="0.1" name="abdominal" placeholder="Abdômen (mm)" class="dobras-field jp7 hidden" />
-            <input type="number" step="0.1" name="coxa" placeholder="Coxa (mm)" class="dobras-field jp7 hidden" />
-            <textarea name="observacoes" placeholder="Observações"></textarea>
+            <label for="peso">
+                Peso (kg)
+                <input id="peso" type="number" step="0.1" name="peso" placeholder="Peso (kg)" />
+            </label>
+            <label for="altura">
+                Altura (cm)
+                <input id="altura" type="number" step="0.1" name="altura" placeholder="Altura (cm)" />
+            </label>
+            <label for="protocoloSelect">
+                Protocolo
+                <select id="protocoloSelect" name="protocolo">
+                    <option value="" disabled selected>Selecione o protocolo</option>
+                    <option value="jp7">Jackson &amp; Pollock 7 dobras para Homens e mulheres (18–50 anos)</option>
+                </select>
+            </label>
+            <label for="peitoral" class="dobras-field jp7 hidden">
+                Peitoral (mm)
+                <input id="peitoral" type="number" step="0.1" name="peitoral" placeholder="Peitoral (mm)" />
+            </label>
+            <label for="axilaMedia" class="dobras-field jp7 hidden">
+                Axila Média (mm)
+                <input id="axilaMedia" type="number" step="0.1" name="axilaMedia" placeholder="Axila Média (mm)" />
+            </label>
+            <label for="triceps" class="dobras-field jp7 hidden">
+                Tríceps (mm)
+                <input id="triceps" type="number" step="0.1" name="triceps" placeholder="Tríceps (mm)" />
+            </label>
+            <label for="subescapular" class="dobras-field jp7 hidden">
+                Subescapular (mm)
+                <input id="subescapular" type="number" step="0.1" name="subescapular" placeholder="Subescapular (mm)" />
+            </label>
+            <label for="suprailiaca" class="dobras-field jp7 hidden">
+                Supra-ilíaca (mm)
+                <input id="suprailiaca" type="number" step="0.1" name="suprailiaca" placeholder="Supra-ilíaca (mm)" />
+            </label>
+            <label for="abdominal" class="dobras-field jp7 hidden">
+                Abdômen (mm)
+                <input id="abdominal" type="number" step="0.1" name="abdominal" placeholder="Abdômen (mm)" />
+            </label>
+            <label for="coxa" class="dobras-field jp7 hidden">
+                Coxa (mm)
+                <input id="coxa" type="number" step="0.1" name="coxa" placeholder="Coxa (mm)" />
+            </label>
+            <label for="percentualGc">
+                %GC (Percentual de gordura corporal)
+                <input id="percentualGc" type="text" name="percentualGc" placeholder="--" readonly />
+            </label>
             <div class="form-actions">
                 <button type="button" id="voltar">Voltar</button>
                 <button type="submit">Salvar</button>
@@ -38,21 +71,113 @@
         <div id="msgDobras"></div>
     </div>
     <script type="module">
+        import { fetchWithFreshToken } from './js/auth.js';
+
         const params = new URLSearchParams(window.location.search);
         const id = params.get('id');
 
         const protocoloSelect = document.getElementById('protocoloSelect');
-        const dobrasFields = document.querySelectorAll('.dobras-field');
+        const dobrasFields = document.querySelectorAll('.dobras-field input');
+        const percentualGcInput = document.getElementById('percentualGc');
+
+        let alunoIdade;
+        let alunoGenero;
+
+        function normalizarGenero(valor) {
+            if (!valor) return '';
+            return valor.toString().trim().toLowerCase();
+        }
+
+        function calcularIdade(dataNascimento) {
+            if (!dataNascimento) return undefined;
+            const nasc = new Date(dataNascimento);
+            if (Number.isNaN(nasc.getTime())) return undefined;
+            const hoje = new Date();
+            let idade = hoje.getFullYear() - nasc.getFullYear();
+            const mes = hoje.getMonth() - nasc.getMonth();
+            if (mes < 0 || (mes === 0 && hoje.getDate() < nasc.getDate())) {
+                idade--;
+            }
+            return idade >= 0 ? idade : undefined;
+        }
+
+        async function carregarAluno() {
+            if (!id) return;
+            try {
+                const res = await fetchWithFreshToken(`/api/users/alunos/${id}`);
+                if (res.ok) {
+                    const aluno = await res.json();
+                    alunoIdade = aluno.idade;
+                    if (alunoIdade === undefined || alunoIdade === null || alunoIdade === '') {
+                        alunoIdade = calcularIdade(aluno.dataNascimento);
+                    }
+                    alunoGenero = aluno.genero || aluno.sexo || '';
+                }
+            } catch (err) {
+                console.error('Erro ao carregar dados do aluno', err);
+            } finally {
+                calcularPercentualGc();
+            }
+        }
 
         function atualizarDobras() {
-            dobrasFields.forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.dobras-field').forEach(el => el.classList.add('hidden'));
             if (protocoloSelect.value === 'jp7') {
                 document.querySelectorAll('.jp7').forEach(el => el.classList.remove('hidden'));
             }
+            calcularPercentualGc();
+        }
+
+        function calcularPercentualGc() {
+            if (!percentualGcInput) return;
+            const valores = Array.from(dobrasFields).map(el => parseFloat(el.value.replace(',', '.')));
+            if (!valores.length || valores.some(v => Number.isNaN(v))) {
+                percentualGcInput.value = '';
+                percentualGcInput.placeholder = '--';
+                return;
+            }
+
+            const s7 = valores.reduce((acc, val) => acc + val, 0);
+            const idadeValida = typeof alunoIdade === 'number' ? alunoIdade : parseFloat(alunoIdade);
+            const generoNormalizado = normalizarGenero(alunoGenero);
+
+            if (!Number.isFinite(s7) || !Number.isFinite(idadeValida) || !generoNormalizado) {
+                percentualGcInput.value = '';
+                percentualGcInput.placeholder = '--';
+                return;
+            }
+
+            const s7Quadrado = s7 * s7;
+            let db;
+            if (generoNormalizado.startsWith('f')) {
+                db = 1.097 - 0.00046971 * s7 + 0.00000056 * s7Quadrado - 0.00012828 * idadeValida;
+            } else {
+                db = 1.112 - 0.00043499 * s7 + 0.00000055 * s7Quadrado - 0.00028826 * idadeValida;
+            }
+
+            if (!db || !Number.isFinite(db)) {
+                percentualGcInput.value = '';
+                percentualGcInput.placeholder = '--';
+                return;
+            }
+
+            const percentual = 495 / db - 450;
+            if (!Number.isFinite(percentual)) {
+                percentualGcInput.value = '';
+                percentualGcInput.placeholder = '--';
+                return;
+            }
+
+            percentualGcInput.value = `${percentual.toFixed(2)} %`;
         }
 
         protocoloSelect.addEventListener('change', atualizarDobras);
         atualizarDobras();
+        carregarAluno();
+
+        dobrasFields.forEach(el => {
+            el.addEventListener('input', calcularPercentualGc);
+        });
 
         const avalId = localStorage.getItem(`currentAvalId_${id}`);
         if (avalId) {
@@ -64,6 +189,7 @@
                     if (el) el.value = obj[k];
                 });
                 atualizarDobras();
+                calcularPercentualGc();
             }
         }
 
