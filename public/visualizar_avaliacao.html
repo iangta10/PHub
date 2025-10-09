@@ -12,96 +12,576 @@
     <link rel="manifest" href="/public/img/site.webmanifest">
 </head>
 <body>
-    <div class="avaliacao-container">
-        <h2>Avaliação</h2>
-        <div id="dadosAvaliacao"></div>
-        <div class="form-actions">
-            <button type="button" id="editar">Editar</button>
-            <button type="button" id="excluir">Excluir</button>
-            <button type="button" id="voltar">Voltar</button>
+    <div class="avaliacao-page">
+        <div class="avaliacao-container visualizar-avaliacao">
+            <header class="visualizacao-header">
+                <div class="visualizacao-header-info">
+                    <h1>Visualizar Avaliação</h1>
+                    <div class="visualizacao-meta">
+                        <span class="visualizacao-aluno" data-aluno-nome>Aluno</span>
+                        <span class="status-badge" data-avaliacao-status>—</span>
+                    </div>
+                </div>
+                <div class="visualizacao-actions">
+                    <button type="button" id="editar">Editar</button>
+                    <button type="button" id="excluir" class="danger">Excluir</button>
+                    <button type="button" id="voltar" class="ghost">Voltar</button>
+                </div>
+            </header>
+
+            <section class="visualizacao-summary">
+                <h2>Resumo da Avaliação</h2>
+                <div class="visualizacao-summary-grid" id="resumoAvaliacao"></div>
+            </section>
+
+            <div class="visualizacao-sections" id="dadosAvaliacao"></div>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module">
-        import { deleteEvaluation, getEvaluation } from './js/evaluationsApi.js';
+        import { deleteEvaluation, getEvaluation, listEvaluations } from './js/evaluationsApi.js';
+        import { fetchAlunoInfo } from './js/avaliacao.js';
+
+        const SECTION_LABELS = {
+            anamnese: 'Anamnese',
+            composicao: 'Composição Corporal',
+            perimetria: 'Perimetria',
+            flexibilidade: 'Flexibilidade',
+            postural: 'Postural',
+            forca: 'Força'
+        };
+
+        const SECTION_ORDER = ['anamnese', 'composicao', 'perimetria', 'flexibilidade', 'postural', 'forca'];
+        const CHART_COLORS = ['#60a5fa', '#34d399', '#f97316', '#f87171', '#a855f7', '#38bdf8', '#facc15', '#22d3ee', '#ef4444', '#2dd4bf'];
 
         function formatDate(value) {
-            if (!value) return '-';
+            if (!value) return '—';
             const date = new Date(value);
-            if (Number.isNaN(date.getTime())) return '-';
+            if (Number.isNaN(date.getTime())) return '—';
             return date.toLocaleDateString('pt-BR');
         }
 
-        function escapeHtml(value) {
-            return String(value ?? '').replace(/[&<>"']/g, match => ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#39;'
-            })[match]);
+        function formatStatus(status) {
+            const normalized = (status || '').toString().trim().toLowerCase();
+            if (!normalized) return '—';
+            if (normalized === 'completed') return 'Concluída';
+            if (normalized === 'draft') return 'Em andamento';
+            if (normalized === 'cancelled') return 'Cancelada';
+            return normalized.charAt(0).toUpperCase() + normalized.slice(1);
         }
 
-        function renderSection(title, data) {
-            if (!data || typeof data !== 'object') return '';
-            const fields = Object.entries(data).map(([key, value]) => `
-                <div><strong>${escapeHtml(key)}:</strong> ${escapeHtml(value)}</div>
-            `).join('');
-            if (!fields) return '';
-            return `
-                <div class="avaliacao-part">
-                    <h3>${escapeHtml(title)}</h3>
-                    <div class="avaliacao-grid">${fields}</div>
-                </div>
-            `;
+        function toTimestamp(value) {
+            if (!value) return 0;
+            const date = new Date(value);
+            return Number.isNaN(date.getTime()) ? 0 : date.getTime();
         }
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            const params = new URLSearchParams(window.location.search);
-            const alunoId = params.get('alunoId');
-            const avaliacaoId = params.get('avaliacaoId');
-            const container = document.getElementById('dadosAvaliacao');
-            if (!alunoId || !avaliacaoId) {
-                container.textContent = 'Avaliação não encontrada';
-                return;
+        function formatFieldLabel(key) {
+            if (!key) return '';
+            const spaced = key
+                .replace(/[_-]+/g, ' ')
+                .replace(/([a-z])([A-Z])/g, '$1 $2')
+                .replace(/\s+/g, ' ')
+                .trim();
+            return spaced.replace(/\b\w/g, char => char.toUpperCase());
+        }
+
+        function formatValueDisplay(value) {
+            if (value === null || value === undefined) return '—';
+            if (Array.isArray(value)) {
+                const filtered = value.map(item => formatValueDisplay(item)).filter(Boolean);
+                return filtered.length ? filtered.join(', ') : '—';
+            }
+            if (typeof value === 'object') {
+                const entries = Object.entries(value).map(([k, v]) => `${formatFieldLabel(k)}: ${formatValueDisplay(v)}`);
+                return entries.length ? entries.join('; ') : '—';
+            }
+            const text = value.toString().trim();
+            return text || '—';
+        }
+
+        function parseNumber(value) {
+            if (value === null || value === undefined) return null;
+            if (typeof value === 'number') {
+                return Number.isFinite(value) ? value : null;
+            }
+            if (typeof value === 'string') {
+                const normalized = value.replace(/\s+/g, '').replace(',', '.');
+                const match = normalized.match(/-?\d+(?:\.\d+)?/);
+                if (match) {
+                    const num = Number(match[0]);
+                    return Number.isNaN(num) ? null : num;
+                }
+            }
+            return null;
+        }
+
+        function extractNumericMetrics(data) {
+            if (!data || typeof data !== 'object' || Array.isArray(data)) return [];
+            const seen = new Set();
+            return Object.entries(data)
+                .map(([key, value]) => ({
+                    key,
+                    label: formatFieldLabel(key),
+                    value: parseNumber(value)
+                }))
+                .filter(item => {
+                    if (item.value === null || seen.has(item.key)) return false;
+                    seen.add(item.key);
+                    return true;
+                });
+        }
+
+        function ensureChartDefaults() {
+            if (typeof Chart === 'undefined' || ensureChartDefaults.initialized) return;
+            Chart.defaults.color = '#e5e7eb';
+            Chart.defaults.borderColor = 'rgba(148, 163, 184, 0.12)';
+            Chart.defaults.font.family = "'Inter', 'Segoe UI', sans-serif";
+            if (Chart.defaults.plugins && Chart.defaults.plugins.legend && Chart.defaults.plugins.legend.labels) {
+                Chart.defaults.plugins.legend.labels.color = '#e5e7eb';
+            }
+            ensureChartDefaults.initialized = true;
+        }
+        ensureChartDefaults.initialized = false;
+
+        function hexToRgb(hex) {
+            const sanitized = hex.replace('#', '');
+            const bigint = parseInt(sanitized, 16);
+            return {
+                r: (bigint >> 16) & 255,
+                g: (bigint >> 8) & 255,
+                b: bigint & 255
+            };
+        }
+
+        function getColor(index, alpha = 1) {
+            const hex = CHART_COLORS[index % CHART_COLORS.length];
+            const { r, g, b } = hexToRgb(hex);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        function evaluationLabel(evaluation) {
+            const label = formatDate(evaluation?.completedAt || evaluation?.createdAt || evaluation?.updatedAt);
+            return label === '—' ? 'Sem data' : label;
+        }
+
+        function mergeEvaluations(history, current) {
+            const map = new Map();
+            (history || []).forEach(item => {
+                if (!item || !item.id) return;
+                map.set(item.id, { ...item });
+            });
+            if (current && current.id) {
+                const existing = map.get(current.id) || {};
+                map.set(current.id, {
+                    ...existing,
+                    ...current,
+                    sections: { ...(existing.sections || {}), ...(current.sections || {}) }
+                });
+            }
+            const evaluations = Array.from(map.values());
+            evaluations.sort((a, b) => toTimestamp(a.completedAt || a.createdAt || a.updatedAt) - toTimestamp(b.completedAt || b.createdAt || b.updatedAt));
+            return evaluations;
+        }
+
+        function getOrderedSections(sections) {
+            if (!sections || typeof sections !== 'object') return [];
+            const entries = Object.entries(sections);
+            entries.sort((a, b) => {
+                const indexA = SECTION_ORDER.indexOf(a[0]);
+                const indexB = SECTION_ORDER.indexOf(b[0]);
+                if (indexA === -1 && indexB === -1) {
+                    return a[0].localeCompare(b[0]);
+                }
+                if (indexA === -1) return 1;
+                if (indexB === -1) return -1;
+                return indexA - indexB;
+            });
+            return entries.map(([key, value]) => [key, SECTION_LABELS[key] || formatFieldLabel(key), value]);
+        }
+
+        function applyStatusBadge(status) {
+            const badge = document.querySelector('[data-avaliacao-status]');
+            if (!badge) return;
+            const normalized = (status || '').toString().trim().toLowerCase();
+            badge.textContent = formatStatus(status);
+            badge.classList.remove('status--completed', 'status--draft', 'status--cancelled', 'status--default');
+            if (normalized === 'completed') {
+                badge.classList.add('status--completed');
+            } else if (normalized === 'draft') {
+                badge.classList.add('status--draft');
+            } else if (normalized === 'cancelled') {
+                badge.classList.add('status--cancelled');
+            } else {
+                badge.classList.add('status--default');
+            }
+        }
+
+        function renderSummary(avaliacao) {
+            const summary = document.getElementById('resumoAvaliacao');
+            if (!summary) return;
+            const items = [
+                { label: 'Data da Avaliação', value: formatDate(avaliacao.completedAt || avaliacao.createdAt) },
+                { label: 'Próxima Avaliação', value: formatDate(avaliacao.nextEvaluationAt) },
+                { label: 'Iniciada em', value: formatDate(avaliacao.startedAt) },
+                { label: 'Atualizada em', value: formatDate(avaliacao.updatedAt) },
+                { label: 'Status', value: formatStatus(avaliacao.status) }
+            ];
+            summary.innerHTML = '';
+            items.forEach(item => {
+                const entry = document.createElement('div');
+                entry.className = 'visualizacao-summary-item';
+                const label = document.createElement('span');
+                label.className = 'visualizacao-summary-label';
+                label.textContent = item.label;
+                const value = document.createElement('span');
+                value.className = 'visualizacao-summary-value';
+                value.textContent = item.value;
+                entry.append(label, value);
+                summary.append(entry);
+            });
+        }
+
+        function buildSectionElement(key, label, data, evaluations, currentEvaluationId) {
+            const section = document.createElement('section');
+            section.className = 'visualizacao-section';
+            section.dataset.sectionKey = key;
+
+            const header = document.createElement('div');
+            header.className = 'visualizacao-section-header';
+            const title = document.createElement('h3');
+            title.textContent = label;
+            header.appendChild(title);
+            section.appendChild(header);
+
+            const content = document.createElement('div');
+            content.className = 'visualizacao-section-content';
+            section.appendChild(content);
+
+            let hasFields = false;
+            if (data && typeof data === 'object' && !Array.isArray(data)) {
+                const grid = document.createElement('div');
+                grid.className = 'visualizacao-section-grid';
+                Object.entries(data).forEach(([fieldKey, fieldValue]) => {
+                    const field = document.createElement('div');
+                    field.className = 'visualizacao-section-field';
+                    const fieldLabel = document.createElement('span');
+                    fieldLabel.className = 'visualizacao-field-label';
+                    fieldLabel.textContent = formatFieldLabel(fieldKey);
+                    const fieldValueEl = document.createElement('span');
+                    fieldValueEl.className = 'visualizacao-field-value';
+                    fieldValueEl.textContent = formatValueDisplay(fieldValue);
+                    field.append(fieldLabel, fieldValueEl);
+                    grid.append(field);
+                    hasFields = true;
+                });
+                if (hasFields) {
+                    content.appendChild(grid);
+                }
             }
 
-            try {
-                const avaliacao = await getEvaluation(alunoId, avaliacaoId);
-                if (!avaliacao) {
-                    container.textContent = 'Avaliação não encontrada';
+            if (!hasFields) {
+                const empty = document.createElement('p');
+                empty.className = 'visualizacao-section-empty';
+                empty.textContent = 'Sem dados para esta seção.';
+                content.appendChild(empty);
+            }
+
+            const metrics = extractNumericMetrics(data);
+            if (metrics.length && typeof Chart !== 'undefined') {
+                ensureChartDefaults();
+                if (key === 'perimetria') {
+                    createPerimetriaChart(section, key, metrics, evaluations, currentEvaluationId);
+                } else {
+                    createLineChart(section, key, metrics, evaluations);
+                }
+            }
+
+            return section;
+        }
+
+        function createLineChart(section, sectionKey, metrics, evaluations) {
+            const relevantEvaluations = (evaluations || []).filter(ev => metrics.some(metric => parseNumber(ev?.sections?.[sectionKey]?.[metric.key]) !== null));
+            if (!relevantEvaluations.length) return;
+
+            const labels = relevantEvaluations.map(evaluationLabel);
+            const series = metrics.map((metric, index) => {
+                const data = relevantEvaluations.map(ev => parseNumber(ev.sections?.[sectionKey]?.[metric.key]));
+                if (data.every(value => value === null)) return null;
+                return { ...metric, index, data };
+            }).filter(Boolean);
+
+            if (!series.length) return;
+
+            const content = section.querySelector('.visualizacao-section-content');
+            const chartContainer = document.createElement('div');
+            chartContainer.className = 'visualizacao-chart';
+
+            const controls = document.createElement('div');
+            controls.className = 'visualizacao-chart-controls';
+            const controlsTitle = document.createElement('span');
+            controlsTitle.className = 'visualizacao-chart-controls-title';
+            controlsTitle.textContent = 'Medidas:';
+            controls.appendChild(controlsTitle);
+
+            const canvasWrapper = document.createElement('div');
+            canvasWrapper.className = 'visualizacao-chart-canvas';
+            const canvas = document.createElement('canvas');
+            canvasWrapper.appendChild(canvas);
+
+            chartContainer.append(controls, canvasWrapper);
+            content.appendChild(chartContainer);
+
+            const ctx = canvas.getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets: [] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: context => `${context.dataset.label}: ${context.formattedValue}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.08)' }
+                        },
+                        y: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.12)' }
+                        }
+                    }
+                }
+            });
+
+            const activeMetrics = new Set(series.map(item => item.key));
+
+            series.forEach(item => {
+                const label = document.createElement('label');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = true;
+                checkbox.value = item.key;
+                checkbox.addEventListener('change', () => {
+                    if (checkbox.checked) {
+                        activeMetrics.add(item.key);
+                    } else {
+                        activeMetrics.delete(item.key);
+                    }
+                    updateChart();
+                });
+                const text = document.createElement('span');
+                text.textContent = item.label;
+                label.append(checkbox, text);
+                controls.appendChild(label);
+            });
+
+            function updateChart() {
+                const activeSeries = series.filter(item => activeMetrics.has(item.key));
+                if (!activeSeries.length) {
+                    chart.data.datasets = [];
+                    chart.update();
+                    return;
+                }
+                chart.data.datasets = activeSeries.map(item => ({
+                    label: item.label,
+                    data: item.data,
+                    borderColor: getColor(item.index, 0.9),
+                    backgroundColor: getColor(item.index, 0.18),
+                    tension: 0.35,
+                    fill: false,
+                    pointRadius: 4,
+                    pointHoverRadius: 5,
+                    spanGaps: true
+                }));
+                chart.update();
+            }
+
+            updateChart();
+        }
+
+        function createPerimetriaChart(section, sectionKey, metrics, evaluations, currentEvaluationId) {
+            const relevantEvaluations = (evaluations || []).filter(ev => metrics.some(metric => parseNumber(ev?.sections?.[sectionKey]?.[metric.key]) !== null));
+            if (!relevantEvaluations.length) return;
+
+            const datasetSeries = relevantEvaluations.map((ev, index) => {
+                const values = new Map();
+                let hasValue = false;
+                metrics.forEach(metric => {
+                    const parsed = parseNumber(ev.sections?.[sectionKey]?.[metric.key]);
+                    values.set(metric.key, parsed);
+                    if (parsed !== null) hasValue = true;
+                });
+                if (!hasValue) return null;
+                return {
+                    id: ev.id,
+                    label: evaluationLabel(ev),
+                    index,
+                    values
+                };
+            }).filter(Boolean);
+
+            if (!datasetSeries.length) return;
+
+            const content = section.querySelector('.visualizacao-section-content');
+            const chartContainer = document.createElement('div');
+            chartContainer.className = 'visualizacao-chart visualizacao-chart--radar';
+
+            const controls = document.createElement('div');
+            controls.className = 'visualizacao-chart-controls';
+            const controlsTitle = document.createElement('span');
+            controlsTitle.className = 'visualizacao-chart-controls-title';
+            controlsTitle.textContent = 'Medidas:';
+            controls.appendChild(controlsTitle);
+
+            const canvasWrapper = document.createElement('div');
+            canvasWrapper.className = 'visualizacao-chart-canvas';
+            const canvas = document.createElement('canvas');
+            canvasWrapper.appendChild(canvas);
+
+            chartContainer.append(controls, canvasWrapper);
+            content.appendChild(chartContainer);
+
+            const ctx = canvas.getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'radar',
+                data: { labels: [], datasets: [] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            angleLines: { color: 'rgba(148, 163, 184, 0.25)' },
+                            grid: { color: 'rgba(148, 163, 184, 0.18)' },
+                            pointLabels: { color: '#cbd5f5', font: { size: 12 } },
+                            ticks: {
+                                backdropColor: 'rgba(15, 23, 42, 0.65)',
+                                color: '#94a3b8'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true } },
+                        tooltip: {
+                            callbacks: {
+                                label: context => `${context.dataset.label}: ${context.formattedValue}`
+                            }
+                        }
+                    }
+                }
+            });
+
+            const activeMetrics = new Set(metrics.map(metric => metric.key));
+
+            metrics.forEach(metric => {
+                const label = document.createElement('label');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = true;
+                checkbox.value = metric.key;
+                checkbox.addEventListener('change', () => {
+                    if (checkbox.checked) {
+                        activeMetrics.add(metric.key);
+                    } else {
+                        activeMetrics.delete(metric.key);
+                    }
+                    updateChart();
+                });
+                const text = document.createElement('span');
+                text.textContent = metric.label;
+                label.append(checkbox, text);
+                controls.appendChild(label);
+            });
+
+            function updateChart() {
+                const selectedMetrics = metrics.filter(metric => activeMetrics.has(metric.key));
+                if (!selectedMetrics.length) {
+                    chart.data.labels = [];
+                    chart.data.datasets = [];
+                    chart.update();
                     return;
                 }
 
-                const sections = avaliacao.sections || {};
-                const sectionOrder = [
-                    ['anamnese', 'Anamnese'],
-                    ['composicao', 'Composição Corporal'],
-                    ['perimetria', 'Perimetria'],
-                    ['flexibilidade', 'Flexibilidade'],
-                    ['postural', 'Postural']
-                ];
+                chart.data.labels = selectedMetrics.map(metric => metric.label);
+                chart.data.datasets = datasetSeries.map(series => {
+                    const isCurrent = series.id === currentEvaluationId;
+                    return {
+                        label: series.label,
+                        data: selectedMetrics.map(metric => series.values.get(metric.key)),
+                        borderColor: getColor(series.index, isCurrent ? 0.95 : 0.6),
+                        backgroundColor: getColor(series.index, isCurrent ? 0.28 : 0.14),
+                        pointBackgroundColor: getColor(series.index, isCurrent ? 0.95 : 0.7),
+                        pointBorderColor: '#0f172a',
+                        borderWidth: isCurrent ? 3 : 2,
+                        spanGaps: true,
+                        fill: true,
+                        tension: 0.25
+                    };
+                });
+                chart.update();
+            }
 
-                const sectionsHtml = sectionOrder
-                    .map(([key, label]) => renderSection(label, sections[key]))
-                    .join('');
+            updateChart();
+        }
 
-                container.innerHTML = `
-                    <div class="avaliacao-grid">
-                        <div><strong>Data:</strong> ${formatDate(avaliacao.completedAt || avaliacao.createdAt)}</div>
-                        <div><strong>Próxima Avaliação:</strong> ${formatDate(avaliacao.nextEvaluationAt)}</div>
-                        <div><strong>Status:</strong> ${escapeHtml(avaliacao.status || '—')}</div>
-                    </div>
-                    ${sectionsHtml || '<p>Sem dados adicionais para esta avaliação.</p>'}
-                `;
+        function renderSections(sections, evaluations, currentEvaluationId) {
+            const container = document.getElementById('dadosAvaliacao');
+            if (!container) return;
+            container.innerHTML = '';
+            const ordered = getOrderedSections(sections);
+            if (!ordered.length) {
+                const empty = document.createElement('p');
+                empty.className = 'visualizacao-empty';
+                empty.textContent = 'Sem dados adicionais para esta avaliação.';
+                container.appendChild(empty);
+                return;
+            }
+            ordered.forEach(([key, label, data]) => {
+                const section = buildSectionElement(key, label, data, evaluations, currentEvaluationId);
+                container.appendChild(section);
+            });
+        }
 
-                document.getElementById('editar').addEventListener('click', () => {
+        async function loadAluno(alunoId) {
+            if (!alunoId) return;
+            try {
+                const aluno = await fetchAlunoInfo(alunoId);
+                if (!aluno) return;
+                const nomeEl = document.querySelector('[data-aluno-nome]');
+                if (nomeEl) {
+                    nomeEl.textContent = aluno.nome || aluno.name || 'Aluno';
+                }
+            } catch (err) {
+                console.error('Erro ao carregar aluno:', err);
+            }
+        }
+
+        function setupActions(alunoId, avaliacaoId) {
+            const editar = document.getElementById('editar');
+            const excluir = document.getElementById('excluir');
+            const voltar = document.getElementById('voltar');
+
+            if (editar) {
+                editar.addEventListener('click', () => {
                     const editParams = new URLSearchParams();
-                    editParams.set('id', alunoId);
-                    editParams.set('avaliacao', avaliacaoId);
+                    if (alunoId) editParams.set('id', alunoId);
+                    if (avaliacaoId) editParams.set('avaliacao', avaliacaoId);
                     window.location.href = `nova_avaliacao.html?${editParams.toString()}`;
                 });
+            }
 
-                document.getElementById('excluir').addEventListener('click', async () => {
+            if (excluir) {
+                excluir.addEventListener('click', async () => {
+                    if (!alunoId || !avaliacaoId) return;
                     if (!confirm('Deseja excluir esta avaliação?')) return;
                     try {
                         await deleteEvaluation(alunoId, avaliacaoId);
@@ -111,12 +591,65 @@
                         alert('Não foi possível excluir a avaliação.');
                     }
                 });
-            } catch (err) {
-                console.error('Erro ao carregar avaliação:', err);
-                container.textContent = 'Não foi possível carregar a avaliação';
             }
 
-            document.getElementById('voltar').addEventListener('click', () => window.history.back());
+            if (voltar) {
+                voltar.addEventListener('click', () => {
+                    if (window.history.length > 1) {
+                        window.history.back();
+                    } else {
+                        window.location.href = 'dashboard.html?section=avaliacoes';
+                    }
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const alunoId = params.get('alunoId') || params.get('id');
+            const avaliacaoId = params.get('avaliacaoId') || params.get('avaliacao');
+            const container = document.getElementById('dadosAvaliacao');
+
+            setupActions(alunoId, avaliacaoId);
+
+            if (!alunoId || !avaliacaoId) {
+                if (container) {
+                    container.innerHTML = '<p class="visualizacao-empty">Avaliação não encontrada.</p>';
+                }
+                applyStatusBadge(null);
+                return;
+            }
+
+            loadAluno(alunoId);
+
+            try {
+                const [avaliacao, historico] = await Promise.all([
+                    getEvaluation(alunoId, avaliacaoId),
+                    listEvaluations(alunoId).catch(err => {
+                        console.error('Erro ao carregar histórico de avaliações:', err);
+                        return [];
+                    })
+                ]);
+
+                if (!avaliacao) {
+                    if (container) {
+                        container.innerHTML = '<p class="visualizacao-empty">Avaliação não encontrada.</p>';
+                    }
+                    applyStatusBadge(null);
+                    return;
+                }
+
+                applyStatusBadge(avaliacao.status);
+                renderSummary(avaliacao);
+
+                const evaluations = mergeEvaluations(historico, avaliacao);
+                renderSections(avaliacao.sections || {}, evaluations, avaliacao.id);
+            } catch (err) {
+                console.error('Erro ao carregar avaliação:', err);
+                if (container) {
+                    container.innerHTML = '<p class="visualizacao-empty">Não foi possível carregar a avaliação.</p>';
+                }
+            }
         });
     </script>
 </body>
