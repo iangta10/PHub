@@ -201,6 +201,24 @@
             return entries.map(([key, value]) => [key, SECTION_LABELS[key] || formatFieldLabel(key), value]);
         }
 
+        function sanitizeSectionData(sectionKey, data) {
+            if (!data || typeof data !== 'object' || Array.isArray(data)) return data;
+            const sanitized = Object.entries(data).filter(([fieldKey]) => {
+                const normalized = fieldKey.toString().toLowerCase();
+                if (sectionKey === 'composicao' && (normalized === 'protocolo' || normalized === 'altura')) {
+                    return false;
+                }
+                if (sectionKey === 'perimetria' && normalized === 'observacoes') {
+                    return false;
+                }
+                return true;
+            });
+            if (!sanitized.length) {
+                return {};
+            }
+            return Object.fromEntries(sanitized);
+        }
+
         function applyStatusBadge(status) {
             const badge = document.querySelector('[data-avaliacao-status]');
             if (!badge) return;
@@ -259,11 +277,12 @@
             content.className = 'visualizacao-section-content';
             section.appendChild(content);
 
+            const sanitizedData = sanitizeSectionData(key, data);
             let hasFields = false;
-            if (data && typeof data === 'object' && !Array.isArray(data)) {
+            if (sanitizedData && typeof sanitizedData === 'object' && !Array.isArray(sanitizedData)) {
                 const grid = document.createElement('div');
                 grid.className = 'visualizacao-section-grid';
-                Object.entries(data).forEach(([fieldKey, fieldValue]) => {
+                Object.entries(sanitizedData).forEach(([fieldKey, fieldValue]) => {
                     const field = document.createElement('div');
                     field.className = 'visualizacao-section-field';
                     const fieldLabel = document.createElement('span');
@@ -288,7 +307,7 @@
                 content.appendChild(empty);
             }
 
-            const metrics = extractNumericMetrics(data);
+            const metrics = extractNumericMetrics(sanitizedData);
             if (metrics.length && typeof Chart !== 'undefined') {
                 ensureChartDefaults();
                 if (key === 'perimetria') {
