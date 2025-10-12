@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const admin = require('../../firebase-admin');
-const { sendMail, isEmailServiceConfigured } = require('../../services/mailer');
-const { sendFirebasePasswordResetEmail } = require('../../services/passwordReset');
+const { sendMail } = require('../../services/mailer');
 const verifyToken = require('../../middleware/verifyToken');
 const requireRole = require('../../middleware/requireRole');
 
@@ -287,22 +286,9 @@ router.post('/alunos/:id/reset-password', async (req, res) => {
             + `<p>Se você não reconhece esta solicitação, ignore este e-mail.</p>`
             + '<p>PersonalHub</p>';
 
-        let emailEnviado = false;
-
-        if (isEmailServiceConfigured()) {
-            try {
-                emailEnviado = await sendMail({ to: email, subject, text, html });
-            } catch (mailErr) {
-                console.error('Erro ao enviar e-mail de redefinição via SMTP:', mailErr);
-            }
-        }
-
-        if (!emailEnviado) {
-            emailEnviado = await sendFirebasePasswordResetEmail(email, actionSettings);
-        }
-
-        if (!emailEnviado) {
-            return res.status(503).json({ error: 'Não foi possível enviar o e-mail de redefinição de senha. Verifique a configuração do serviço de e-mail ou da API do Firebase.' });
+        const mailSent = await sendMail({ to: email, subject, text, html });
+        if (!mailSent) {
+            return res.status(503).json({ error: 'Serviço de e-mail não configurado.' });
         }
 
         return res.json({ message: 'E-mail de redefinição enviado com sucesso.' });
