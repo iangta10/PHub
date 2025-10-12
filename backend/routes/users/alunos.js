@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const admin = require('../../firebase-admin');
+const { sendMail, isEmailServiceConfigured } = require('../../services/mailer');
+const { sendFirebasePasswordResetEmail } = require('../../services/passwordReset');
 const verifyToken = require('../../middleware/verifyToken');
 const requireRole = require('../../middleware/requireRole');
 
@@ -229,6 +231,84 @@ router.delete('/alunos/:id', async (req, res) => {
     } catch (err) {
         console.error('Erro ao remover aluno:', err);
         res.status(500).json({ error: 'Erro ao remover aluno' });
+    }
+});
+
+router.post('/alunos/:id/reset-password', async (req, res) => {
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso restrito ao administrador.' });
+    }
+
+    const personalId = req.user.uid;
+    const alunoId = req.params.id;
+
+    try {
+        const alunoRef = admin.firestore()
+            .collection('users')
+            .doc(personalId)
+            .collection('alunos')
+            .doc(alunoId);
+
+        const alunoSnap = await alunoRef.get();
+        if (!alunoSnap.exists) {
+            return res.status(404).json({ error: 'Aluno não encontrado.' });
+        }
+
+        const alunoData = alunoSnap.data() || {};
+        const emailRaw = alunoData.email || alunoData.emailAddress || null;
+        const email = emailRaw ? String(emailRaw).trim() : '';
+        if (!email) {
+            return res.status(400).json({ error: 'O aluno não possui e-mail cadastrado.' });
+        }
+
+        const continueUrl = process.env.PASSWORD_RESET_REDIRECT_URL || process.env.PASSWORD_RESET_CONTINUE_URL || null;
+        const actionSettings = continueUrl ? { url: continueUrl, handleCodeInApp: false } : undefined;
+        const resetLink = await admin.auth().generatePasswordResetLink(email, actionSettings);
+
+        let remetenteNome = 'PersonalHub';
+        try {
+            const personalSnap = await admin.firestore().collection('users').doc(personalId).get();
+            if (personalSnap.exists) {
+                const personalData = personalSnap.data() || {};
+                if (personalData.nome) {
+                    remetenteNome = personalData.nome;
+                }
+            }
+        } catch (infoErr) {
+            console.warn('Não foi possível carregar dados do usuário para o e-mail de redefinição:', infoErr);
+        }
+
+        const alunoNome = alunoData.nome || alunoData.name || 'aluno';
+        const subject = 'Redefinição de senha - PersonalHub';
+        const text = `Olá ${alunoNome},\n\n${remetenteNome} solicitou o envio deste e-mail para que você possa redefinir a sua senha de acesso ao PersonalHub.\n\nUse o link a seguir para criar uma nova senha:\n${resetLink}\n\nSe você não reconhece esta solicitação, ignore este e-mail.\n\nPersonalHub`;
+        const html = `<p>Olá ${alunoNome},</p>`
+            + `<p>${remetenteNome} solicitou o envio deste e-mail para que você possa redefinir a sua senha de acesso ao PersonalHub.</p>`
+            + `<p><a href="${resetLink}" target="_blank" rel="noopener">Clique aqui para redefinir sua senha</a></p>`
+            + `<p>Se você não reconhece esta solicitação, ignore este e-mail.</p>`
+            + '<p>PersonalHub</p>';
+
+        let emailEnviado = false;
+
+        if (isEmailServiceConfigured()) {
+            try {
+                emailEnviado = await sendMail({ to: email, subject, text, html });
+            } catch (mailErr) {
+                console.error('Erro ao enviar e-mail de redefinição via SMTP:', mailErr);
+            }
+        }
+
+        if (!emailEnviado) {
+            emailEnviado = await sendFirebasePasswordResetEmail(email, actionSettings);
+        }
+
+        if (!emailEnviado) {
+            return res.status(503).json({ error: 'Não foi possível enviar o e-mail de redefinição de senha. Verifique a configuração do serviço de e-mail ou da API do Firebase.' });
+        }
+
+        return res.json({ message: 'E-mail de redefinição enviado com sucesso.' });
+    } catch (err) {
+        console.error('Erro ao enviar redefinição de senha para aluno:', err);
+        return res.status(500).json({ error: 'Não foi possível enviar o e-mail de redefinição de senha.' });
     }
 });
 

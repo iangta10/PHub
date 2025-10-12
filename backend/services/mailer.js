@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 
 let transporter;
+let transporterInitialized = false;
 
 function buildTransporter() {
     const {
@@ -28,15 +29,20 @@ function buildTransporter() {
     });
 }
 
-async function getTransporter() {
-    if (!transporter) {
+function ensureTransporter() {
+    if (!transporterInitialized) {
         transporter = buildTransporter();
+        transporterInitialized = true;
     }
     return transporter;
 }
 
+function isEmailServiceConfigured() {
+    return Boolean(ensureTransporter());
+}
+
 async function sendMail(options) {
-    const mailer = await getTransporter();
+    const mailer = ensureTransporter();
     if (!mailer) {
         console.warn('Serviço de email não configurado. Defina as variáveis SMTP_HOST, SMTP_PORT, SMTP_USER e SMTP_PASS.');
         return false;
@@ -50,5 +56,6 @@ async function sendMail(options) {
 }
 
 module.exports = {
-    sendMail
+    sendMail,
+    isEmailServiceConfigured
 };
