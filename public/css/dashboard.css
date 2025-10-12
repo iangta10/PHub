@@ -2604,6 +2604,12 @@ body {
     color: #f8fafc;
 }
 
+.visualizacao-section-content{
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
 .visualizacao-section-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
