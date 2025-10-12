@@ -1,4 +1,4 @@
-import { fetchWithFreshToken, fetchUserInfo, getCurrentUser } from "./auth.js";
+import { fetchWithFreshToken, fetchUserInfo, fetchUserRole, getCurrentUser } from "./auth.js";
 import { StudentsTable } from "./components/studentsTable.js";
 import { listStudents, bulkAction, clearStudentsCache } from "./dataProviders/studentsProvider.mjs";
 import { listEvaluations } from "./evaluationsApi.js";
@@ -29,6 +29,17 @@ const PLAN_OPTIONS = [
 
 let personalContextPromise;
 let studentsTableInstance = null;
+let currentUserRolePromise = null;
+
+function getCurrentUserRole() {
+    if (!currentUserRolePromise) {
+        currentUserRolePromise = fetchUserRole().catch(err => {
+            console.error('Erro ao obter role do usuário:', err);
+            return null;
+        });
+    }
+    return currentUserRolePromise;
+}
 
 async function getPersonalContext() {
     if (!personalContextPromise) {
@@ -440,15 +451,17 @@ async function openEditAlunoFromList(id) {
             throw new Error('Erro ao buscar aluno');
         }
         const aluno = await res.json();
-        showEditAlunoForm(aluno);
+        await showEditAlunoForm(aluno);
     } catch (err) {
         console.error('Erro ao abrir edição do aluno:', err);
         alert('Não foi possível carregar os dados do aluno.');
     }
 }
 
-function showEditAlunoForm(aluno) {
+async function showEditAlunoForm(aluno) {
     const content = document.getElementById('content');
+    const role = await getCurrentUserRole();
+    const isAdmin = role === 'admin';
     const matchingPlan = aluno.plano
         ? PLAN_OPTIONS.find(opt => opt.id === aluno.plano.id)
             || PLAN_OPTIONS.find(opt => opt.nome === aluno.plano.nome && opt.duracao === aluno.plano.duracao)
@@ -595,6 +608,7 @@ function showEditAlunoForm(aluno) {
             </div>
             <div class="form-actions">
                 <button type="submit">Salvar</button>
+                ${isAdmin ? '<button type="button" id="resetSenhaAluno" class="ghost">Resetar senha</button>' : ''}
                 <button type="button" id="cancelEdit">Cancelar</button>
             </div>
         </form>
@@ -616,6 +630,7 @@ function showEditAlunoForm(aluno) {
     const dietaField = form.querySelector('[data-dieta-field]');
     const dietaSelect = form.querySelector('#editAlunoDieta');
     const fotoFileInput = form.querySelector('#editAlunoFotoArquivo');
+    const resetSenhaBtn = form.querySelector('#resetSenhaAluno');
 
     statusButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -789,6 +804,50 @@ function showEditAlunoForm(aluno) {
     applyModalidadeState();
     updatePlanOptions();
     updatePlanDetails(!vencimentoPlanoInput.value && !!planSelect.value);
+
+    if (resetSenhaBtn) {
+        resetSenhaBtn.addEventListener('click', async () => {
+            const emailAtual = form.email?.value?.trim();
+            if (!emailAtual) {
+                alert('Informe um e-mail para o aluno antes de resetar a senha.');
+                return;
+            }
+            if (!aluno?.id) {
+                alert('Aluno inválido.');
+                return;
+            }
+
+            const originalText = resetSenhaBtn.textContent;
+            resetSenhaBtn.disabled = true;
+            resetSenhaBtn.textContent = 'Enviando...';
+
+            try {
+                const res = await fetchWithFreshToken(`/api/users/alunos/${aluno.id}/reset-password`, { method: 'POST' });
+                if (!res.ok) {
+                    let message = 'Não foi possível enviar o e-mail de redefinição de senha.';
+                    try {
+                        const data = await res.json();
+                        if (data?.error) {
+                            message = data.error;
+                        } else if (data?.message) {
+                            message = data.message;
+                        }
+                    } catch (parseErr) {
+                        // Ignora erro ao interpretar resposta
+                    }
+                    alert(message);
+                } else {
+                    alert('E-mail de redefinição de senha enviado para o aluno.');
+                }
+            } catch (err) {
+                console.error('Erro ao solicitar redefinição de senha:', err);
+                alert('Não foi possível enviar o e-mail de redefinição de senha.');
+            } finally {
+                resetSenhaBtn.disabled = false;
+                resetSenhaBtn.textContent = originalText;
+            }
+        });
+    }
 
     planSelect.addEventListener('change', () => updatePlanDetails(true, { ensureStartDate: true }));
     inicioPlanoInput.addEventListener('change', () => updatePlanDetails(true));

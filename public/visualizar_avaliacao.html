@@ -51,6 +51,22 @@
             postural: 'Postural',
             forca: 'Força'
         };
+        const PERIMETRIA_FIELD_ORDER = [
+            'peitoral',
+            'cintura',
+            'abdomem',
+            'quadril',
+            'bracoContraidoDireito',
+            'bracoContraidoEsquerdo',
+            'bracoRelaxadoDireito',
+            'bracoRelaxadoEsquerdo',
+            'antebracoDireito',
+            'antebracoEsquerdo',
+            'coxaDireita',
+            'coxaEsquerda',
+            'panturrilhaDireita',
+            'panturrilhaEsquerda'
+        ];
 
         const SECTION_ORDER = ['anamnese', 'composicao', 'perimetria', 'flexibilidade', 'postural', 'forca'];
         const CHART_COLORS = ['#60a5fa', '#34d399', '#f97316', '#f87171', '#a855f7', '#38bdf8', '#facc15', '#22d3ee', '#ef4444', '#2dd4bf'];
@@ -215,6 +231,16 @@
             });
             if (!sanitized.length) {
                 return {};
+            }
+            if (sectionKey === 'perimetria') {
+                const orderMap = new Map(PERIMETRIA_FIELD_ORDER.map((field, index) => [field, index]));
+                const defaultIndex = PERIMETRIA_FIELD_ORDER.length;
+                sanitized.sort((a, b) => {
+                    const indexA = orderMap.has(a[0]) ? orderMap.get(a[0]) : defaultIndex;
+                    const indexB = orderMap.has(b[0]) ? orderMap.get(b[0]) : defaultIndex;
+                    if (indexA !== indexB) return indexA - indexB;
+                    return a[0].localeCompare(b[0]);
+                });
             }
             return Object.fromEntries(sanitized);
         }

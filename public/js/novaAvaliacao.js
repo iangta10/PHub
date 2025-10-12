@@ -15,6 +15,26 @@ function toIsoDate(value) {
     return date.toISOString();
 }
 
+function toDateInputValueFromDate(date) {
+    if (!(date instanceof Date)) return '';
+    const time = date.getTime();
+    if (Number.isNaN(time)) return '';
+    const adjusted = new Date(time - date.getTimezoneOffset() * 60000);
+    return adjusted.toISOString().slice(0, 10);
+}
+
+function getTodayInputValue() {
+    return toDateInputValueFromDate(new Date());
+}
+
+function computeNextEvaluationDate(realizacaoValue, days = 60) {
+    if (!realizacaoValue) return '';
+    const baseDate = new Date(`${realizacaoValue}T00:00:00`);
+    if (Number.isNaN(baseDate.getTime())) return '';
+    baseDate.setDate(baseDate.getDate() + days);
+    return toDateInputValueFromDate(baseDate);
+}
+
 function ensureQueryParam(name, value) {
     const url = new URL(window.location.href);
     if (value === null || value === undefined || value === '') {
@@ -124,10 +144,60 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     renderOpcoes(alunoId, 'avaliacaoOpcoes', avaliacaoAtual.id);
 
+    const realizacaoInput = document.getElementById('dataRealizacao');
     const proximaInput = document.getElementById('proximaAvaliacao');
-    if (proximaInput && avaliacaoAtual.nextEvaluationAt) {
-        proximaInput.value = toDateInputValue(avaliacaoAtual.nextEvaluationAt);
+    let proximaManual = Boolean(avaliacaoAtual.nextEvaluationAt);
+    let proximaAutoValue = '';
+
+    const updateNextEvaluation = ({ force = false } = {}) => {
+        const realizacaoValue = realizacaoInput ? realizacaoInput.value : '';
+        const nextValue = computeNextEvaluationDate(realizacaoValue);
+        proximaAutoValue = nextValue;
+        if (!proximaInput) return;
+        const shouldApply = force
+            || !proximaManual
+            || proximaInput.dataset.auto === 'true'
+            || proximaInput.value === ''
+            || proximaInput.value === nextValue;
+        if (shouldApply) {
+            proximaInput.value = nextValue;
+            proximaManual = false;
+            proximaInput.dataset.auto = nextValue ? 'true' : 'false';
+        }
+    };
+
+    const initialRealizacaoIso = avaliacaoAtual.completedAt || avaliacaoAtual.startedAt || avaliacaoAtual.createdAt || null;
+    const initialRealizacaoValue = toDateInputValue(initialRealizacaoIso) || getTodayInputValue();
+    if (realizacaoInput) {
+        realizacaoInput.value = initialRealizacaoValue;
+        const handleRealizacaoChange = () => updateNextEvaluation();
+        realizacaoInput.addEventListener('input', handleRealizacaoChange);
+        realizacaoInput.addEventListener('change', handleRealizacaoChange);
     }
+
+    if (proximaInput) {
+        if (avaliacaoAtual.nextEvaluationAt) {
+            const storedValue = toDateInputValue(avaliacaoAtual.nextEvaluationAt);
+            if (storedValue) {
+                proximaInput.value = storedValue;
+                proximaInput.dataset.auto = 'false';
+            }
+        } else {
+            proximaInput.dataset.auto = 'true';
+        }
+
+        proximaInput.addEventListener('input', () => {
+            if (proximaInput.value === proximaAutoValue) {
+                proximaManual = false;
+                proximaInput.dataset.auto = proximaAutoValue ? 'true' : 'false';
+            } else {
+                proximaManual = true;
+                proximaInput.dataset.auto = 'false';
+            }
+        });
+    }
+
+    updateNextEvaluation({ force: !avaliacaoAtual.nextEvaluationAt });
 
     const finalizar = document.getElementById('finalizarAvaliacao');
     const cancelar = document.getElementById('cancelarAvaliacao');
@@ -150,12 +220,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         finalizar.addEventListener('click', async () => {
             finalizar.disabled = true;
             try {
+                const realizacao = document.getElementById('dataRealizacao');
                 const proxima = document.getElementById('proximaAvaliacao');
+                const realizacaoIso = toIsoDate(realizacao ? realizacao.value : '');
                 const proximaIso = toIsoDate(proxima ? proxima.value : '');
                 await updateEvaluation(alunoId, avaliacaoAtual.id, {
                     status: 'completed',
                     nextEvaluationAt: proximaIso,
-                    completedAt: new Date().toISOString()
+                    completedAt: realizacaoIso || new Date().toISOString()
                 });
                 window.location.href = 'dashboard.html?section=avaliacoes';
             } catch (err) {
