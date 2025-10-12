@@ -226,6 +226,45 @@ function calcularIdade(data) {
     return idade;
 }
 
+function formatIdadeLabel(idade) {
+    if (idade === '' || idade === null || idade === undefined) return '—';
+    if (Number.isNaN(Number(idade))) return '—';
+    const parsed = Number(idade);
+    if (!Number.isFinite(parsed) || parsed < 0) return '—';
+    const suffix = parsed === 1 ? 'ano' : 'anos';
+    return `${parsed} ${suffix}`;
+}
+
+function updateAgeDisplay(element, dataNascimento) {
+    if (!element) return;
+    const idade = calcularIdade(dataNascimento);
+    element.textContent = formatIdadeLabel(idade);
+}
+
+function readFileAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+    });
+}
+
+async function resolveFotoValor(fileInput, urlValue) {
+    const trimmedUrl = typeof urlValue === 'string' ? urlValue.trim() : '';
+    const file = fileInput?.files?.[0];
+    if (file) {
+        try {
+            return await readFileAsDataURL(file);
+        } catch (error) {
+            console.error('Erro ao ler arquivo de imagem:', error);
+            alert('Não foi possível carregar a imagem selecionada. Utilize um arquivo diferente ou informe um link.');
+            return trimmedUrl;
+        }
+    }
+    return trimmedUrl;
+}
+
 async function getAvaliacoesResumo(alunoId) {
     if (!alunoId) return [];
     try {
@@ -422,14 +461,49 @@ function showEditAlunoForm(aluno) {
     const isStatusActive = initialStatus === 'ativo';
     const isStatusInactive = initialStatus === 'inativo';
     const statusLabel = aluno.statusLabel || aluno.status || '';
+    const idadeAtual = aluno.idade ?? calcularIdade(aluno.dataNascimento);
+    const idadeLabel = formatIdadeLabel(idadeAtual);
+    const generoAtual = (aluno.genero || aluno.sexo || '').toLowerCase();
+
+    let selectedModalidade = (aluno.modalidade || matchingPlan?.modalidade || '').toLowerCase();
+    if (!['presencial', 'online'].includes(selectedModalidade)) {
+        if (matchingPlan?.modalidade && ['presencial', 'online'].includes(matchingPlan.modalidade.toLowerCase())) {
+            selectedModalidade = matchingPlan.modalidade.toLowerCase();
+        } else if (aluno.aulasPorSemana) {
+            selectedModalidade = 'presencial';
+        } else if (aluno.dieta) {
+            selectedModalidade = 'online';
+        } else {
+            selectedModalidade = '';
+        }
+    }
+
+    let selectedDieta = '';
+    if (typeof aluno.dieta === 'string') {
+        const normalized = aluno.dieta.toLowerCase();
+        if (normalized === 'sim' || normalized === 'não' || normalized === 'nao') {
+            selectedDieta = normalized.startsWith('s') ? 'sim' : 'nao';
+        } else if (normalized === 'true' || normalized === 'false') {
+            selectedDieta = normalized === 'true' ? 'sim' : 'nao';
+        }
+    } else if (typeof aluno.dieta === 'boolean') {
+        selectedDieta = aluno.dieta ? 'sim' : 'nao';
+    }
+    if (!selectedDieta && matchingPlan && typeof matchingPlan.dieta === 'boolean') {
+        selectedDieta = matchingPlan.dieta ? 'sim' : 'nao';
+    }
 
     const planOptionsHtml = PLAN_OPTIONS.map(option => `
                 <option value="${option.id}" ${option.id === selectedPlanId ? 'selected' : ''}>
                     ${option.nome} - ${option.duracao} - ${option.preco}
                 </option>`).join('');
+    const defaultPlanInfo = matchingPlan
+        ? `${matchingPlan.nome} - ${matchingPlan.duracao} - ${matchingPlan.preco}`
+        : 'Selecione um plano para visualizar os detalhes';
+
     content.innerHTML = `
         <h2>Editar Aluno</h2>
-        <form id="editAlunoForm">
+        <form id="editAlunoForm" class="novo-aluno-form is-complete">
             <div class="form-field">
                 <label for="editAlunoNome">Nome</label>
                 <input id="editAlunoNome" type="text" name="nome" value="${aluno.nome || ''}" />
@@ -441,6 +515,10 @@ function showEditAlunoForm(aluno) {
             <div class="form-field">
                 <label for="editAlunoTelefone">Telefone</label>
                 <input id="editAlunoTelefone" type="text" name="telefone" value="${aluno.telefone || ''}" />
+            </div>
+            <div class="form-field">
+                <label for="editAlunoObservacoes">Observações</label>
+                <textarea id="editAlunoObservacoes" name="observacoes">${aluno.observacoes || ''}</textarea>
             </div>
             <div class="form-field status-field">
                 <span>Status</span>
@@ -456,16 +534,48 @@ function showEditAlunoForm(aluno) {
                 <input id="editAlunoDataNascimento" type="date" name="dataNascimento" value="${aluno.dataNascimento || ''}" />
             </div>
             <div class="form-field">
-                <label for="editAlunoIdade">Idade</label>
-                <input id="editAlunoIdade" type="number" min="0" name="idade" value="${aluno.idade || ''}" />
+                <label>Idade</label>
+                <span class="age-display" data-age-display>${idadeLabel}</span>
             </div>
             <div class="form-field">
                 <label for="editAlunoGenero">Gênero</label>
-                <input id="editAlunoGenero" type="text" name="genero" value="${aluno.genero || aluno.sexo || ''}" />
+                <select id="editAlunoGenero" name="genero">
+                    <option value="" ${!generoAtual ? 'selected' : ''}>Selecione</option>
+                    <option value="feminino" ${generoAtual === 'feminino' ? 'selected' : ''}>Feminino</option>
+                    <option value="masculino" ${generoAtual === 'masculino' ? 'selected' : ''}>Masculino</option>
+                    <option value="nao binario" ${generoAtual === 'nao binario' || generoAtual === 'não binario' ? 'selected' : ''}>Não binário</option>
+                    <option value="prefiro nao dizer" ${generoAtual === 'prefiro nao dizer' ? 'selected' : ''}>Prefiro não dizer</option>
+                    <option value="outro" ${generoAtual === 'outro' ? 'selected' : ''}>Outro</option>
+                </select>
             </div>
             <div class="form-field">
-                <label for="editAlunoFotoUrl">URL da foto</label>
-                <input id="editAlunoFotoUrl" type="text" name="fotoUrl" value="${aluno.fotoUrl || ''}" />
+                <label for="editAlunoFotoArquivo">Foto do aluno</label>
+                <input id="editAlunoFotoArquivo" type="file" accept="image/*" />
+                <input id="editAlunoFotoUrl" type="text" name="fotoUrl" value="${aluno.fotoUrl || ''}" placeholder="https://..." />
+                <small class="form-hint">Você pode enviar uma imagem do dispositivo ou informar um link.</small>
+            </div>
+            <div class="form-field" data-modalidade-wrapper>
+                <span>Modalidade</span>
+                <div class="modalidade-actions">
+                    <button type="button" data-modalidade="presencial">Presencial</button>
+                    <button type="button" data-modalidade="online">Online</button>
+                </div>
+            </div>
+            <div class="form-field" data-presencial-field ${selectedModalidade === 'presencial' ? '' : 'hidden'}>
+                <label for="editAlunoAulas">Aulas por semana</label>
+                <input id="editAlunoAulas" type="number" min="1" name="aulasPorSemana" value="${aluno.aulasPorSemana || ''}" placeholder="2" />
+            </div>
+            <div class="form-field" data-dieta-field ${selectedModalidade === 'online' ? '' : 'hidden'}>
+                <label for="editAlunoDieta">Dieta</label>
+                <select id="editAlunoDieta" name="dieta">
+                    <option value="" ${!selectedDieta ? 'selected' : ''}>Selecione</option>
+                    <option value="sim" ${selectedDieta === 'sim' ? 'selected' : ''}>Sim</option>
+                    <option value="nao" ${selectedDieta === 'nao' ? 'selected' : ''}>Não</option>
+                </select>
+            </div>
+            <div class="form-field">
+                <label for="editAlunoObjetivo">Objetivo</label>
+                <textarea id="editAlunoObjetivo" name="objetivo">${aluno.objetivo || ''}</textarea>
             </div>
             <div class="form-field">
                 <label for="editAlunoPlano">Plano</label>
@@ -473,7 +583,7 @@ function showEditAlunoForm(aluno) {
                     <option value="">Selecione um plano</option>
                     ${planOptionsHtml}
                 </select>
-                <small class="plan-info" data-plan-info></small>
+                <small class="plan-info" data-plan-info>${defaultPlanInfo}</small>
             </div>
             <div class="form-field">
                 <label for="editAlunoInicioPlano">Início do plano</label>
@@ -483,16 +593,10 @@ function showEditAlunoForm(aluno) {
                 <label for="editAlunoVencimentoPlano">Vencimento do plano</label>
                 <input id="editAlunoVencimentoPlano" type="date" name="vencimentoPlano" value="${aluno.vencimentoPlano || ''}" readonly />
             </div>
-            <div class="form-field">
-                <label for="editAlunoObjetivo">Objetivo</label>
-                <textarea id="editAlunoObjetivo" name="objetivo">${aluno.objetivo || ''}</textarea>
+            <div class="form-actions">
+                <button type="submit">Salvar</button>
+                <button type="button" id="cancelEdit">Cancelar</button>
             </div>
-            <div class="form-field">
-                <label for="editAlunoObservacoes">Observações</label>
-                <textarea id="editAlunoObservacoes" name="observacoes">${aluno.observacoes || ''}</textarea>
-            </div>
-            <button type="submit">Salvar</button>
-            <button type="button" id="cancelEdit">Cancelar</button>
         </form>
     `;
 
@@ -505,6 +609,13 @@ function showEditAlunoForm(aluno) {
     const vencimentoPlanoInput = form.querySelector('#editAlunoVencimentoPlano');
     const statusInput = form.querySelector('input[name="status"]');
     const statusButtons = form.querySelectorAll('.status-button');
+    const dataNascimentoInput = form.querySelector('#editAlunoDataNascimento');
+    const idadeDisplay = form.querySelector('[data-age-display]');
+    const modalidadeButtons = form.querySelectorAll('[data-modalidade]');
+    const presencialField = form.querySelector('[data-presencial-field]');
+    const dietaField = form.querySelector('[data-dieta-field]');
+    const dietaSelect = form.querySelector('#editAlunoDieta');
+    const fotoFileInput = form.querySelector('#editAlunoFotoArquivo');
 
     statusButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -520,15 +631,15 @@ function showEditAlunoForm(aluno) {
         if (planInfo) {
             planInfo.textContent = selectedPlan
                 ? `${selectedPlan.nome} - ${selectedPlan.duracao} - ${selectedPlan.preco}`
-                : 'Selecione um plano para visualizar os detalhes';
+                : defaultPlanInfo;
         }
         if (!selectedPlan) {
-            if (shouldCalculateEnd) {
+            if (shouldCalculateEnd && vencimentoPlanoInput) {
                 vencimentoPlanoInput.value = '';
             }
             return;
         }
-        if (shouldCalculateEnd) {
+        if (shouldCalculateEnd && inicioPlanoInput && vencimentoPlanoInput) {
             if (ensureStartDate && !inicioPlanoInput.value) {
                 const hoje = new Date();
                 const iso = new Date(hoje.getTime() - hoje.getTimezoneOffset() * 60000).toISOString().split('T')[0];
@@ -546,38 +657,207 @@ function showEditAlunoForm(aluno) {
         }
     };
 
+    let selectedModalidadeAtual = selectedModalidade;
+    let selectedDietaAtual = selectedDieta;
+
+    const applyModalidadeState = () => {
+        modalidadeButtons.forEach(button => {
+            const isActive = button.dataset.modalidade === selectedModalidadeAtual;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+        if (selectedModalidadeAtual === 'presencial') {
+            if (presencialField) {
+                presencialField.hidden = false;
+            }
+            if (dietaField) {
+                dietaField.hidden = true;
+            }
+            if (dietaSelect) {
+                dietaSelect.value = '';
+            }
+            selectedDietaAtual = '';
+        } else if (selectedModalidadeAtual === 'online') {
+            if (presencialField) {
+                presencialField.hidden = true;
+                const aulasInput = presencialField.querySelector('input[name="aulasPorSemana"]');
+                if (aulasInput) {
+                    aulasInput.value = '';
+                }
+            }
+            if (dietaField) {
+                dietaField.hidden = false;
+            }
+            if (dietaSelect && selectedDietaAtual) {
+                dietaSelect.value = selectedDietaAtual;
+            }
+        } else {
+            if (presencialField) {
+                presencialField.hidden = true;
+            }
+            if (dietaField) {
+                dietaField.hidden = true;
+            }
+            if (dietaSelect) {
+                dietaSelect.value = '';
+            }
+            selectedDietaAtual = '';
+        }
+    };
+
+    const updatePlanOptions = () => {
+        if (!planSelect) return;
+        const previousValue = planSelect.value || selectedPlanId;
+        planSelect.innerHTML = '<option value="">Selecione um plano</option>';
+        if (!selectedModalidadeAtual) {
+            planSelect.disabled = true;
+            planSelect.value = '';
+            updatePlanDetails(false);
+            return;
+        }
+
+        const filteredPlans = PLAN_OPTIONS.filter(option => {
+            if (option.modalidade !== selectedModalidadeAtual) {
+                return false;
+            }
+            if (selectedModalidadeAtual !== 'online') {
+                return true;
+            }
+            if (!selectedDietaAtual) {
+                return true;
+            }
+            return selectedDietaAtual === 'sim' ? option.dieta : !option.dieta;
+        });
+
+        if (!filteredPlans.length) {
+            planSelect.disabled = true;
+            planSelect.value = '';
+            updatePlanDetails(false);
+            return;
+        }
+
+        planSelect.disabled = false;
+
+        filteredPlans.forEach(option => {
+            const opt = document.createElement('option');
+            opt.value = option.id;
+            opt.textContent = `${option.nome} - ${option.duracao} - ${option.preco}`;
+            planSelect.appendChild(opt);
+        });
+
+        if (filteredPlans.some(plan => plan.id === previousValue)) {
+            planSelect.value = previousValue;
+        } else if (filteredPlans.some(plan => plan.id === selectedPlanId)) {
+            planSelect.value = selectedPlanId;
+        } else {
+            planSelect.value = '';
+        }
+
+        updatePlanDetails(false);
+    };
+
+    modalidadeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const modalidade = button.dataset.modalidade || '';
+            if (!modalidade) {
+                return;
+            }
+
+            selectedModalidadeAtual = modalidade;
+
+            if (selectedModalidadeAtual === 'presencial') {
+                if (dietaSelect) {
+                    dietaSelect.value = '';
+                }
+                selectedDietaAtual = '';
+            } else if (selectedModalidadeAtual === 'online' && dietaSelect) {
+                selectedDietaAtual = dietaSelect.value || selectedDietaAtual;
+            } else {
+                selectedDietaAtual = '';
+            }
+
+            applyModalidadeState();
+            updatePlanOptions();
+        });
+    });
+
+    dietaSelect?.addEventListener('change', () => {
+        selectedDietaAtual = dietaSelect.value;
+        updatePlanOptions();
+    });
+
+    applyModalidadeState();
+    updatePlanOptions();
     updatePlanDetails(!vencimentoPlanoInput.value && !!planSelect.value);
 
     planSelect.addEventListener('change', () => updatePlanDetails(true, { ensureStartDate: true }));
     inicioPlanoInput.addEventListener('change', () => updatePlanDetails(true));
 
+    updateAgeDisplay(idadeDisplay, dataNascimentoInput?.value);
+    const handleAgeUpdate = () => updateAgeDisplay(idadeDisplay, dataNascimentoInput.value);
+    dataNascimentoInput?.addEventListener('input', handleAgeUpdate);
+    dataNascimentoInput?.addEventListener('change', handleAgeUpdate);
+
     form.addEventListener('submit', async e => {
         e.preventDefault();
+        const nome = form.nome.value.trim();
+        if (!nome) {
+            alert('Informe o nome do aluno.');
+            form.nome.focus();
+            return;
+        }
+
+        const email = form.email.value.trim();
+        const telefone = form.telefone.value.trim();
+        const observacoes = form.observacoes.value.trim();
+        const objetivo = form.objetivo.value.trim();
         const genero = form.genero.value.trim();
-        const idadeValor = form.idade.value.trim();
-        const idade = idadeValor ? Number(idadeValor) : null;
+        const dataNascimento = form.dataNascimento.value;
+        const idadeCalculada = dataNascimento ? calcularIdade(dataNascimento) : '';
+        const idadeValida = idadeCalculada !== '' && !Number.isNaN(Number(idadeCalculada)) ? Number(idadeCalculada) : null;
+        const fotoUrlInput = form.querySelector('#editAlunoFotoUrl');
+        const fotoValor = await resolveFotoValor(fotoFileInput, fotoUrlInput?.value || '');
+        const aulasValor = form.aulasPorSemana.value;
+        const planoSelecionado = PLAN_OPTIONS.find(opt => opt.id === form.plano.value);
+
         const data = {
-            nome: form.nome.value,
-            email: form.email.value,
-            telefone: form.telefone.value,
-            dataNascimento: form.dataNascimento.value,
-            idade: idade ?? null,
+            nome,
+            email,
+            telefone,
+            dataNascimento: dataNascimento || '',
+            idade: idadeValida,
             genero,
             sexo: genero,
-            fotoUrl: form.fotoUrl.value,
-            objetivo: form.objetivo.value,
-            observacoes: form.observacoes.value,
-            status: statusInput?.value || initialStatus || 'ativo'
+            objetivo,
+            observacoes,
+            status: statusInput?.value || initialStatus || 'ativo',
+            modalidade: selectedModalidadeAtual,
+            dieta: selectedModalidadeAtual === 'online' ? (dietaSelect?.value || '') : '',
+            aulasPorSemana: aulasValor ? Number(aulasValor) : null,
+            fotoUrl: fotoValor,
+            inicioPlano: form.inicioPlano.value || null,
+            vencimentoPlano: form.vencimentoPlano.value || null
         };
-        const planoSelecionado = PLAN_OPTIONS.find(opt => opt.id === form.plano.value);
-        data.plano = planoSelecionado ? {
-            id: planoSelecionado.id,
-            nome: planoSelecionado.nome,
-            duracao: planoSelecionado.duracao,
-            preco: planoSelecionado.preco
-        } : null;
-        data.inicioPlano = form.inicioPlano.value || null;
-        data.vencimentoPlano = form.vencimentoPlano.value || null;
+
+        if (Number.isNaN(data.aulasPorSemana)) {
+            data.aulasPorSemana = null;
+        }
+
+        if (!planoSelecionado) {
+            data.plano = null;
+        } else {
+            data.plano = {
+                id: planoSelecionado.id,
+                nome: planoSelecionado.nome,
+                duracao: planoSelecionado.duracao,
+                preco: planoSelecionado.preco
+            };
+        }
+
+        if (!fotoValor) {
+            data.fotoUrl = '';
+        }
+
         const res = await fetchWithFreshToken(`/api/users/alunos/${aluno.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -608,10 +888,6 @@ export function showNovoAlunoModal(callback) {
                     <input id="novoAlunoEmail" type="email" name="email" placeholder="Email" />
                 </div>
                 <div class="form-field">
-                    <label for="novoAlunoIdade">Idade</label>
-                    <input id="novoAlunoIdade" type="number" min="0" name="idade" placeholder="Idade" />
-                </div>
-                <div class="form-field">
                     <label for="novoAlunoGenero">Gênero</label>
                     <select id="novoAlunoGenero" name="genero">
                         <option value="">Selecione</option>
@@ -636,8 +912,14 @@ export function showNovoAlunoModal(callback) {
                         <input id="novoAlunoDataNascimento" type="date" name="dataNascimento" />
                     </div>
                     <div class="form-field">
-                        <label for="novoAlunoFotoUrl">URL da foto</label>
+                        <label>Idade</label>
+                        <span class="age-display" data-age-display>—</span>
+                    </div>
+                    <div class="form-field">
+                        <label for="novoAlunoFotoArquivo">Foto do aluno</label>
+                        <input id="novoAlunoFotoArquivo" type="file" accept="image/*" />
                         <input id="novoAlunoFotoUrl" type="text" name="fotoUrl" placeholder="https://..." />
+                        <small class="form-hint">Você pode enviar uma imagem do dispositivo ou informar um link.</small>
                     </div>
                     <div class="form-field" data-modalidade-wrapper>
                         <span>Modalidade</span>
@@ -721,11 +1003,18 @@ export function showNovoAlunoModal(callback) {
     const presencialField = form.querySelector('[data-presencial-field]');
     const dietaField = form.querySelector('[data-dieta-field]');
     const dietaSelect = form.querySelector('#novoAlunoDieta');
+    const dataNascimentoInput = form.querySelector('#novoAlunoDataNascimento');
+    const idadeDisplay = form.querySelector('[data-age-display]');
+    const fotoFileInput = form.querySelector('#novoAlunoFotoArquivo');
 
     let selectedModalidade = '';
     let selectedDieta = '';
 
     modalidadeButtons.forEach(btn => btn.setAttribute('aria-pressed', 'false'));
+
+    updateAgeDisplay(idadeDisplay, dataNascimentoInput?.value);
+    dataNascimentoInput?.addEventListener('input', () => updateAgeDisplay(idadeDisplay, dataNascimentoInput.value));
+    dataNascimentoInput?.addEventListener('change', () => updateAgeDisplay(idadeDisplay, dataNascimentoInput.value));
 
     function updatePlanDetails(shouldCalculateEnd = false, { ensureStartDate = false } = {}) {
         if (!planSelect) return;
@@ -898,17 +1187,13 @@ export function showNovoAlunoModal(callback) {
             body.telefone = telefone;
         }
 
-        const idadeValor = form.idade.value.trim();
-        if (idadeValor) {
-            const idadeNumero = Number(idadeValor);
-            if (!Number.isNaN(idadeNumero)) {
-                body.idade = idadeNumero;
-            }
-        }
-
         const dataNascimento = form.dataNascimento.value;
         if (dataNascimento) {
             body.dataNascimento = dataNascimento;
+            const idadeCalculada = calcularIdade(dataNascimento);
+            if (idadeCalculada !== '' && !Number.isNaN(Number(idadeCalculada))) {
+                body.idade = Number(idadeCalculada);
+            }
         }
 
         const genero = form.genero.value.trim();
@@ -917,9 +1202,9 @@ export function showNovoAlunoModal(callback) {
             body.sexo = genero;
         }
 
-        const fotoUrl = form.fotoUrl.value.trim();
-        if (fotoUrl) {
-            body.fotoUrl = fotoUrl;
+        const fotoValor = await resolveFotoValor(fotoFileInput, form.fotoUrl.value);
+        if (fotoValor) {
+            body.fotoUrl = fotoValor;
         }
 
         if (selectedModalidade === 'online') {
