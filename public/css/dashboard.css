@@ -745,6 +745,285 @@ body {
     color: #ff6b6b;
 }
 
+/* === Aulas === */
+.aulas-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.aulas-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.aulas-header p {
+    color: #b3b3b3;
+    margin: 0.4rem 0 0;
+}
+
+.aulas-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.curso-card {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.curso-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.curso-header h3 {
+    margin: 0;
+}
+
+.curso-header p {
+    margin: 0.35rem 0 0;
+    color: #b3b3b3;
+}
+
+.curso-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.curso-progress {
+    font-weight: 600;
+    color: #f58725;
+}
+
+.curso-btn {
+    border: 1px solid #444;
+    background: transparent;
+    color: #fff;
+    border-radius: 999px;
+    padding: 0.35rem 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.curso-btn:hover {
+    border-color: #f58725;
+    color: #f58725;
+}
+
+.curso-btn.danger {
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+}
+
+.curso-btn.danger:hover {
+    border-color: #ff8787;
+    color: #ff8787;
+}
+
+.aula-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.aula-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+}
+
+.aula-info h4 {
+    margin: 0;
+}
+
+.aula-info p {
+    margin: 0.25rem 0 0;
+    font-size: 0.9rem;
+    color: #b3b3b3;
+}
+
+.aula-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.4rem;
+    max-width: 260px;
+}
+
+.aula-action-btn {
+    background: #f58725;
+    color: #000;
+    border: none;
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: filter 0.2s ease;
+}
+
+.aula-action-btn:hover {
+    filter: brightness(1.05);
+}
+
+.aula-status {
+    font-size: 0.85rem;
+    color: #b3b3b3;
+}
+
+.aula-status.is-complete {
+    color: #7bd88f;
+}
+
+.aula-meta {
+    font-size: 0.8rem;
+    color: #b3b3b3;
+    max-width: 240px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.aula-player {
+    margin-top: 2rem;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.aula-player.hidden {
+    display: none;
+}
+
+.player-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.player-header p {
+    margin: 0.3rem 0 0;
+    color: #b3b3b3;
+}
+
+.player-header button {
+    background: transparent;
+    border: 1px solid #444;
+    color: #fff;
+    border-radius: 999px;
+    padding: 0.35rem 0.9rem;
+    cursor: pointer;
+}
+
+.aula-player video {
+    width: 100%;
+    max-height: 460px;
+    background: #000;
+    border-radius: 10px;
+}
+
+.player-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.aulas-section .primary,
+.aulas-modal .primary,
+.player-actions .primary,
+.aulas-header .primary {
+    background: #f58725;
+    color: #000;
+    border: none;
+    padding: 0.45rem 1.2rem;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: filter 0.2s ease;
+}
+
+.aulas-section .primary:hover,
+.aulas-modal .primary:hover,
+.player-actions .primary:hover,
+.aulas-header .primary:hover {
+    filter: brightness(1.05);
+}
+
+.aulas-modal {
+    width: min(640px, 90vw);
+}
+
+.aulas-modal textarea,
+.aulas-modal input {
+    width: 100%;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 0.6rem 0.75rem;
+    color: #fff;
+}
+
+.lessons-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.lesson-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 0.75rem;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    background: #111;
+}
+
+.lesson-field label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+}
+
+.lesson-field .remove-lesson {
+    align-self: flex-start;
+    background: transparent;
+    border: 1px solid #ff6b6b;
+    color: #ff6b6b;
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
 /* === Avaliação / Anamnese === */
 .avaliacao-header {
     display: flex;

@@ -38,6 +38,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const aluno = new URLSearchParams(window.location.search).get('aluno') || '';
                     const incluirOcupado = USER_ROLE === 'aluno';
                     loadAgendaSection(aluno, incluirOcupado);
+                } else if (section === 'aulas') {
+                    const { loadAulasSection } = await import('./aulas.js');
+                    loadAulasSection(USER_ROLE);
                 } else if (section === 'meus-treinos') {
                     const { loadMeusTreinos } = await import('./treinos.js');
                     loadMeusTreinos();
