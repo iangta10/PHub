@@ -66,6 +66,7 @@ router.post('/register', verifyToken, async (req, res) => {
                 const now = new Date().toISOString();
                 await admin.firestore().collection('users').doc(uid).set({
                     email,
+                    emailLowerCase: String(email).toLowerCase(),
                     role: 'aluno',
                     personalId,
                     aulasPorSemana: aulasPorSemana ? parseInt(aulasPorSemana) : 1,
@@ -76,6 +77,7 @@ router.post('/register', verifyToken, async (req, res) => {
                     .collection('alunos').doc(uid).set({
                         nome: nome || '',
                         email,
+                        emailLowerCase: String(email).toLowerCase(),
                         aulasPorSemana: aulasPorSemana ? parseInt(aulasPorSemana) : 1,
                         criadoEm: now
                     });

@@ -32,6 +32,7 @@ router.post('/alunos', async (req, res) => {
     const personalId = req.user.uid;
 
     try {
+        const emailLowerCase = email ? String(email).toLowerCase() : null;
         const docRef = await admin.firestore()
             .collection('users')
             .doc(personalId)
@@ -39,6 +40,7 @@ router.post('/alunos', async (req, res) => {
             .add({
                 nome,
                 email,
+                emailLowerCase,
                 observacoes,
                 aulasPorSemana: aulasPorSemana || 2,
                 fotoUrl: fotoUrl || null,
@@ -154,7 +156,10 @@ router.put('/alunos/:id', async (req, res) => {
 
         const updateData = {};
         if (nome !== undefined) updateData.nome = nome;
-        if (email !== undefined) updateData.email = email;
+        if (email !== undefined) {
+            updateData.email = email;
+            updateData.emailLowerCase = email ? String(email).toLowerCase() : null;
+        }
         if (observacoes !== undefined) updateData.observacoes = observacoes;
         if (aulasPorSemana !== undefined) updateData.aulasPorSemana = aulasPorSemana;
         if (fotoUrl !== undefined) updateData.fotoUrl = fotoUrl;

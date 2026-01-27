@@ -8,6 +8,51 @@ module.exports = async (req, res) => {
             const doc = await userRef.get();
 
             if (!doc.exists) {
+                const email = req.user.email ? String(req.user.email).trim() : '';
+                const emailLower = email.toLowerCase();
+                if (emailLower) {
+                    let alunoSnap = await admin.firestore()
+                        .collectionGroup('alunos')
+                        .where('email', '==', email)
+                        .limit(1)
+                        .get();
+
+                    if (alunoSnap.empty) {
+                        alunoSnap = await admin.firestore()
+                            .collectionGroup('alunos')
+                            .where('emailLowerCase', '==', emailLower)
+                            .limit(1)
+                            .get();
+                    }
+
+                    if (alunoSnap.empty) {
+                        alunoSnap = await admin.firestore()
+                            .collectionGroup('alunos')
+                            .where('email', '==', emailLower)
+                            .limit(1)
+                            .get();
+                    }
+
+                    if (!alunoSnap.empty) {
+                        const alunoDoc = alunoSnap.docs[0];
+                        const alunoData = alunoDoc.data() || {};
+                        const personalId = alunoDoc.ref.parent.parent ? alunoDoc.ref.parent.parent.id : null;
+                        const now = new Date().toISOString();
+                        const userPayload = {
+                            email: alunoData.email || email,
+                            emailLowerCase: (alunoData.email || email).toLowerCase(),
+                            role: 'aluno',
+                            personalId,
+                            nome: alunoData.nome || alunoData.name || '',
+                            aulasPorSemana: alunoData.aulasPorSemana ?? null,
+                            createdAt: now
+                        };
+
+                        await userRef.set(userPayload, { merge: true });
+                        return res.json({ ...alunoData, ...userPayload });
+                    }
+                }
+
                 return res.status(404).json({ message: 'Usuário não encontrado' });
             }
 
