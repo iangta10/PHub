@@ -31,11 +31,14 @@ function normalizeVideoUrl(url) {
 function buildLessonRow({ courseId, lesson, role }) {
     const progress = lesson.progresso || { positionSeconds: 0, completed: false };
     const hasProgress = progress.positionSeconds > 0 && !progress.completed;
-    const statusLabel = progress.completed
-        ? 'Concluída'
-        : hasProgress
-            ? `Continuar em ${formatTime(progress.positionSeconds)}`
-            : 'Iniciar aula';
+    const canTrackProgress = role !== 'admin';
+    const statusLabel = canTrackProgress
+        ? (progress.completed
+            ? 'Concluída'
+            : hasProgress
+                ? `Continuar em ${formatTime(progress.positionSeconds)}`
+                : 'Iniciar aula')
+        : 'Assistir aula';
 
     return `
         <li class="aula-item" data-course-id="${courseId}" data-lesson-id="${lesson.id}">
@@ -44,12 +47,12 @@ function buildLessonRow({ courseId, lesson, role }) {
                 <p>${lesson.duracaoSegundos ? `Duração: ${formatTime(lesson.duracaoSegundos)}` : 'Duração não informada'}</p>
             </div>
             <div class="aula-actions">
-                ${role !== 'admin'
-                    ? `<button class="aula-action-btn" data-action="play">${statusLabel}</button>`
-                    : `<span class="aula-meta">${lesson.videoUrl}</span>`}
-                <span class="aula-status ${progress.completed ? 'is-complete' : ''}">
-                    ${progress.completed ? '✅ Finalizada' : hasProgress ? `⏱️ ${formatTime(progress.positionSeconds)}` : ''}
-                </span>
+                <button class="aula-action-btn" data-action="play">${statusLabel}</button>
+                ${canTrackProgress
+                    ? `<span class="aula-status ${progress.completed ? 'is-complete' : ''}">
+                        ${progress.completed ? '✅ Finalizada' : hasProgress ? `⏱️ ${formatTime(progress.positionSeconds)}` : ''}
+                    </span>`
+                    : ''}
             </div>
         </li>`;
 }
@@ -222,6 +225,7 @@ export async function loadAulasSection(roleOverride) {
     const novoCursoBtn = content.querySelector('#novoCursoBtn');
     if (isAdmin) {
         novoCursoBtn.style.display = 'inline-flex';
+        markCompleteBtn.classList.add('hidden');
     }
 
     let activeLesson = null;
@@ -435,7 +439,7 @@ export async function loadAulasSection(roleOverride) {
             }
         }
 
-        if (lessonItem && !isAdmin) {
+        if (lessonItem) {
             const courseId = lessonItem.dataset.courseId;
             const lessonId = lessonItem.dataset.lessonId;
             const course = cachedCourses.find(c => c.id === courseId);
