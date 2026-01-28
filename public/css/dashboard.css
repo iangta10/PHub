@@ -956,6 +956,16 @@ body {
     flex-wrap: wrap;
 }
 
+.player-actions .drive-link {
+    color: #f7b267;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.player-actions .drive-link:hover {
+    text-decoration: underline;
+}
+
 .aulas-section .primary,
 .aulas-modal .primary,
 .player-actions .primary,

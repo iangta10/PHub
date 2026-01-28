@@ -15,13 +15,33 @@ function buildLessonId() {
     return admin.firestore().collection(COURSE_COLLECTION).doc().collection('lessons').doc().id;
 }
 
+function extractGoogleDriveId(url) {
+    if (!url) return null;
+    const patterns = [
+        /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
+        /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/,
+        /drive\.google\.com\/uc\?id=([a-zA-Z0-9_-]+)/,
+        /drive\.google\.com\/uc\?export=download&id=([a-zA-Z0-9_-]+)/
+    ];
+    const match = patterns.map(pattern => url.match(pattern)).find(Boolean);
+    return match ? match[1] : null;
+}
+
+function normalizeVideoUrl(url) {
+    const trimmed = (url || '').trim();
+    if (!trimmed) return '';
+    const driveId = extractGoogleDriveId(trimmed);
+    if (!driveId) return trimmed;
+    return `https://drive.google.com/uc?export=download&id=${driveId}`;
+}
+
 function normalizeLessons(lessons, keepIds = false) {
     if (!Array.isArray(lessons)) return [];
     return lessons
         .map(lesson => ({
             id: keepIds && lesson.id ? lesson.id : buildLessonId(),
             titulo: (lesson.titulo || '').trim(),
-            videoUrl: (lesson.videoUrl || '').trim(),
+            videoUrl: normalizeVideoUrl(lesson.videoUrl),
             duracaoSegundos: Number.isFinite(Number(lesson.duracaoSegundos))
                 ? Number(lesson.duracaoSegundos)
                 : null
