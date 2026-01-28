@@ -47,18 +47,35 @@ if (loginForm) {
 
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const idToken = await userCredential.user.getIdToken();
+            let idToken = await userCredential.user.getIdToken(true);
             localStorage.setItem('token', idToken);
 
-            const res = await fetch('/api/users/me', {
+            const makeAuthRequest = async (token) => fetch('/api/users/me', {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${idToken}`
+                    'Authorization': `Bearer ${token}`
                 }
             });
 
+            let res = await makeAuthRequest(idToken);
+
+            if (res.status === 401 || res.status === 403) {
+                idToken = await userCredential.user.getIdToken(true);
+                localStorage.setItem('token', idToken);
+                res = await makeAuthRequest(idToken);
+            }
+
             if (!res.ok) {
-                throw new Error('Falha ao obter dados do usuário');
+                let message = 'Falha ao obter dados do usuário';
+                try {
+                    const errorPayload = await res.json();
+                    if (errorPayload?.message) {
+                        message = errorPayload.message;
+                    }
+                } catch (parseError) {
+                    // ignore parse error
+                }
+                throw new Error(message);
             }
 
             const userData = await res.json();
