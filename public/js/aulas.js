@@ -8,6 +8,26 @@ function formatTime(seconds) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
+function extractGoogleDriveId(url) {
+    if (!url) return null;
+    const patterns = [
+        /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
+        /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/,
+        /drive\.google\.com\/uc\?id=([a-zA-Z0-9_-]+)/,
+        /drive\.google\.com\/uc\?export=download&id=([a-zA-Z0-9_-]+)/
+    ];
+    const match = patterns.map(pattern => url.match(pattern)).find(Boolean);
+    return match ? match[1] : null;
+}
+
+function normalizeVideoUrl(url) {
+    const trimmed = (url || '').trim();
+    if (!trimmed) return '';
+    const driveId = extractGoogleDriveId(trimmed);
+    if (!driveId) return trimmed;
+    return `https://drive.google.com/uc?export=download&id=${driveId}`;
+}
+
 function buildLessonRow({ courseId, lesson, role }) {
     const progress = lesson.progresso || { positionSeconds: 0, completed: false };
     const hasProgress = progress.positionSeconds > 0 && !progress.completed;
@@ -70,7 +90,7 @@ function buildLessonField(lesson = {}) {
             </label>
             <label>
                 URL do vídeo
-                <input type="url" name="lessonUrl" value="${lesson.videoUrl || ''}" required />
+                <input type="url" name="lessonUrl" value="${lesson.videoUrl || ''}" placeholder="https://drive.google.com/file/d/..." required />
             </label>
             <label>
                 Duração (segundos)
@@ -165,6 +185,7 @@ function buildPlayerSection() {
             <video id="lessonVideo" controls></video>
             <div class="player-actions">
                 <span id="playerStatus"></span>
+                <a id="driveLink" class="drive-link hidden" href="#" target="_blank" rel="noopener">Abrir no Google Drive</a>
                 <button id="markComplete" class="primary">Marcar como concluída</button>
             </div>
         </section>`;
@@ -192,6 +213,7 @@ export async function loadAulasSection(roleOverride) {
     const playerTitle = content.querySelector('#playerTitle');
     const playerSubtitle = content.querySelector('#playerSubtitle');
     const playerStatus = content.querySelector('#playerStatus');
+    const driveLink = content.querySelector('#driveLink');
     const markCompleteBtn = content.querySelector('#markComplete');
     const closePlayerBtn = content.querySelector('#closePlayer');
 
@@ -260,14 +282,23 @@ export async function loadAulasSection(roleOverride) {
         activeLesson = { courseId: course.id, lessonId: lesson.id, title: lesson.titulo };
         const progressKey = `${course.id}_${lesson.id}`;
         const progress = progressCache.get(progressKey) || { positionSeconds: 0, completed: false };
+        const driveId = extractGoogleDriveId(lesson.videoUrl);
 
         player.classList.remove('hidden');
         playerTitle.textContent = lesson.titulo;
         playerSubtitle.textContent = course.titulo;
-        video.src = lesson.videoUrl;
+        video.src = normalizeVideoUrl(lesson.videoUrl);
         video.dataset.courseId = course.id;
         video.dataset.lessonId = lesson.id;
         updatePlayerStatus(progress);
+
+        if (driveId) {
+            driveLink.href = `https://drive.google.com/file/d/${driveId}/view`;
+            driveLink.classList.remove('hidden');
+        } else {
+            driveLink.href = '#';
+            driveLink.classList.add('hidden');
+        }
 
         if (progress.completed) {
             markCompleteBtn.textContent = 'Concluída';
