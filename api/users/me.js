@@ -25,6 +25,14 @@ module.exports = async (req, res) => {
                             .get();
                     }
 
+                    if (alunoSnap.empty) {
+                        alunoSnap = await admin.firestore()
+                            .collectionGroup('alunos')
+                            .where('email', '==', emailLower)
+                            .limit(1)
+                            .get();
+                    }
+
                     if (!alunoSnap.empty) {
                         const alunoDoc = alunoSnap.docs[0];
                         const alunoData = alunoDoc.data() || {};
@@ -32,6 +40,7 @@ module.exports = async (req, res) => {
                         const now = new Date().toISOString();
                         const userPayload = {
                             email: alunoData.email || email,
+                            emailLowerCase: (alunoData.email || email).toLowerCase(),
                             role: 'aluno',
                             personalId,
                             nome: alunoData.nome || alunoData.name || '',
