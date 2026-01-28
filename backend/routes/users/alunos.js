@@ -5,8 +5,7 @@ const { sendMail } = require('../../services/mailer');
 const verifyToken = require('../../middleware/verifyToken');
 const requireRole = require('../../middleware/requireRole');
 
-router.use(verifyToken);
-router.use(requireRole('personal', 'admin'));
+router.use('/alunos', verifyToken, requireRole('personal', 'admin'));
 
 // Criar aluno
 router.post('/alunos', async (req, res) => {
