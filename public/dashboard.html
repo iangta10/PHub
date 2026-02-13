@@ -18,27 +18,33 @@
 <body>
     <div class="dashboard">
         <aside class="sidebar">
-            <div class="logo">🏋️</div>
+            <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Expandir menu" aria-expanded="false">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="logo"><i class="fas fa-dumbbell"></i><span class="logo-text">PersonalHub</span></div>
             <ul class="menu">
-                <li data-section="home"><i class="fas fa-home"></i><span class="tooltip">Dashboard</span></li>
-                <li data-section="alunos"><i class="fas fa-users"></i><span class="tooltip">Alunos</span></li>
-                <li data-section="avaliacoes"><i class="fas fa-notes-medical"></i><span class="tooltip">Avaliação Física</span>
+                <li data-section="home"><i class="fas fa-home"></i><span class="menu-label">Dashboard</span></li>
+                <li data-section="alunos"><i class="fas fa-users"></i><span class="menu-label">Alunos</span></li>
+                <li data-section="avaliacoes"><i class="fas fa-notes-medical"></i><span class="menu-label">Avaliação Física</span>
                 </li>
-                <li data-section="treinos"><i class="fas fa-dumbbell"></i><span class="tooltip">Treinos</span></li>
-                <li data-section="exercicios"><i class="fas fa-list"></i><span class="tooltip">Exercícios</span></li>
-                <li data-section="agenda"><i class="fas fa-calendar-alt"></i><span class="tooltip">Agenda</span></li>
-                <li data-section="aulas"><i class="fas fa-play-circle"></i><span class="tooltip">Aulas</span></li>
-                <li data-section="relatorios"><i class="fas fa-chart-line"></i><span class="tooltip">Relatórios</span>
+                <li data-section="treinos"><i class="fas fa-dumbbell"></i><span class="menu-label">Treinos</span></li>
+                <li data-section="exercicios"><i class="fas fa-list"></i><span class="menu-label">Exercícios</span></li>
+                <li data-section="agenda"><i class="fas fa-calendar-alt"></i><span class="menu-label">Agenda</span></li>
+                <li data-section="aulas"><i class="fas fa-play-circle"></i><span class="menu-label">Aulas</span></li>
+                <li data-section="relatorios"><i class="fas fa-chart-line"></i><span class="menu-label">Relatórios</span>
                 </li>
-                <li data-section="personais"><i class="fas fa-user-tie"></i><span class="tooltip">Personais</span></li>
-                <li data-section="perfil"><i class="fas fa-user"></i><span class="tooltip">Perfil</span></li>
-                <li id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span class="tooltip">Sair</span></li>
+                <li data-section="personais"><i class="fas fa-user-tie"></i><span class="menu-label">Personais</span></li>
+                <li data-section="perfil"><i class="fas fa-user"></i><span class="menu-label">Perfil</span></li>
+                <li id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span class="menu-label">Sair</span></li>
             </ul>
 
         </aside>
 
         <div class="main">
             <header class="header">
+                <button class="mobile-sidebar-toggle" id="mobileSidebarToggle" type="button" aria-label="Abrir menu" aria-expanded="false">
+                    <i class="fas fa-bars"></i>
+                </button>
                 <h1><span style="color: #f58725;">Personal</span>Hub</h1>
                 <div class="header-right">
                     <span id="userGreeting">Olá, Personal</span>

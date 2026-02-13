@@ -19,6 +19,7 @@ function updateNavigation(role) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    setupSidebarToggle();
     document.querySelectorAll('.sidebar li').forEach(item => {
         item.addEventListener('click', async () => {
             const section = item.getAttribute('data-section');
@@ -65,6 +66,69 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+
+function setupSidebarToggle() {
+    const sidebar = document.querySelector('.sidebar');
+    const desktopToggle = document.getElementById('sidebarToggle');
+    const mobileToggle = document.getElementById('mobileSidebarToggle');
+
+    if (!sidebar) {
+        return;
+    }
+
+    const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+
+    const syncToggleLabels = () => {
+        const expandedDesktop = sidebar.classList.contains('is-expanded');
+        const openMobile = sidebar.classList.contains('is-mobile-open');
+
+        if (desktopToggle) {
+            desktopToggle.setAttribute('aria-expanded', String(expandedDesktop || openMobile));
+            desktopToggle.setAttribute('aria-label', expandedDesktop ? 'Recolher menu' : 'Expandir menu');
+        }
+
+        if (mobileToggle) {
+            mobileToggle.setAttribute('aria-expanded', String(openMobile));
+        }
+    };
+
+    if (desktopToggle) {
+        desktopToggle.addEventListener('click', () => {
+            if (isMobile()) {
+                sidebar.classList.toggle('is-mobile-open');
+            } else {
+                sidebar.classList.toggle('is-expanded');
+            }
+            syncToggleLabels();
+        });
+    }
+
+    if (mobileToggle) {
+        mobileToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('is-mobile-open');
+            syncToggleLabels();
+        });
+    }
+
+    window.addEventListener('resize', () => {
+        if (!isMobile()) {
+            sidebar.classList.remove('is-mobile-open');
+        }
+        syncToggleLabels();
+    });
+
+    document.querySelectorAll('.sidebar li').forEach(item => {
+        item.addEventListener('click', () => {
+            if (isMobile()) {
+                sidebar.classList.remove('is-mobile-open');
+                syncToggleLabels();
+            }
+        });
+    });
+
+    syncToggleLabels();
+}
 
 function loadSection(section) {
     const content = document.getElementById("content");
