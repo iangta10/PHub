@@ -5,11 +5,14 @@ let USER_ROLE = 'personal';
 function updateNavigation(role) {
     const personalOnly = ['alunos', 'avaliacoes', 'treinos', 'exercicios', 'relatorios'];
     const alunoOnly = ['meus-treinos', 'anamnese', 'progresso'];
+    const adminOnly = ['personais'];
     document.querySelectorAll('.sidebar li[data-section]').forEach(li => {
         const section = li.getAttribute('data-section');
         if (role === 'aluno' && personalOnly.includes(section)) {
             li.style.display = 'none';
         } else if (role !== 'aluno' && alunoOnly.includes(section)) {
+            li.style.display = 'none';
+        } else if (role !== 'admin' && adminOnly.includes(section)) {
             li.style.display = 'none';
         }
     });
@@ -44,6 +47,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (section === 'meus-treinos') {
                     const { loadMeusTreinos } = await import('./treinos.js');
                     loadMeusTreinos();
+                } else if (section === 'personais') {
+                    const { loadPersonaisSection } = await import('./personais.js');
+                    loadPersonaisSection();
                 } else if (section === 'perfil') {
                     const { loadProfileSection } = await import('./profile.js');
                     loadProfileSection();
