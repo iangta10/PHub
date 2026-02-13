@@ -186,7 +186,7 @@ function ensureDataset(data) {
         return data;
     }
     const now = Date.now();
-    return Array.from({ length: 60 }, (_, index) => {
+    return Array.from({ length: 2 }, (_, index) => {
         const base = now - index * 86_400_000;
         const statusKeys = Object.keys(STATUS_LABELS);
         const planKeys = ["mensal", "trimestral", "semestral"];
