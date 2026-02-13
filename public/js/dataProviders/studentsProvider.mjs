@@ -268,6 +268,30 @@ function removeFromCache(ids) {
     };
 }
 
+
+function updateStatusInCache(ids, status) {
+    if (!Array.isArray(cache.data) || !Array.isArray(ids) || !ids.length || !status) {
+        return;
+    }
+    const idSet = new Set(ids.map(value => String(value)));
+    const statusKey = String(status).toLowerCase();
+    const statusLabel = STATUS_LABELS[statusKey] || status;
+    cache = {
+        data: cache.data.map(item => {
+            const candidate = item?.id ?? item?.uid ?? item?.userId;
+            if (candidate === undefined || candidate === null || !idSet.has(String(candidate))) {
+                return item;
+            }
+            return {
+                ...item,
+                status: statusKey,
+                statusLabel
+            };
+        }),
+        fetchedAt: Date.now()
+    };
+}
+
 function applyFilters(dataset, params) {
     const term = (params.search || params.searchTerm || "").trim().toLowerCase();
     const statusFilters = getFilterArray(params.status).map(v => v.toLowerCase());
@@ -379,13 +403,13 @@ export async function bulkAction(type, ids) {
         if (type === "delete") {
             removeFromCache(ids);
         }
+        if (type === "deactivate") {
+            updateStatusInCache(ids, "inativo");
+        }
         return result;
     } catch (error) {
-        console.warn("Ação em massa tratada localmente:", error);
-        if (type === "delete") {
-            removeFromCache(ids);
-        }
-        return { success: true, message: "Ação registrada localmente." };
+        console.error("Falha ao executar ação em massa:", error);
+        throw error;
     }
 }
 

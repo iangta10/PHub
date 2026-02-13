@@ -24,6 +24,7 @@ router.post('/alunos', async (req, res) => {
         metas,
         prazoMeta,
         motivacao,
+        status,
         plano,
         inicioPlano,
         vencimentoPlano
@@ -56,6 +57,7 @@ router.post('/alunos', async (req, res) => {
                 metas: metas || null,
                 prazoMeta: prazoMeta || null,
                 motivacao: motivacao || null,
+                status: status || 'ativo',
                 plano: plano || null,
                 inicioPlano: inicioPlano || null,
                 vencimentoPlano: vencimentoPlano || null,
@@ -141,6 +143,7 @@ router.put('/alunos/:id', async (req, res) => {
         metas,
         prazoMeta,
         motivacao,
+        status,
         plano,
         inicioPlano,
         vencimentoPlano
@@ -183,6 +186,7 @@ router.put('/alunos/:id', async (req, res) => {
         if (metas !== undefined) updateData.metas = metas;
         if (prazoMeta !== undefined) updateData.prazoMeta = prazoMeta;
         if (motivacao !== undefined) updateData.motivacao = motivacao;
+        if (status !== undefined) updateData.status = status;
         if (plano !== undefined) updateData.plano = plano;
         if (inicioPlano !== undefined) updateData.inicioPlano = inicioPlano;
         if (vencimentoPlano !== undefined) updateData.vencimentoPlano = vencimentoPlano;
@@ -234,6 +238,77 @@ router.delete('/alunos/:id', async (req, res) => {
     } catch (err) {
         console.error('Erro ao remover aluno:', err);
         res.status(500).json({ error: 'Erro ao remover aluno' });
+    }
+});
+
+router.post('/alunos/bulk', async (req, res) => {
+    const personalId = req.user.uid;
+    const { type, ids } = req.body || {};
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: 'Selecione ao menos um aluno.' });
+    }
+
+    const normalizedIds = ids.map(id => String(id).trim()).filter(Boolean);
+    if (!normalizedIds.length) {
+        return res.status(400).json({ error: 'IDs inválidos para operação em massa.' });
+    }
+
+    try {
+        const db = admin.firestore();
+        const alunosCollection = db.collection('users').doc(personalId).collection('alunos');
+
+        if (type === 'delete') {
+            const chunks = [];
+            for (let i = 0; i < normalizedIds.length; i += 400) {
+                chunks.push(normalizedIds.slice(i, i + 400));
+            }
+
+            for (const chunk of chunks) {
+                const batch = db.batch();
+                chunk.forEach(id => {
+                    batch.delete(alunosCollection.doc(id));
+                });
+                await batch.commit();
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: `${normalizedIds.length} aluno(s) excluído(s) com sucesso.`
+            });
+        }
+
+        if (type === 'deactivate') {
+            const chunks = [];
+            for (let i = 0; i < normalizedIds.length; i += 400) {
+                chunks.push(normalizedIds.slice(i, i + 400));
+            }
+
+            for (const chunk of chunks) {
+                const batch = db.batch();
+                chunk.forEach(id => {
+                    batch.update(alunosCollection.doc(id), { status: 'inativo' });
+                });
+                await batch.commit();
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: `${normalizedIds.length} aluno(s) desativado(s) com sucesso.`
+            });
+        }
+
+        if (type === 'anamnese' || type === 'invite') {
+            return res.status(200).json({
+                success: true,
+                message: 'Ação registrada. Esta funcionalidade será concluída em uma próxima versão.'
+            });
+        }
+
+        return res.status(400).json({ error: 'Tipo de ação em massa inválido.' });
+    } catch (err) {
+        console.error('Erro ao executar ação em massa para alunos:', err);
+        return res.status(500).json({ error: 'Erro ao executar ação em massa.' });
     }
 });
 
