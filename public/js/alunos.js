@@ -909,7 +909,9 @@ async function showEditAlunoForm(aluno) {
                 id: planoSelecionado.id,
                 nome: planoSelecionado.nome,
                 duracao: planoSelecionado.duracao,
-                preco: planoSelecionado.preco
+                preco: planoSelecionado.preco,
+                modalidade: planoSelecionado.modalidade,
+                dieta: planoSelecionado.dieta
             };
         }
 
@@ -1292,7 +1294,9 @@ export function showNovoAlunoModal(callback) {
                 id: planoSelecionado.id,
                 nome: planoSelecionado.nome,
                 duracao: planoSelecionado.duracao,
-                preco: planoSelecionado.preco
+                preco: planoSelecionado.preco,
+                modalidade: planoSelecionado.modalidade,
+                dieta: planoSelecionado.dieta
             };
         }
 

@@ -542,6 +542,27 @@ body {
     color: #000;
 }
 
+.dia-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.dia-header h3 {
+    margin: 0;
+}
+
+.dia-header .removeDia {
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.dia-header .removeDia:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
 .treinoCard {
     background-color: #1e1e1e;
     padding: 20px;
@@ -552,6 +573,18 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
+}
+
+.treino-meta {
+    margin: 0;
+    text-align: left;
+    color: #cfcfcf;
+}
+
+.treino-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .diaCard {
@@ -1646,6 +1679,120 @@ body {
 }
 .config-ficha input[type="number"] {
     width: 60px;
+}
+
+.config-ficha input[type="text"],
+.config-ficha input[type="date"],
+.config-ficha select,
+.treino-periodizacao input {
+    min-width: 180px;
+}
+
+.treino-periodizacao {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.sessao-treino-modal__content {
+    width: min(900px, 94vw);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.sessao-treino-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.sessao-treino-modal__header h3 {
+    margin: 0;
+}
+
+.sessao-modal-close {
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 1.7rem;
+    padding: 0;
+}
+
+.sessao-treino-form,
+.sessao-history {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sessao-exercicios {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sessao-exercicio {
+    display: grid;
+    grid-template-columns: minmax(180px, 1.4fr) auto repeat(3, minmax(120px, 1fr));
+    gap: 8px;
+    align-items: center;
+    padding: 10px;
+    background-color: #121212;
+    border: 1px solid #333;
+    border-radius: 6px;
+}
+
+.sessao-exercicio__info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.sessao-exercicio__info span,
+.sessao-history-item small {
+    color: #a9a9a9;
+}
+
+.sessao-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.sessao-check input {
+    width: auto;
+    margin: 0;
+}
+
+.sessao-feedback {
+    color: #facc15;
+}
+
+.sessao-history h4 {
+    margin: 0;
+}
+
+.sessao-history-item {
+    display: grid;
+    grid-template-columns: 120px 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 10px;
+    background-color: #121212;
+    border-radius: 6px;
+}
+
+.sessao-history-item small {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 760px) {
+    .sessao-exercicio,
+    .sessao-history-item {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* === Treino Tabs === */

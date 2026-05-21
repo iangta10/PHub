@@ -3,11 +3,35 @@ const router = express.Router({ mergeParams: true });
 const admin = require('../../firebase-admin');
 const verifyToken = require('../../middleware/verifyToken');
 
+function parseInteger(value) {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isNaN(parsed) ? null : parsed;
+}
+
+function sanitizeSessionExercises(exercicios) {
+    if (!Array.isArray(exercicios)) return [];
+    return exercicios.map((ex, index) => {
+        const carga = ex?.carga === '' || ex?.carga === undefined || ex?.carga === null
+            ? null
+            : Number(ex.carga);
+        return {
+            nome: ex?.nome || `Exercício ${index + 1}`,
+            seriesPrevistas: ex?.seriesPrevistas || null,
+            repeticoesPrevistas: ex?.repeticoesPrevistas || null,
+            cargaPrevista: ex?.cargaPrevista === undefined ? null : ex.cargaPrevista,
+            concluido: ex?.concluido !== false,
+            carga: Number.isNaN(carga) ? null : carga,
+            repeticoes: ex?.repeticoes || '',
+            observacoes: ex?.observacoes || ''
+        };
+    });
+}
+
 // Criar treino para um aluno especifico (personal)
 router.post('/alunos/:alunoId/treinos', verifyToken, async (req, res) => {
     const personalId = req.user.uid;
     const alunoId = req.params.alunoId;
-    const { nome, dias, qtdTreinos, proximoTreino, vencimento } = req.body;
+    const { nome, periodizacao, dias, qtdTreinos, proximoTreino, vencimento } = req.body;
 
     try {
         const treinoRef = await admin.firestore()
@@ -16,6 +40,7 @@ router.post('/alunos/:alunoId/treinos', verifyToken, async (req, res) => {
             .collection('treinos')
             .add({
                 nome: nome || 'Treino',
+                periodizacao: periodizacao || null,
                 dias: Array.isArray(dias) ? dias : [],
                 qtdTreinos: qtdTreinos ? parseInt(qtdTreinos) : 1,
                 proximoTreino: proximoTreino || null,
@@ -53,10 +78,11 @@ router.get('/alunos/:alunoId/treinos', verifyToken, async (req, res) => {
 router.put('/alunos/:alunoId/treinos/:id', verifyToken, async (req, res) => {
     const personalId = req.user.uid;
     const { alunoId, id } = req.params;
-    const { nome, dias, qtdTreinos, proximoTreino, vencimento } = req.body;
+    const { nome, periodizacao, dias, qtdTreinos, proximoTreino, vencimento } = req.body;
 
     const updateData = {};
     if (nome !== undefined) updateData.nome = nome;
+    if (periodizacao !== undefined) updateData.periodizacao = periodizacao || null;
     if (dias !== undefined) updateData.dias = Array.isArray(dias) ? dias : [];
     if (qtdTreinos !== undefined) updateData.qtdTreinos = parseInt(qtdTreinos);
     if (proximoTreino !== undefined) updateData.proximoTreino = proximoTreino;
@@ -73,6 +99,92 @@ router.put('/alunos/:alunoId/treinos/:id', verifyToken, async (req, res) => {
     } catch (err) {
         console.error('Erro ao atualizar treino:', err);
         res.status(500).json({ error: 'Erro ao atualizar treino' });
+    }
+});
+
+// Listar sessoes registradas pelo personal para um treino
+router.get('/alunos/:alunoId/treinos/:id/sessoes', verifyToken, async (req, res) => {
+    const personalId = req.user.uid;
+    const { alunoId, id } = req.params;
+
+    try {
+        const treinoRef = admin.firestore()
+            .collection('users').doc(personalId)
+            .collection('alunos').doc(alunoId)
+            .collection('treinos').doc(id);
+
+        const treinoDoc = await treinoRef.get();
+        if (!treinoDoc.exists) {
+            return res.status(404).json({ error: 'Treino não encontrado' });
+        }
+
+        const snapshot = await treinoRef.collection('sessoes')
+            .orderBy('criadoEm', 'desc')
+            .limit(20)
+            .get();
+
+        const sessoes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        res.json(sessoes);
+    } catch (err) {
+        console.error('Erro ao listar sessões do treino:', err);
+        res.status(500).json({ error: 'Erro ao listar sessões' });
+    }
+});
+
+// Registrar sessao presencial conduzida pelo personal
+router.post('/alunos/:alunoId/treinos/:id/sessoes', verifyToken, async (req, res) => {
+    const personalId = req.user.uid;
+    const { alunoId, id } = req.params;
+    const { diaIndex, diaNome, data, observacoes, exercicios, realizadoPor, origem } = req.body || {};
+    const now = new Date().toISOString();
+
+    try {
+        const treinoRef = admin.firestore()
+            .collection('users').doc(personalId)
+            .collection('alunos').doc(alunoId)
+            .collection('treinos').doc(id);
+
+        const treinoDoc = await treinoRef.get();
+        if (!treinoDoc.exists) {
+            return res.status(404).json({ error: 'Treino não encontrado' });
+        }
+
+        const treino = treinoDoc.data() || {};
+        const dias = Array.isArray(treino.dias) ? treino.dias : [];
+        const parsedDiaIndex = parseInteger(diaIndex);
+        const dia = parsedDiaIndex !== null && parsedDiaIndex >= 0 ? dias[parsedDiaIndex] : null;
+        const sessionDate = data || now;
+        const payload = {
+            treinoId: id,
+            treinoNome: treino.nome || 'Treino',
+            diaIndex: parsedDiaIndex,
+            diaNome: diaNome || dia?.nome || null,
+            data: sessionDate,
+            observacoes: observacoes || '',
+            exercicios: sanitizeSessionExercises(exercicios),
+            realizadoPor: realizadoPor || 'personal',
+            origem: origem || 'presencial',
+            criadoEm: now,
+            atualizadoEm: now
+        };
+
+        const sessaoRef = await treinoRef.collection('sessoes').add(payload);
+
+        const updateData = {
+            ultimaSessaoEm: sessionDate,
+            sessoesRealizadas: admin.firestore.FieldValue.increment(1)
+        };
+
+        if (dias.length && parsedDiaIndex !== null && parsedDiaIndex >= 0) {
+            updateData.proximoTreino = String((parsedDiaIndex + 1) % dias.length);
+        }
+
+        await treinoRef.set(updateData, { merge: true });
+
+        res.status(201).json({ id: sessaoRef.id, ...payload });
+    } catch (err) {
+        console.error('Erro ao registrar sessão do treino:', err);
+        res.status(500).json({ error: 'Erro ao registrar sessão' });
     }
 });
 

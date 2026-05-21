@@ -80,6 +80,16 @@
         const protocoloSelect = document.getElementById('protocoloSelect');
         const dobrasFields = document.querySelectorAll('.dobras-field input');
         const percentualGcInput = document.getElementById('percentualGc');
+        const msgDobras = document.getElementById('msgDobras');
+        const dobrasLabels = {
+            peitoral: 'Peitoral',
+            axilaMedia: 'Axila Média',
+            triceps: 'Tríceps',
+            subescapular: 'Subescapular',
+            suprailiaca: 'Supra-ilíaca',
+            abdominal: 'Abdômen',
+            coxa: 'Coxa'
+        };
 
         let alunoIdade;
         let alunoGenero;
@@ -127,22 +137,63 @@
             calcularPercentualGc();
         }
 
+        function atualizarAvisoCalculo(motivos = []) {
+            if (!msgDobras) return;
+            if (!motivos.length) {
+                if (msgDobras.dataset.tipo === 'calculo') {
+                    msgDobras.textContent = '';
+                    msgDobras.removeAttribute('data-tipo');
+                }
+                return;
+            }
+
+            msgDobras.dataset.tipo = 'calculo';
+            msgDobras.textContent = `Não foi possível calcular o %GC. Dados pendentes: ${motivos.join('; ')}.`;
+        }
+
         function calcularPercentualGc() {
             if (!percentualGcInput) return;
-            const valores = Array.from(dobrasFields).map(el => parseFloat(el.value.replace(',', '.')));
-            if (!valores.length || valores.some(v => Number.isNaN(v))) {
-                percentualGcInput.value = '';
-                percentualGcInput.placeholder = '--';
-                return;
+            const motivos = [];
+
+            if (protocoloSelect.value !== 'jp7') {
+                motivos.push('protocolo');
+            }
+
+            const dobrasPendentes = [];
+            const valores = Array.from(dobrasFields).map(el => {
+                const valor = parseFloat(el.value.replace(',', '.'));
+                if (!el.value || Number.isNaN(valor)) {
+                    dobrasPendentes.push(dobrasLabels[el.name] || el.name);
+                }
+                return valor;
+            });
+
+            if (!valores.length || dobrasPendentes.length) {
+                motivos.push(`dobras (${dobrasPendentes.join(', ')})`);
             }
 
             const s7 = valores.reduce((acc, val) => acc + val, 0);
             const idadeValida = typeof alunoIdade === 'number' ? alunoIdade : parseFloat(alunoIdade);
             const generoNormalizado = normalizarGenero(alunoGenero);
 
+            if (!Number.isFinite(idadeValida)) {
+                motivos.push('idade do aluno');
+            }
+            if (!generoNormalizado) {
+                motivos.push('gênero do aluno');
+            }
+
+            if (motivos.length) {
+                percentualGcInput.value = '';
+                percentualGcInput.placeholder = '--';
+                atualizarAvisoCalculo(motivos);
+                return;
+            }
+
             if (!Number.isFinite(s7) || !Number.isFinite(idadeValida) || !generoNormalizado) {
                 percentualGcInput.value = '';
                 percentualGcInput.placeholder = '--';
+                atualizarAvisoCalculo(['dados insuficientes']);
                 return;
             }
 
@@ -157,6 +208,7 @@
             if (!db || !Number.isFinite(db)) {
                 percentualGcInput.value = '';
                 percentualGcInput.placeholder = '--';
+                atualizarAvisoCalculo(['dados informados não geram densidade corporal válida']);
                 return;
             }
 
@@ -164,10 +216,12 @@
             if (!Number.isFinite(percentual)) {
                 percentualGcInput.value = '';
                 percentualGcInput.placeholder = '--';
+                atualizarAvisoCalculo(['dados informados não geram percentual válido']);
                 return;
             }
 
             percentualGcInput.value = `${percentual.toFixed(2)} %`;
+            atualizarAvisoCalculo();
         }
 
         protocoloSelect.addEventListener('change', atualizarDobras);

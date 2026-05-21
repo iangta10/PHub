@@ -381,6 +381,12 @@ body.formulario-anamnese {
     color: #ff6b6b;
 }
 
+#msgDobras[data-tipo="calculo"] {
+    margin-top: 16px;
+    color: #facc15;
+    text-align: left;
+}
+
 @media (max-width: 520px) {
     body.formulario-anamnese {
         padding: 24px 12px;

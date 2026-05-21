@@ -25,6 +25,8 @@ router.post('/alunos', async (req, res) => {
         prazoMeta,
         motivacao,
         status,
+        modalidade,
+        dieta,
         plano,
         inicioPlano,
         vencimentoPlano
@@ -58,6 +60,8 @@ router.post('/alunos', async (req, res) => {
                 prazoMeta: prazoMeta || null,
                 motivacao: motivacao || null,
                 status: status || 'ativo',
+                modalidade: modalidade || null,
+                dieta: dieta === undefined ? null : dieta,
                 plano: plano || null,
                 inicioPlano: inicioPlano || null,
                 vencimentoPlano: vencimentoPlano || null,
@@ -144,6 +148,8 @@ router.put('/alunos/:id', async (req, res) => {
         prazoMeta,
         motivacao,
         status,
+        modalidade,
+        dieta,
         plano,
         inicioPlano,
         vencimentoPlano
@@ -187,6 +193,8 @@ router.put('/alunos/:id', async (req, res) => {
         if (prazoMeta !== undefined) updateData.prazoMeta = prazoMeta;
         if (motivacao !== undefined) updateData.motivacao = motivacao;
         if (status !== undefined) updateData.status = status;
+        if (modalidade !== undefined) updateData.modalidade = modalidade;
+        if (dieta !== undefined) updateData.dieta = dieta;
         if (plano !== undefined) updateData.plano = plano;
         if (inicioPlano !== undefined) updateData.inicioPlano = inicioPlano;
         if (vencimentoPlano !== undefined) updateData.vencimentoPlano = vencimentoPlano;
