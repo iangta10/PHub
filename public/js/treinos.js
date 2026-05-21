@@ -72,6 +72,109 @@ function isPresencialAluno(aluno = {}) {
     return getAlunoModalidade(aluno) === 'presencial';
 }
 
+function parseRepeticoesValue(value) {
+    if (Array.isArray(value)) {
+        return value.map(item => String(item ?? '').trim());
+    }
+    if (value === null || value === undefined || value === '') return [];
+    return String(value)
+        .split(/[\/,;|]+/)
+        .map(item => item.trim())
+        .filter(item => item !== '');
+}
+
+function parseRepeticoesDataset(value) {
+    if (!value) return [];
+    try {
+        const parsed = JSON.parse(decodeURIComponent(value));
+        return Array.isArray(parsed) ? parsed.map(item => String(item ?? '').trim()) : [];
+    } catch (err) {
+        console.warn('Não foi possível interpretar as repetições do método:', err);
+        return [];
+    }
+}
+
+function normalizeSeriesCount(value, fallback = 0) {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function expandRepsToSeries(seriesCount, repsList = []) {
+    const count = normalizeSeriesCount(seriesCount, repsList.length);
+    if (!count) return [];
+    const normalized = parseRepeticoesValue(repsList);
+    return Array.from({ length: count }, (_, index) => {
+        if (normalized[index] !== undefined) return normalized[index];
+        if (normalized.length === 1) return normalized[0];
+        return '';
+    });
+}
+
+function getSeriesDetalhadas(exDiv) {
+    const rows = Array.from(exDiv.querySelectorAll('.serie-planejada'));
+    return rows.map((row, index) => ({
+        numero: index + 1,
+        repeticoes: row.querySelector('.serieReps')?.value?.trim() || ''
+    }));
+}
+
+function getRepsFromSeriesDetalhadas(exDiv) {
+    return getSeriesDetalhadas(exDiv).map(serie => serie.repeticoes);
+}
+
+function formatRepeticoesResumo(seriesDetalhadas = [], fallback = '') {
+    const reps = seriesDetalhadas.map(serie => serie.repeticoes).filter(Boolean);
+    if (!reps.length) return fallback || null;
+    const unique = Array.from(new Set(reps));
+    return unique.length === 1 ? unique[0] : reps.join(' / ');
+}
+
+function getExerciseSeriesPlan(ex = {}) {
+    if (Array.isArray(ex.seriesDetalhadas) && ex.seriesDetalhadas.length) {
+        return ex.seriesDetalhadas.map((serie, index) => ({
+            numero: Number(serie.numero) || index + 1,
+            repeticoes: serie.repeticoes ?? ''
+        }));
+    }
+
+    const repsList = parseRepeticoesValue(ex.repeticoes);
+    const count = normalizeSeriesCount(ex.series, repsList.length || 1);
+    return expandRepsToSeries(count, repsList).map((repeticoes, index) => ({
+        numero: index + 1,
+        repeticoes
+    }));
+}
+
+function formatExercisePrescription(ex = {}) {
+    const plan = getExerciseSeriesPlan(ex);
+    if (plan.length) {
+        const reps = plan.map(serie => serie.repeticoes).filter(Boolean);
+        const unique = Array.from(new Set(reps));
+        if (unique.length === 1 && unique[0]) return `${plan.length}x${unique[0]}`;
+        if (reps.length) return `${plan.length} séries (${reps.join(' / ')})`;
+        return `${plan.length} séries`;
+    }
+    return `${ex.series || ''}x${ex.repeticoes || ''}`;
+}
+
+function renderSeriesDetalhesForExercise(exDiv, seriesValue, repsValues = []) {
+    const seriesDetalhes = exDiv.querySelector('.seriesDetalhes');
+    if (!seriesDetalhes) return;
+    const currentValues = Array.isArray(repsValues) ? repsValues : parseRepeticoesValue(repsValues);
+    const count = normalizeSeriesCount(seriesValue, currentValues.length);
+    if (!count) {
+        seriesDetalhes.innerHTML = '';
+        return;
+    }
+    const reps = expandRepsToSeries(count, currentValues);
+    seriesDetalhes.innerHTML = reps.map((rep, index) => `
+        <label class="serie-planejada">
+            <span>Serie ${index + 1}</span>
+            <input type="text" class="serieReps" inputmode="numeric" placeholder="Reps" value="${escapeAttribute(rep)}" />
+        </label>
+    `).join('');
+}
+
 function updateProximoOptions() {
     const select = document.querySelector('#configFicha select[name="proximoTreino"]');
     if (!select) return;
@@ -270,11 +373,14 @@ export async function loadTreinosSection(alunoIdParam = '') {
                 const diaSemanaVal = diaDiv.querySelector('.diaSemana').value || null;
                 const exercicios = [];
                 diaDiv.querySelectorAll('.exercicio').forEach(exDiv => {
+                    const seriesDetalhadas = getSeriesDetalhadas(exDiv);
                     exercicios.push({
                         categoria: exDiv.querySelector('.categoria').value || null,
                         nome: exDiv.querySelector('.nomeExercicio').value,
-                        series: Number(exDiv.querySelector('.series').value) || null,
-                        repeticoes: Number(exDiv.querySelector('.repeticoes').value) || null,
+                        metodo: exDiv.querySelector('.metodo').value || null,
+                        series: seriesDetalhadas.length || Number(exDiv.querySelector('.series').value) || null,
+                        repeticoes: formatRepeticoesResumo(seriesDetalhadas, exDiv.querySelector('.repeticoes').value),
+                        seriesDetalhadas,
                         carga: exDiv.querySelector('.carga').value ? Number(exDiv.querySelector('.carga').value) : undefined,
                         observacoes: exDiv.querySelector('.observacoes').value || ''
                     });
@@ -392,6 +498,7 @@ function addExercicio(container) {
         </select>
         <input type="number" class="series" placeholder="Séries" />
         <input type="number" class="repeticoes" placeholder="Reps" />
+        <div class="seriesDetalhes"></div>
         <input type="number" class="carga" placeholder="Sug. Carga" />
         <label class="bisetLbl"><input type="checkbox" class="biSet" /> bi-set</label>
         <input type="text" class="observacoes" placeholder="Observações" />
@@ -407,6 +514,17 @@ function addExercicio(container) {
     const seriesInput = exDiv.querySelector('.series');
     const repInput = exDiv.querySelector('.repeticoes');
     const obsInput = exDiv.querySelector('.observacoes');
+    const seriesDetalhes = exDiv.querySelector('.seriesDetalhes');
+
+    function renderSeriesDetalhes(seriesValue, repsValues = []) {
+        renderSeriesDetalhesForExercise(exDiv, seriesValue, repsValues);
+    }
+
+    function syncSeriesDetalhesFromInputs() {
+        const currentReps = getRepsFromSeriesDetalhadas(exDiv);
+        const fallbackReps = repInput.value ? [repInput.value] : currentReps;
+        renderSeriesDetalhes(seriesInput.value, fallbackReps);
+    }
 
     function updateOptions() {
         const cat = categoriaSel.value;
@@ -432,10 +550,17 @@ function addExercicio(container) {
         if (!opt) return;
         const s = opt.dataset.series;
         const r = opt.dataset.repeticoes;
+        const repsList = parseRepeticoesDataset(opt.dataset.repeticoesList);
         const o = opt.dataset.observacoes;
         if (s) seriesInput.value = s;
         if (r) repInput.value = r;
         if (o) obsInput.value = o;
+        renderSeriesDetalhes(seriesInput.value, repsList.length ? repsList : (r ? [r] : []));
+    });
+
+    seriesInput.addEventListener('input', syncSeriesDetalhesFromInputs);
+    repInput.addEventListener('input', () => {
+        renderSeriesDetalhes(seriesInput.value, repInput.value ? [repInput.value] : []);
     });
 
     exDiv.querySelector('.clearExercicio').addEventListener('click', () => {
@@ -444,6 +569,7 @@ function addExercicio(container) {
             else if (el.type === 'checkbox') el.checked = false;
             else el.value = '';
         });
+        seriesDetalhes.innerHTML = '';
     });
 
     exDiv.querySelector('.removeExercicio').addEventListener('click', () => {
@@ -524,11 +650,14 @@ function renderTreinoAluno(treino, alunoId, aluno = {}) {
     const registrarSessao = isPresencialAluno(aluno)
         ? '<button class="registrarSessao">Registrar sessão</button>'
         : '';
+    const verSessoes = (isPresencialAluno(aluno) || sessoes > 0)
+        ? '<button class="verSessoes">Ver sessoes</button>'
+        : '';
     const dias = (treino.dias || []).map(d => {
-        const exs = (d.exercicios || []).map(ex => `<li>${escapeHtml(ex.nome)} - ${ex.series || ''}x${ex.repeticoes || ''}</li>`).join('');
+        const exs = (d.exercicios || []).map(ex => `<li>${escapeHtml(ex.nome)} - ${escapeHtml(formatExercisePrescription(ex))}</li>`).join('');
         return `<div class="diaCard"><h4>${escapeHtml(d.nome)}</h4><ul>${exs}</ul></div>`;
     }).join('');
-    return `<div class="treinoCard" data-id="${treino.id}"><h3>${escapeHtml(treino.nome)}</h3>${periodizacao}${sessaoMeta}${dias}<div class="treino-actions"><button class="editTreino">Editar</button> ${registrarSessao}<button class="delTreino">Excluir</button></div></div>`;
+    return `<div class="treinoCard" data-id="${treino.id}"><h3>${escapeHtml(treino.nome)}</h3>${periodizacao}${sessaoMeta}${dias}<div class="treino-actions"><button class="editTreino">Editar</button> ${registrarSessao}${verSessoes}<button class="delTreino">Excluir</button></div></div>`;
 }
 
 function attachTreinoHandlers(alunoId, treinos, aluno = {}) {
@@ -557,6 +686,14 @@ function attachTreinoHandlers(alunoId, treinos, aluno = {}) {
             if (treino) openSessaoTreinoModal(alunoId, treino, aluno);
         });
     });
+
+    document.querySelectorAll('#listaTreinos .verSessoes').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const card = btn.closest('.treinoCard');
+            const treino = treinos.find(t => t.id === card.dataset.id);
+            if (treino) openSessaoTreinoModal(alunoId, treino, aluno, { focusHistory: true });
+        });
+    });
 }
 
 function renderSessaoHistorico(container, sessoes = []) {
@@ -573,12 +710,25 @@ function renderSessaoHistorico(container, sessoes = []) {
             : 0;
         const dia = sessao.diaNome ? `<span>${escapeHtml(sessao.diaNome)}</span>` : '';
         const observacoes = sessao.observacoes ? `<small>${escapeHtml(sessao.observacoes)}</small>` : '';
+        const exercicios = Array.isArray(sessao.exercicios) && sessao.exercicios.length
+            ? `<div class="sessao-history-exercicios">${sessao.exercicios.map(ex => {
+                const series = Array.isArray(ex.seriesExecutadas) && ex.seriesExecutadas.length
+                    ? ex.seriesExecutadas.map(serie => {
+                        const carga = serie.carga !== null && serie.carga !== undefined && serie.carga !== '' ? `${serie.carga}kg` : 'sem carga';
+                        const reps = serie.repeticoes || serie.repeticoesPrevistas || '-';
+                        return `<span>S${serie.numero || ''}: ${escapeHtml(reps)} rep - ${escapeHtml(carga)}</span>`;
+                    }).join('')
+                    : `<span>${escapeHtml(ex.repeticoes || ex.repeticoesPrevistas || '-')} rep - ${ex.carga !== null && ex.carga !== undefined ? `${escapeHtml(ex.carga)}kg` : 'sem carga'}</span>`;
+                return `<div class="sessao-history-exercicio"><strong>${escapeHtml(ex.nome)}</strong>${series}</div>`;
+            }).join('')}</div>`
+            : '';
         return `
             <article class="sessao-history-item">
                 <strong>${formatDateLabel(sessao.data || sessao.criadoEm)}</strong>
                 ${dia}
                 <span>${concluidos}/${total} exercícios</span>
                 ${observacoes}
+                ${exercicios}
             </article>
         `;
     }).join('');
@@ -598,7 +748,7 @@ async function carregarHistoricoSessoes(alunoId, treinoId, container) {
     }
 }
 
-function openSessaoTreinoModal(alunoId, treino, aluno = {}) {
+function openSessaoTreinoModal(alunoId, treino, aluno = {}, options = {}) {
     document.querySelectorAll('.sessao-treino-modal').forEach(modal => modal.remove());
 
     const dias = Array.isArray(treino.dias) ? treino.dias : [];
@@ -666,9 +816,16 @@ function openSessaoTreinoModal(alunoId, treino, aluno = {}) {
         }
 
         exerciciosContainer.innerHTML = exercicios.map((ex, idxEx) => {
-            const cargaPrevista = ex.carga !== undefined && ex.carga !== null ? ex.carga : '';
-            const cargaTexto = cargaPrevista ? ` · ${cargaPrevista}kg` : '';
-            const prescricao = `${ex.series || ''}x${ex.repeticoes || ''}${cargaTexto}`;
+            const seriesPlan = getExerciseSeriesPlan(ex);
+            const prescricao = formatExercisePrescription(ex);
+            const seriesRows = seriesPlan.map((serie, idxSerie) => `
+                <div class="sessao-serie" data-serie="${idxSerie}">
+                    <span>Serie ${serie.numero || idxSerie + 1}</span>
+                    <label><input type="checkbox" class="serieConcluida" checked /> Feita</label>
+                    <input type="number" class="serieCargaRealizada" step="0.1" placeholder="Carga" />
+                    <input type="text" class="serieRepsRealizadas" placeholder="Reps" value="${escapeAttribute(serie.repeticoes)}" />
+                </div>
+            `).join('');
             return `
                 <div class="sessao-exercicio" data-index="${idxEx}">
                     <div class="sessao-exercicio__info">
@@ -676,12 +833,20 @@ function openSessaoTreinoModal(alunoId, treino, aluno = {}) {
                         <span>${escapeHtml(prescricao)}</span>
                     </div>
                     <label class="sessao-check"><input type="checkbox" class="concluido" checked /> Feito</label>
-                    <input type="number" class="cargaRealizada" step="0.1" placeholder="Carga" value="${escapeAttribute(cargaPrevista)}" />
-                    <input type="text" class="repsRealizadas" placeholder="Reps feitas" value="${escapeAttribute(ex.repeticoes || '')}" />
                     <input type="text" class="obsExercicio" placeholder="Observações" />
+                    <div class="sessao-series">${seriesRows}</div>
                 </div>
             `;
         }).join('');
+
+        exerciciosContainer.querySelectorAll('.sessao-exercicio').forEach(row => {
+            const concluido = row.querySelector('.concluido');
+            concluido?.addEventListener('change', () => {
+                row.querySelectorAll('.serieConcluida').forEach(input => {
+                    input.checked = concluido.checked;
+                });
+            });
+        });
     };
 
     diaSelect?.addEventListener('change', renderExercicios);
@@ -695,15 +860,27 @@ function openSessaoTreinoModal(alunoId, treino, aluno = {}) {
         const exerciciosPlanejados = Array.isArray(dia.exercicios) ? dia.exercicios : [];
         const exercicios = Array.from(form.querySelectorAll('.sessao-exercicio')).map((row, idxEx) => {
             const previsto = exerciciosPlanejados[idxEx] || {};
-            const cargaRealizada = row.querySelector('.cargaRealizada')?.value;
+            const planoSeries = getExerciseSeriesPlan(previsto);
+            const seriesExecutadas = Array.from(row.querySelectorAll('.sessao-serie')).map((serieRow, idxSerie) => {
+                const cargaValor = serieRow.querySelector('.serieCargaRealizada')?.value;
+                const plano = planoSeries[idxSerie] || {};
+                return {
+                    numero: plano.numero || idxSerie + 1,
+                    repeticoesPrevistas: plano.repeticoes || '',
+                    concluido: serieRow.querySelector('.serieConcluida')?.checked !== false,
+                    carga: cargaValor ? Number(cargaValor) : null,
+                    repeticoes: serieRow.querySelector('.serieRepsRealizadas')?.value?.trim() || ''
+                };
+            });
             return {
                 nome: previsto.nome || `Exercício ${idxEx + 1}`,
-                seriesPrevistas: previsto.series || null,
-                repeticoesPrevistas: previsto.repeticoes || null,
+                seriesPrevistas: seriesExecutadas.length || previsto.series || null,
+                repeticoesPrevistas: formatRepeticoesResumo(seriesExecutadas.map(serie => ({ repeticoes: serie.repeticoesPrevistas })), previsto.repeticoes),
                 cargaPrevista: previsto.carga !== undefined ? previsto.carga : null,
-                concluido: row.querySelector('.concluido')?.checked !== false,
-                carga: cargaRealizada ? Number(cargaRealizada) : null,
-                repeticoes: row.querySelector('.repsRealizadas')?.value?.trim() || '',
+                concluido: row.querySelector('.concluido')?.checked !== false && seriesExecutadas.some(serie => serie.concluido),
+                carga: null,
+                repeticoes: formatRepeticoesResumo(seriesExecutadas.map(serie => ({ repeticoes: serie.repeticoes }))),
+                seriesExecutadas,
                 observacoes: row.querySelector('.obsExercicio')?.value?.trim() || ''
             };
         });
@@ -729,7 +906,6 @@ function openSessaoTreinoModal(alunoId, treino, aluno = {}) {
             feedback.textContent = 'Sessão registrada com sucesso.';
             await carregarHistoricoSessoes(alunoId, treino.id, historico);
             await loadTreinosAluno(alunoId);
-            setTimeout(close, 500);
         } catch (err) {
             console.error('Erro ao registrar sessão:', err);
             feedback.textContent = 'Não foi possível salvar a sessão.';
@@ -739,6 +915,9 @@ function openSessaoTreinoModal(alunoId, treino, aluno = {}) {
     document.body.appendChild(modal);
     renderExercicios();
     carregarHistoricoSessoes(alunoId, treino.id, historico);
+    if (options.focusHistory) {
+        modal.querySelector('.sessao-history')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 function fillTreinoForm(alunoId, treino) {
@@ -773,8 +952,10 @@ function fillTreinoForm(alunoId, treino) {
             exDiv.querySelector('.categoria').value = exData.categoria || '';
             exDiv.querySelector('.grupo').value = exData.grupoMuscularPrincipal || '';
             exDiv.querySelector('.nomeExercicio').value = exData.nome;
+            exDiv.querySelector('.metodo').value = exData.metodo || '';
             exDiv.querySelector('.series').value = exData.series || '';
             exDiv.querySelector('.repeticoes').value = exData.repeticoes || '';
+            renderSeriesDetalhesForExercise(exDiv, exData.series, getExerciseSeriesPlan(exData).map(serie => serie.repeticoes));
             if (exData.carga !== undefined) exDiv.querySelector('.carga').value = exData.carga;
             exDiv.querySelector('.observacoes').value = exData.observacoes || '';
         });
@@ -812,7 +993,7 @@ function renderTreino(treino) {
         const exs = (d.exercicios || []).map(ex => {
             const carga = ex.carga ? ` - ${ex.carga}kg` : '';
             const obs = ex.observacoes ? ` (${ex.observacoes})` : '';
-            return `<li>${escapeHtml(ex.nome)} - ${ex.series || ''}x${ex.repeticoes || ''}${escapeHtml(carga)}${escapeHtml(obs)}</li>`;
+            return `<li>${escapeHtml(ex.nome)} - ${escapeHtml(formatExercisePrescription(ex))}${escapeHtml(carga)}${escapeHtml(obs)}</li>`;
         }).join('');
         return `<div class="diaCard"><h4>${escapeHtml(d.nome)}</h4><ul>${exs}</ul></div>`;
     }).join('');

@@ -8,12 +8,29 @@ function parseInteger(value) {
     return Number.isNaN(parsed) ? null : parsed;
 }
 
+function sanitizeSessionSeries(series) {
+    if (!Array.isArray(series)) return [];
+    return series.map((serie, index) => {
+        const carga = serie?.carga === '' || serie?.carga === undefined || serie?.carga === null
+            ? null
+            : Number(serie.carga);
+        return {
+            numero: parseInteger(serie?.numero) || index + 1,
+            repeticoesPrevistas: serie?.repeticoesPrevistas || '',
+            concluido: serie?.concluido !== false,
+            carga: Number.isNaN(carga) ? null : carga,
+            repeticoes: serie?.repeticoes || ''
+        };
+    });
+}
+
 function sanitizeSessionExercises(exercicios) {
     if (!Array.isArray(exercicios)) return [];
     return exercicios.map((ex, index) => {
         const carga = ex?.carga === '' || ex?.carga === undefined || ex?.carga === null
             ? null
             : Number(ex.carga);
+        const seriesExecutadas = sanitizeSessionSeries(ex?.seriesExecutadas);
         return {
             nome: ex?.nome || `Exercício ${index + 1}`,
             seriesPrevistas: ex?.seriesPrevistas || null,
@@ -22,6 +39,7 @@ function sanitizeSessionExercises(exercicios) {
             concluido: ex?.concluido !== false,
             carga: Number.isNaN(carga) ? null : carga,
             repeticoes: ex?.repeticoes || '',
+            seriesExecutadas,
             observacoes: ex?.observacoes || ''
         };
     });
